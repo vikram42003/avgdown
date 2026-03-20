@@ -6,4 +6,7 @@ async function bootstrap() {
   await app.listen(process.env.PORT_API ?? 3001);
 }
 
-bootstrap().catch((e) => console.error(e));
+bootstrap().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
