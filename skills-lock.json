@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "turborepo": {
+      "source": "/tmp/turborepo",
+      "sourceType": "local",
+      "computedHash": "f798c6994f38dc6cca2ee6867c5fb7fda09310c7a01da06d389dea3ab8a491ba"
+    }
+  }
+}
