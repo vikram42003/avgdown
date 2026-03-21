@@ -7,9 +7,13 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:deploy": "turbo run db:deploy"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "prettier": "^3.7.4",
     "turbo": "^2.8.17",
     "typescript": "5.9.2"

@@ -39,5 +39,8 @@ yarn-error.log*
 .DS_Store
 *.pem
 
+# Prisma
+packages/database/generated
+
 # Custom
 GUIDE.md
