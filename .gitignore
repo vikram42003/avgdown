@@ -38,3 +38,10 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Prisma
+packages/database/src/generated
+
+# Custom
+GUIDE.md
+.env.DO_NOT_USE_ITS_ONLY_FOR_STORING_THE_URLS
