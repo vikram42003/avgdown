@@ -40,7 +40,8 @@ yarn-error.log*
 *.pem
 
 # Prisma
-packages/database/generated
+packages/database/src/generated
 
 # Custom
 GUIDE.md
+.env.DO_NOT_USE_ITS_ONLY_FOR_STORING_THE_URLS
