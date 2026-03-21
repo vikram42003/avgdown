@@ -2,20 +2,20 @@
   "name": "avgdown",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "build": "bun --env-file=.env.local turbo run build",
+    "dev": "bun --env-file=.env.local turbo run dev",
+    "lint": "bun --env-file=.env.local turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types",
+    "check-types": "bun --env-file=.env.local turbo run check-types",
     "clean": "turbo run clean && rm -rf node_modules",
-    "db:generate": "turbo run db:generate",
-    "db:migrate": "turbo run db:migrate",
-    "db:deploy": "turbo run db:deploy"
+    "db:generate": "bun --env-file=.env.local turbo run db:generate",
+    "db:migrate": "bun --env-file=.env.local turbo run db:migrate",
+    "db:deploy": "bun --env-file=.env.local turbo run db:deploy"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "prettier": "^3.7.4",
-    "turbo": "^2.8.17",
+    "turbo": "^2.8.20",
     "typescript": "5.9.2"
   },
   "engines": {
