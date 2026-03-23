@@ -1,0 +1,5 @@
+# prisma.config.ts file is loaded directly by the Prisma CLI (via its own ts runner) and
+# is intentionally excluded from the package's tsconfig.json (which only covers
+# src/ for compilation). Including it would violate the `rootDir: "src"` constraint.
+# See: https://www.prisma.io/docs/guides/turborepo#22-initialize-prisma-and-define-models
+**/prisma.config.ts
