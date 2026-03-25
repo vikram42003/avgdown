@@ -1,24 +1,10 @@
-import {
-  ZodValidationPipe,
-  ZodSerializerInterceptor,
-  ZodSerializationException,
-} from 'nestjs-zod';
-import {
-  APP_PIPE,
-  APP_INTERCEPTOR,
-  APP_FILTER,
-  BaseExceptionFilter,
-} from '@nestjs/core';
-import { ZodError } from 'zod';
-import {
-  Logger,
-  Module,
-  HttpException,
-  ArgumentsHost,
-  Catch,
-} from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ZodValidationPipe, ZodSerializerInterceptor, ZodSerializationException } from "nestjs-zod";
+import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER, BaseExceptionFilter } from "@nestjs/core";
+import { ZodError } from "zod";
+import { Logger, Module, HttpException, ArgumentsHost, Catch } from "@nestjs/common";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { LoggerInterceptor } from "./common/interceptors/logger/logger.interceptor";
 
 @Catch(HttpException)
 class HttpExceptionFilter extends BaseExceptionFilter {
@@ -50,6 +36,10 @@ class HttpExceptionFilter extends BaseExceptionFilter {
     {
       provide: APP_INTERCEPTOR,
       useClass: ZodSerializerInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggerInterceptor,
     },
     {
       provide: APP_FILTER,

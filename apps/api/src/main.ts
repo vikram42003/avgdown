@@ -1,15 +1,12 @@
-import { cleanupOpenApiDoc } from 'nestjs-zod';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { cleanupOpenApiDoc } from "nestjs-zod";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
 
-import {
-  WinstonModule,
-  utilities as nestWinstonModuleUtilities,
-} from 'nest-winston';
-import * as winston from 'winston';
+import { WinstonModule, utilities as nestWinstonModuleUtilities } from "nest-winston";
+import * as winston from "winston";
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === "production";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -21,7 +18,7 @@ async function bootstrap() {
             winston.format.ms(),
             isProduction
               ? winston.format.json()
-              : nestWinstonModuleUtilities.format.nestLike('AvgDown', {
+              : nestWinstonModuleUtilities.format.nestLike("AvgDown", {
                   colors: true,
                   prettyPrint: true,
                 }),
@@ -34,13 +31,14 @@ async function bootstrap() {
   const openApiDoc = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
-      .setTitle('Example API')
-      .setDescription('Example API description')
-      .setVersion('1.0')
+      .setTitle("AvgDown API")
+      .setDescription("The (Private) backend for the AvgDown service")
+      .setVersion("0.1.0")
+      .addBearerAuth()
       .build(),
   );
 
-  SwaggerModule.setup('api', app, cleanupOpenApiDoc(openApiDoc));
+  SwaggerModule.setup("api", app, cleanupOpenApiDoc(openApiDoc));
   await app.listen(process.env.PORT_API ?? 3001);
 }
 
