@@ -1,7 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalEnv": ["SOMETHING", "PORT_API", "PORT_WORKER", "DATABASE_URL", "DIRECT_URL"],
+  "globalEnv": ["PORT_API", "PORT_WORKER", "DATABASE_URL", "DIRECT_URL", "NODE_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
