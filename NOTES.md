@@ -4,6 +4,7 @@
 ## Todo
 - Do swagger stuff once the project is done
 - Make a separate model for Exchange field and then remove the ts typeguard from types/src/assets
+- Uhh prettier may not be setup correctly, its only in api currently, so do do that
 
 ## Implementation rough work
 1. Get all DISTINCT assets that have at least one active WatchlistEntry
