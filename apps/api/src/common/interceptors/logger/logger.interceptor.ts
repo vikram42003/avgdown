@@ -8,14 +8,15 @@ export class LoggerInterceptor implements NestInterceptor {
   private readonly internalLogger = new Logger("HTTP");
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    // Skip if we're in prod, for now
+    if (process.env.NODE_ENV === "production") return next.handle();
+
     const http = context.switchToHttp();
     const request = http.getRequest<Request>();
     const { method, url, ip } = request;
 
-    // 1. Silence favicon noise
     if (url === "/favicon.ico") return next.handle();
 
-    // 2. Parse the User-Agent
     const ua = request.get("user-agent") || "unknown";
     const parser = new UAParser(ua);
     const browser = parser.getBrowser();
@@ -27,8 +28,6 @@ export class LoggerInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap({
         next: () => {
-          if (process.env.NODE_ENV === "production") return;
-
           const response = http.getResponse<Response>();
           const { statusCode } = response;
           const duration = Date.now() - start;
