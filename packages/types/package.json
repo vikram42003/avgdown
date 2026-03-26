@@ -10,8 +10,17 @@
       "default": "./dist/index.js"
     }
   },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist node_modules",
+    "dev": "tsc --watch"
+  },
   "devDependencies": {
+    "@avgdown/eslint-config": "workspace:*",
     "@avgdown/typescript-config": "workspace:*",
     "typescript": "latest"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
   }
 }

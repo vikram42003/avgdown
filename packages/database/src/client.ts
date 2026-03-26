@@ -4,7 +4,7 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 if (!process.env.DATABASE_URL) {
   throw new Error(
     "DATABASE_URL environment variable is required but not defined. " +
-    "Please set DATABASE_URL in your environment configuration."
+      "Please set DATABASE_URL in your environment configuration.",
   );
 }
 
