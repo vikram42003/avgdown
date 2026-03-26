@@ -1,19 +1,25 @@
 import { z } from "zod";
+import { AssetResponseSchema } from "./asset";
+
+// Base
 
 export const WatchlistEntrySchema = z.object({
-  id: z.uuid().describe("The UUID id of the watchlist entry"),
-  userId: z.uuid().describe("The userId of user who created the watchlist entry"),
-  assetId: z.uuid().describe("The assetId of the asset to be added to the watchlist"),
+  id: z.uuid().describe("Unique identifier for the watchlist entry"),
+  userId: z.uuid().describe("ID of the user who owns this entry"),
+  assetId: z.uuid().describe("ID of the asset being tracked"),
   smaPeriod: z
     .number()
+    .int()
     .min(1)
     .max(250)
     .default(20)
-    .describe("The SMA period of the asset being tracked by this watchlist"),
-  isActive: z.boolean().default(true).describe("Whether the watchlist entry is active"),
-  createdAt: z.date().describe("The date and time when the watchlist entry was created"),
-  updatedAt: z.date().describe("The date and time when the watchlist entry was updated"),
+    .describe("Number of price snapshots used to calculate the SMA"),
+  isActive: z.boolean().default(true).describe("Whether this watchlist entry is actively being monitored"),
+  createdAt: z.date().describe("Timestamp when the entry was created"),
+  updatedAt: z.date().describe("Timestamp when the entry was last updated"),
 });
+
+// Input: Frontend -> Backend
 
 export const CreateWatchlistEntrySchema = WatchlistEntrySchema.omit({
   id: true,
@@ -22,8 +28,21 @@ export const CreateWatchlistEntrySchema = WatchlistEntrySchema.omit({
   updatedAt: true,
 });
 
+// (Update)Input: Frontend -> Backend (partial)
+
 export const UpdateWatchlistEntrySchema = CreateWatchlistEntrySchema.partial();
 
+// Response: Backend -> Frontend
+
+export const WatchlistEntryResponseSchema = WatchlistEntrySchema.omit({ userId: true, assetId: true }).extend({
+  asset: AssetResponseSchema,
+  createdAt: z.iso.datetime().describe("ISO timestamp when the entry was created"),
+  updatedAt: z.iso.datetime().describe("ISO timestamp when the entry was last updated"),
+});
+
+// Inferred types
+
 export type WatchlistEntry = z.infer<typeof WatchlistEntrySchema>;
-export type CreateWatchlistEntry = z.infer<typeof CreateWatchlistEntrySchema>;
-export type UpdateWatchlistEntry = z.infer<typeof UpdateWatchlistEntrySchema>;
+export type CreateWatchlistEntryDto = z.infer<typeof CreateWatchlistEntrySchema>;
+export type UpdateWatchlistEntryDto = z.infer<typeof UpdateWatchlistEntrySchema>;
+export type WatchlistEntryResponse = z.infer<typeof WatchlistEntryResponseSchema>;
