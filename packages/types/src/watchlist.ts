@@ -21,7 +21,7 @@ export const WatchlistEntrySchema = z.object({
 
 // Input: Frontend -> Backend
 
-export const CreateWatchlistEntrySchema = WatchlistEntrySchema.omit({
+export const WatchlistEntryCreateSchema = WatchlistEntrySchema.omit({
   id: true,
   userId: true,
   createdAt: true,
@@ -30,7 +30,7 @@ export const CreateWatchlistEntrySchema = WatchlistEntrySchema.omit({
 
 // (Update)Input: Frontend -> Backend (partial)
 
-export const UpdateWatchlistEntrySchema = CreateWatchlistEntrySchema.partial();
+export const WatchlistEntryUpdateSchema = WatchlistEntryCreateSchema.partial();
 
 // Response: Backend -> Frontend
 
@@ -43,6 +43,6 @@ export const WatchlistEntryResponseSchema = WatchlistEntrySchema.omit({ userId: 
 // Inferred types
 
 export type WatchlistEntry = z.infer<typeof WatchlistEntrySchema>;
-export type CreateWatchlistEntryDto = z.infer<typeof CreateWatchlistEntrySchema>;
-export type UpdateWatchlistEntryDto = z.infer<typeof UpdateWatchlistEntrySchema>;
+export type WatchlistEntryCreateDto = z.infer<typeof WatchlistEntryCreateSchema>;
+export type WatchlistEntryUpdateDto = z.infer<typeof WatchlistEntryUpdateSchema>;
 export type WatchlistEntryResponse = z.infer<typeof WatchlistEntryResponseSchema>;
