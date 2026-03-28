@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WatchlistEntryResponseSchema } from "./watchlist.js";
 
 // Base
 
@@ -14,7 +15,8 @@ export const AlertSchema = z.object({
 
 // Response: Backend -> Frontend
 
-export const AlertResponseSchema = AlertSchema.extend({
+export const AlertResponseSchema = AlertSchema.omit({ watchlistEntryId: true }).extend({
+  watchlistEntry: WatchlistEntryResponseSchema.describe("The full watchlist entry including the asset details"),
   deliveredAt: z.iso.datetime().nullable().describe("ISO timestamp of delivery"),
   createdAt: z.iso.datetime().describe("ISO timestamp when the alert was created"),
 });
