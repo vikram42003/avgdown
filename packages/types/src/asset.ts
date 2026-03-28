@@ -20,7 +20,7 @@ export const AssetSchema = z.object({
 // Response: Backend -> Frontend
 
 export const AssetResponseSchema = AssetSchema.extend({
-  createdAt: z.string().datetime().describe("ISO string representation of createdAt"),
+  createdAt: z.iso.datetime().describe("ISO string representation of createdAt"),
 });
 
 // Base - Price Snapshot
@@ -35,7 +35,7 @@ export const PriceSnapshotSchema = z.object({
 // Response: Backend -> Frontend
 
 export const PriceSnapshotResponseSchema = PriceSnapshotSchema.extend({
-  fetchedAt: z.string().datetime().describe("ISO string representation of fetchedAt"), // Safe string serialization for JSON
+  fetchedAt: z.iso.datetime().describe("ISO string representation of fetchedAt"),
 });
 
 // Inferred Types
