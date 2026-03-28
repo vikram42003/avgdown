@@ -19,6 +19,15 @@ enum AssetType {
   ETF
 }
 
+enum Exchange {
+  NASDAQ
+  NYSE
+  NSE
+  BSE
+  BINANCE
+  COINBASE
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -36,7 +45,7 @@ model User {
 model Asset {
   id        String    @id @default(uuid())
   symbol    String
-  exchange  String
+  exchange  Exchange
   name      String
   assetType AssetType @map("asset_type")
   createdAt DateTime @default(now()) @map("created_at")
