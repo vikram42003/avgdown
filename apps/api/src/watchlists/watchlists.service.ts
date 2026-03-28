@@ -3,7 +3,7 @@ import { CreateWatchlistDto } from "./dto/create-watchlist.dto";
 import { UpdateWatchlistDto } from "./dto/update-watchlist.dto";
 
 @Injectable()
-export class WatchlistService {
+export class WatchlistsService {
   create(createWatchlistDto: CreateWatchlistDto) {
     return "This action adds a new watchlist";
   }

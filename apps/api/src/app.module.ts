@@ -5,7 +5,7 @@ import { Logger, Module, HttpException, ArgumentsHost, Catch } from "@nestjs/com
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { LoggerInterceptor } from "./common/interceptors/logger/logger.interceptor";
-import { WatchlistModule } from "./watchlist/watchlist.module";
+import { WatchlistsModule } from "./watchlists/watchlists.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { PrismaModule } from "./common/database/prisma/prisma.module";
@@ -28,7 +28,7 @@ class HttpExceptionFilter extends BaseExceptionFilter {
 }
 
 @Module({
-  imports: [WatchlistModule, UsersModule, AuthModule, PrismaModule],
+  imports: [WatchlistsModule, UsersModule, AuthModule, PrismaModule],
   controllers: [AppController],
   providers: [
     AppService,

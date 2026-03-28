@@ -1,34 +1,34 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from "@nestjs/common";
-import { WatchlistService } from "./watchlist.service";
+import { WatchlistsService } from "./watchlists.service";
 import { CreateWatchlistDto } from "./dto/create-watchlist.dto";
 import { UpdateWatchlistDto } from "./dto/update-watchlist.dto";
 
-@Controller("watchlist")
-export class WatchlistController {
-  constructor(private readonly watchlistService: WatchlistService) {}
+@Controller("watchlists")
+export class WatchlistsController {
+  constructor(private readonly watchlistsService: WatchlistsService) {}
 
   @Post()
   create(@Body() createWatchlistDto: CreateWatchlistDto) {
-    return this.watchlistService.create(createWatchlistDto);
+    return this.watchlistsService.create(createWatchlistDto);
   }
 
   @Get()
   findAll() {
-    return this.watchlistService.findAll();
+    return this.watchlistsService.findAll();
   }
 
   @Get(":id")
   findOne(@Param("id") id: string) {
-    return this.watchlistService.findOne(+id);
+    return this.watchlistsService.findOne(+id);
   }
 
   @Patch(":id")
   update(@Param("id") id: string, @Body() updateWatchlistDto: UpdateWatchlistDto) {
-    return this.watchlistService.update(+id, updateWatchlistDto);
+    return this.watchlistsService.update(+id, updateWatchlistDto);
   }
 
   @Delete(":id")
   remove(@Param("id") id: string) {
-    return this.watchlistService.remove(+id);
+    return this.watchlistsService.remove(+id);
   }
 }
