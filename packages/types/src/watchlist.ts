@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AssetResponseSchema } from "./asset";
+import { AssetResponseSchema } from "./asset.js";
 
 // Base
 

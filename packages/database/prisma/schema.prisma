@@ -39,6 +39,7 @@ model Asset {
   exchange  String
   name      String
   assetType AssetType @map("asset_type")
+  createdAt DateTime @default(now()) @map("created_at")
 
   watchlistEntries WatchlistEntry[]
   priceSnapshots   PriceSnapshot[]
