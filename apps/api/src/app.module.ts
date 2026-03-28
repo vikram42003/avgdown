@@ -8,6 +8,7 @@ import { LoggerInterceptor } from "./common/interceptors/logger/logger.intercept
 import { WatchlistModule } from "./watchlist/watchlist.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
+import { PrismaModule } from "./common/database/prisma/prisma.module";
 
 @Catch(HttpException)
 class HttpExceptionFilter extends BaseExceptionFilter {
@@ -27,7 +28,7 @@ class HttpExceptionFilter extends BaseExceptionFilter {
 }
 
 @Module({
-  imports: [WatchlistModule, UsersModule, AuthModule],
+  imports: [WatchlistModule, UsersModule, AuthModule, PrismaModule],
   controllers: [AppController],
   providers: [
     AppService,
