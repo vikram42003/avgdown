@@ -1,17 +1,12 @@
 {
   "name": "@avgdown/db",
   "version": "0.0.0",
+  "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc",
     "clean": "rm -rf dist node_modules src/generated",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -19,8 +14,9 @@
   },
   "devDependencies": {
     "@avgdown/typescript-config": "workspace:*",
-    "typescript": "latest",
-    "prisma": "^7.5.0"
+    "@types/node": "^25.5.0",
+    "prisma": "^7.5.0",
+    "typescript": "latest"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

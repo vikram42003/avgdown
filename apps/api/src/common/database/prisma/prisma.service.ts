@@ -5,7 +5,6 @@ import { prisma } from "@avgdown/db";
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
-  // typeof prisma gives us the exact type of the singleton — no generics, no casting
   public readonly db: typeof prisma = prisma;
 
   async onModuleInit() {

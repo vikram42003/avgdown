@@ -1,26 +1,28 @@
 import { Injectable } from "@nestjs/common";
-import { CreateWatchlistDto } from "./dto/create-watchlist.dto";
-import { UpdateWatchlistDto } from "./dto/update-watchlist.dto";
+import { PrismaService } from "src/common/database/prisma/prisma.service";
+import { WatchlistEntryCreateDto, WatchlistEntryUpdateDto, WatchlistEntryResponseDto } from "./dto/watchlist.dto";
 
 @Injectable()
 export class WatchlistsService {
-  create(createWatchlistDto: CreateWatchlistDto) {
-    return "This action adds a new watchlist";
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(createDto: WatchlistEntryCreateDto): Promise<WatchlistEntryResponseDto> {
+    return "This action adds a new watchlist" as any;
   }
 
-  findAll() {
-    return `This action returns all watchlist`;
+  async findAll(): Promise<WatchlistEntryResponseDto[]> {
+    return await this.prisma.db.watchlistEntry.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} watchlist`;
+  async findOne(id: number): Promise<WatchlistEntryResponseDto> {
+    return `This action returns a #${id} watchlist` as any;
   }
 
-  update(id: number, updateWatchlistDto: UpdateWatchlistDto) {
-    return `This action updates a #${id} watchlist`;
+  async update(id: number, updateDto: WatchlistEntryUpdateDto): Promise<WatchlistEntryResponseDto> {
+    return `This action updates a #${id} watchlist` as any;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} watchlist`;
+  async remove(id: number): Promise<WatchlistEntryResponseDto> {
+    return `This action removes a #${id} watchlist` as any;
   }
 }

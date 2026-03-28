@@ -1,34 +1,33 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from "@nestjs/common";
 import { WatchlistsService } from "./watchlists.service";
-import { CreateWatchlistDto } from "./dto/create-watchlist.dto";
-import { UpdateWatchlistDto } from "./dto/update-watchlist.dto";
+import { WatchlistEntryResponseDto, WatchlistEntryCreateDto, WatchlistEntryUpdateDto } from "./dto/watchlist.dto";
 
 @Controller("watchlists")
 export class WatchlistsController {
   constructor(private readonly watchlistsService: WatchlistsService) {}
 
   @Post()
-  create(@Body() createWatchlistDto: CreateWatchlistDto) {
-    return this.watchlistsService.create(createWatchlistDto);
+  create(@Body() createDto: WatchlistEntryCreateDto): Promise<WatchlistEntryResponseDto> {
+    return this.watchlistsService.create(createDto);
   }
 
   @Get()
-  findAll() {
+  findAll(): Promise<WatchlistEntryResponseDto[]> {
     return this.watchlistsService.findAll();
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
+  findOne(@Param("id") id: string): Promise<WatchlistEntryResponseDto> {
     return this.watchlistsService.findOne(+id);
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() updateWatchlistDto: UpdateWatchlistDto) {
-    return this.watchlistsService.update(+id, updateWatchlistDto);
+  update(@Param("id") id: string, @Body() updateDto: WatchlistEntryUpdateDto): Promise<WatchlistEntryResponseDto> {
+    return this.watchlistsService.update(+id, updateDto);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
+  remove(@Param("id") id: string): Promise<WatchlistEntryResponseDto> {
     return this.watchlistsService.remove(+id);
   }
 }
