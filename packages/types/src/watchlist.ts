@@ -36,8 +36,8 @@ export const WatchlistEntryUpdateSchema = WatchlistEntryCreateSchema.partial();
 
 export const WatchlistEntryResponseSchema = WatchlistEntrySchema.omit({ userId: true, assetId: true }).extend({
   asset: AssetResponseSchema.describe("The fully populated asset for this entry"),
-  createdAt: z.iso.datetime().describe("ISO timestamp when the entry was created"),
-  updatedAt: z.iso.datetime().describe("ISO timestamp when the entry was last updated"),
+  createdAt: z.union([z.date(), z.iso.datetime()]).describe("ISO timestamp when the entry was created"),
+  updatedAt: z.union([z.date(), z.iso.datetime()]).describe("ISO timestamp when the entry was last updated"),
 });
 
 // Inferred types

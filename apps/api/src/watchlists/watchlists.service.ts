@@ -11,7 +11,7 @@ export class WatchlistsService {
   }
 
   async findAll(): Promise<WatchlistEntryResponseDto[]> {
-    return await this.prisma.db.watchlistEntry.findMany();
+    return await this.prisma.watchlistEntry.findMany({ include: { asset: true } });
   }
 
   async findOne(id: number): Promise<WatchlistEntryResponseDto> {

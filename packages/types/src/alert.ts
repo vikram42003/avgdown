@@ -17,8 +17,8 @@ export const AlertSchema = z.object({
 
 export const AlertResponseSchema = AlertSchema.omit({ watchlistEntryId: true }).extend({
   watchlistEntry: WatchlistEntryResponseSchema.describe("The full watchlist entry including the asset details"),
-  deliveredAt: z.iso.datetime().nullable().describe("ISO timestamp of delivery"),
-  createdAt: z.iso.datetime().describe("ISO timestamp when the alert was created"),
+  deliveredAt: z.union([z.date(), z.iso.datetime()]).nullable().describe("ISO timestamp of delivery"),
+  createdAt: z.union([z.date(), z.iso.datetime()]).describe("ISO timestamp when the alert was created"),
 });
 
 // Inferred Types

@@ -33,8 +33,8 @@ export const UserUpdateSchema = UserSchema.pick({
 // Response: Backend -> Frontend
 
 export const UserResponseSchema = UserSchema.omit({ passwordHash: true, googleId: true }).extend({
-  createdAt: z.iso.datetime().describe("ISO timestamp when the entry was created"),
-  updatedAt: z.iso.datetime().describe("ISO timestamp when the entry was last updated"),
+  createdAt: z.union([z.date(), z.iso.datetime()]).describe("ISO timestamp when the entry was created"),
+  updatedAt: z.union([z.date(), z.iso.datetime()]).describe("ISO timestamp when the entry was last updated"),
 });
 
 // Inferred Types
