@@ -24,10 +24,14 @@
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.6",
     "nest-winston": "^1.10.2",
     "nestjs-zod": "^5.2.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "ua-parser-js": "^2.0.9",
@@ -35,9 +39,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@avgdown/types": "workspace:*",
     "@avgdown/db": "workspace:*",
     "@avgdown/eslint-config": "workspace:*",
+    "@avgdown/types": "workspace:*",
     "@avgdown/typescript-config": "workspace:*",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
@@ -47,6 +51,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
+    "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
     "@types/ua-parser-js": "^0.7.39",
     "eslint": "^9.18.0",

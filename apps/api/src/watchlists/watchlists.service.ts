@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/common/database/prisma/prisma.service";
-import { WatchlistEntryCreateDto, WatchlistEntryUpdateDto, WatchlistEntryResponseDto } from "./dto/watchlist.dto";
+import { WatchlistEntryCreateDto, WatchlistEntryUpdateDto, WatchlistEntryResponseDto } from "./watchlist.dto";
 
 import { assertFound } from "src/common/utils/assert-found";
 

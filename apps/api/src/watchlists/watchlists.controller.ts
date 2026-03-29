@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from "@nestjs/common";
 import { WatchlistsService } from "./watchlists.service";
-import { WatchlistEntryResponseDto, WatchlistEntryCreateDto, WatchlistEntryUpdateDto } from "./dto/watchlist.dto";
+import { WatchlistEntryResponseDto, WatchlistEntryCreateDto, WatchlistEntryUpdateDto } from "./watchlist.dto";
 
 @Controller("watchlists")
 export class WatchlistsController {
