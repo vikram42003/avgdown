@@ -18,7 +18,7 @@ export class WatchlistsController {
 
   @Get(":id")
   findOne(@Param("id") id: string): Promise<WatchlistEntryResponseDto> {
-    return this.watchlistsService.findOne(+id);
+    return this.watchlistsService.findOne(id);
   }
 
   @Patch(":id")

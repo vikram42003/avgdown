@@ -3,6 +3,8 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 
+import { ZodValidationPipe } from "nestjs-zod";
+
 import { WinstonModule, utilities as nestWinstonModuleUtilities } from "nest-winston";
 import * as winston from "winston";
 
@@ -39,6 +41,7 @@ async function bootstrap() {
   );
 
   SwaggerModule.setup("api", app, cleanupOpenApiDoc(openApiDoc));
+  app.useGlobalPipes(new ZodValidationPipe());
   await app.listen(process.env.PORT_API ?? 3001);
 }
 
