@@ -4,7 +4,7 @@
   "globalEnv": ["PORT_API", "PORT_WORKER", "DATABASE_URL", "DIRECT_URL", "NODE_ENV"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
@@ -15,6 +15,7 @@
       "dependsOn": ["^check-types"]
     },
     "dev": {
+      "dependsOn": ["^build", "^db:generate"],
       "cache": false,
       "persistent": true
     },
