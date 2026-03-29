@@ -1,15 +1,19 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../common/database/prisma/prisma.service";
+import { User } from "@avgdown/db";
+import { UserResponseSchema } from "@avgdown/types";
+
 import { UserResponseDto } from "./users.dto";
+import { PrismaService } from "../common/database/prisma/prisma.service";
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<UserResponseDto[]> {
-    // Our nestjs-zod validation pipe will automatically strip sensitive fields like passwordHash
-    return this.prisma.user.findMany();
+    return this.prisma.user.findMany().then((users) => users.map((user) => UserResponseSchema.parse(user)));
   }
 
-  
+  async findUserByEmailHelper(email: string): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: { email } });
+  }
 }

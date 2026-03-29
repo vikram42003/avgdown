@@ -37,6 +37,11 @@ export const UserResponseSchema = UserSchema.omit({ passwordHash: true, googleId
   updatedAt: z.union([z.date(), z.iso.datetime()]).describe("ISO timestamp when the entry was last updated"),
 });
 
+export const AuthResponseSchema = z.object({
+  accessToken: z.string().describe("JWT access token"),
+  user: UserResponseSchema,
+});
+
 // Inferred Types
 
 export type User = z.infer<typeof UserSchema>;
@@ -44,3 +49,4 @@ export type UserRegister = z.infer<typeof UserRegisterSchema>;
 export type UserLogin = z.infer<typeof UserLoginSchema>;
 export type UserUpdate = z.infer<typeof UserUpdateSchema>;
 export type UserResponse = z.infer<typeof UserResponseSchema>;
+export type AuthResponse = z.infer<typeof AuthResponseSchema>;
