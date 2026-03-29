@@ -8,7 +8,7 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const adapter = new PrismaNeon({
+export const adapter = new PrismaNeon({
   connectionString: process.env.DATABASE_URL,
 });
 
