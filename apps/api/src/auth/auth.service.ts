@@ -24,8 +24,9 @@ export class AuthService {
 
   private generateToken(user: UserResponse): string {
     return this.jwtService.sign({
-      sub: user.id,
+      id: user.id,
       email: user.email,
+      webhookUrl: user.webhookUrl,
     });
   }
 
