@@ -2,6 +2,8 @@ import { ZodValidationPipe, ZodSerializerInterceptor, ZodSerializationException 
 import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER, BaseExceptionFilter } from "@nestjs/core";
 import { ZodError } from "zod";
 import { Logger, Module, HttpException, ArgumentsHost, Catch } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { LoggerInterceptor } from "./common/interceptors/logger/logger.interceptor";
@@ -12,7 +14,7 @@ import { PrismaModule } from "./common/database/prisma/prisma.module";
 
 @Catch(HttpException)
 class HttpExceptionFilter extends BaseExceptionFilter {
-  private logger = new Logger(HttpExceptionFilter.name);
+  private readonly logger = new Logger(HttpExceptionFilter.name);
 
   catch(exception: HttpException, host: ArgumentsHost) {
     if (exception instanceof ZodSerializationException) {
@@ -28,7 +30,13 @@ class HttpExceptionFilter extends BaseExceptionFilter {
 }
 
 @Module({
-  imports: [WatchlistsModule, UsersModule, AuthModule, PrismaModule],
+  imports: [
+    WatchlistsModule,
+    UsersModule,
+    AuthModule,
+    PrismaModule,
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ".env.local" }),
+  ],
   controllers: [AppController],
   providers: [
     AppService,

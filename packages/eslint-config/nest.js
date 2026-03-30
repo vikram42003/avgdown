@@ -1,5 +1,6 @@
 import { config as baseConfig } from "./base.js";
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import sonarjs from 'eslint-plugin-sonarjs';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -13,6 +14,7 @@ import tseslint from 'typescript-eslint';
 export const nestJsConfig = [
   ...baseConfig,
   ...tseslint.configs.recommendedTypeChecked,
+  sonarjs.configs.recommended,
   eslintPluginPrettierRecommended,
   {
     languageOptions: {

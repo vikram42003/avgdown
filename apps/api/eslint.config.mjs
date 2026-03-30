@@ -25,5 +25,13 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
     },
-  }
+  },
+  {
+    // main.ts uses bootstrap().catch() intentionally — NestJS compiles to CJS
+    // so top-level await is not available. This is not a pattern we can change.
+    files: ["src/main.ts"],
+    rules: {
+      "sonarjs/prefer-top-level-await": "off",
+    },
+  },
 );
