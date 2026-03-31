@@ -26,7 +26,6 @@ export class AuthService {
     return this.jwtService.sign({
       id: user.id,
       email: user.email,
-      webhookUrl: user.webhookUrl,
     });
   }
 

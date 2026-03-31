@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from "@nestjs/common";
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from "@nestjs/common";
 import { WatchlistsService } from "./watchlists.service";
 import { WatchlistEntryResponseDto, WatchlistEntryCreateDto, WatchlistEntryUpdateDto } from "./watchlist.dto";
+import { AuthGuard } from "src/common/guards/auth/auth.guard";
 
+@UseGuards(AuthGuard)
 @Controller("watchlists")
 export class WatchlistsController {
   constructor(private readonly watchlistsService: WatchlistsService) {}

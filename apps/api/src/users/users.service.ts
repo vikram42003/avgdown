@@ -13,6 +13,10 @@ export class UsersService {
     return this.prisma.user.findMany().then((users) => users.map((user) => UserResponseSchema.parse(user)));
   }
 
+  async findMe(user: { id: string; email: string }): Promise<UserResponseDto> {
+    return this.prisma.user.findUnique({ where: { id: user.id } }).then((user) => UserResponseSchema.parse(user));
+  }
+
   async findUserByEmailHelper(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
   }
