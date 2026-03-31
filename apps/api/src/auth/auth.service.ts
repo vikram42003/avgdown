@@ -31,17 +31,26 @@ export class AuthService {
 
   private async validateUser(userDetails: UserLoginDto): Promise<UserResponse> {
     const user = await this.userService.findUserByEmailHelper(userDetails.email);
-
     if (!user?.passwordHash) {
       throw new UnauthorizedException("Invalid credentials");
     }
 
     const isPasswordValid = await bcrypt.compare(userDetails.password, user.passwordHash);
-
     if (!isPasswordValid) {
       throw new UnauthorizedException("Invalid credentials");
     }
 
     return UserResponseSchema.parse(user);
+  }
+
+  async googleLoginOrCreateUser({ email, googleId }: { email: string; googleId: string }) {
+    const user = await this.userService.upsertUser({ email, googleId });
+    const userResponse = UserResponseSchema.parse(user);
+
+    const token = this.generateToken(userResponse);
+    return {
+      accessToken: token,
+      user: userResponse,
+    };
   }
 }

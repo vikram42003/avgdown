@@ -1,7 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalEnv": ["PORT", "PORT_WORKER", "DATABASE_URL", "DIRECT_URL", "NODE_ENV", "JWT_SECRET"],
+  "globalEnv": ["PORT", "PORT_WORKER", "DATABASE_URL", "DIRECT_URL", "NODE_ENV", "JWT_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_CALLBACK_URL"],
   "tasks": {
     "build": {
       "dependsOn": ["^build", "^db:generate"],
