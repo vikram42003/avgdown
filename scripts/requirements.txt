@@ -1,0 +1,6 @@
+# Dev-only scripts dependencies
+# Run: pip install -r scripts/requirements.txt
+
+yfinance>=0.2.54
+asyncpg>=0.30.0
+python-dotenv>=1.0.0

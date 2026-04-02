@@ -1,76 +1,91 @@
+"""
+Seed script for assets table.
+Uses yfinance to fetch real metadata and asyncpg to write to Postgres directly.
+
+Usage:
+    source .venv/bin/activate
+    pip install yfinance asyncpg python-dotenv
+    python scripts/seed_assets.py
+"""
+
 import asyncio
+import os
 import yfinance as yf
-from prisma import Prisma # type: ignore
+import asyncpg
+from dotenv import load_dotenv
 
-# The list of symbols we want to seed
-# Note: Different symbols on Yahoo have different suffixes (.NS for NSE, -USD for Crypto)
+# Loads DIRECT_URL from your .env.local at project root
+load_dotenv(".env.local")
+
+# The list of symbols we want to seed.
+# Each entry maps to a row in the `assets` table.
+# symbol      — the Yahoo Finance symbol (e.g. AAPL, RELIANCE.NS, BTC-USD)
+# exchange    — must match your Exchange enum in schema.prisma
+# asset_type  — must match your AssetType enum (STOCK, CRYPTO, ETF)
 SYMBOLS = [
-    # US Stocks
-    {"symbol": "AAPL", "exchange": "NASDAQ", "type": "STOCK"},
-    {"symbol": "TSLA", "exchange": "NASDAQ", "type": "STOCK"},
-    {"symbol": "NVDA", "exchange": "NASDAQ", "type": "STOCK"},
-    {"symbol": "MSFT", "exchange": "NASDAQ", "type": "STOCK"},
-    {"symbol": "AMZN", "exchange": "NASDAQ", "type": "STOCK"},
-    
-    # Crypto
-    {"symbol": "BTC-USD", "exchange": "BINANCE", "type": "CRYPTO"},
-    {"symbol": "ETH-USD", "exchange": "BINANCE", "type": "CRYPTO"},
-    {"symbol": "SOL-USD", "exchange": "BINANCE", "type": "CRYPTO"},
-    
-    # Indian Stocks (NSE)
-    {"symbol": "RELIANCE.NS", "exchange": "NSE", "type": "STOCK"},
-    {"symbol": "TCS.NS", "exchange": "NSE", "type": "STOCK"},
-    {"symbol": "INFY.NS", "exchange": "NSE", "type": "STOCK"},
-    {"symbol": "HDFCBANK.NS", "exchange": "NSE", "type": "STOCK"},
+    # --- US Stocks ---
+    {"symbol": "AAPL",       "exchange": "NASDAQ",  "asset_type": "STOCK"},
+    {"symbol": "TSLA",       "exchange": "NASDAQ",  "asset_type": "STOCK"},
+    {"symbol": "NVDA",       "exchange": "NASDAQ",  "asset_type": "STOCK"},
+    {"symbol": "MSFT",       "exchange": "NASDAQ",  "asset_type": "STOCK"},
+    {"symbol": "AMZN",       "exchange": "NASDAQ",  "asset_type": "STOCK"},
+    {"symbol": "GOOGL",      "exchange": "NASDAQ",  "asset_type": "STOCK"},
+    {"symbol": "META",       "exchange": "NASDAQ",  "asset_type": "STOCK"},
+    {"symbol": "JPM",        "exchange": "NYSE",    "asset_type": "STOCK"},
+    {"symbol": "BAC",        "exchange": "NYSE",    "asset_type": "STOCK"},
+    {"symbol": "KO",         "exchange": "NYSE",    "asset_type": "STOCK"},
 
-    # ETFs / Indices
-    {"symbol": "SPY", "exchange": "NYSE", "type": "ETF"},
-    {"symbol": "QQQ", "exchange": "NASDAQ", "type": "ETF"},
+    # --- ETFs ---
+    {"symbol": "SPY",        "exchange": "NYSE",    "asset_type": "ETF"},
+    {"symbol": "QQQ",        "exchange": "NASDAQ",  "asset_type": "ETF"},
+    {"symbol": "VTI",        "exchange": "NYSE",    "asset_type": "ETF"},
+
+    # --- Crypto ---
+    {"symbol": "BTC-USD",    "exchange": "BINANCE", "asset_type": "CRYPTO"},
+    {"symbol": "ETH-USD",    "exchange": "BINANCE", "asset_type": "CRYPTO"},
+    {"symbol": "SOL-USD",    "exchange": "BINANCE", "asset_type": "CRYPTO"},
+
+    # --- Indian Stocks (NSE suffix: .NS) ---
+    {"symbol": "RELIANCE.NS","exchange": "NSE",     "asset_type": "STOCK"},
+    {"symbol": "TCS.NS",     "exchange": "NSE",     "asset_type": "STOCK"},
+    {"symbol": "INFY.NS",    "exchange": "NSE",     "asset_type": "STOCK"},
+    {"symbol": "HDFCBANK.NS","exchange": "NSE",     "asset_type": "STOCK"},
+    {"symbol": "ICICIBANK.NS","exchange": "NSE",    "asset_type": "STOCK"},
 ]
 
-async def main():
-    db = Prisma()
-    await db.connect()
 
-    print(f"🌱 Starting seed for {len(SYMBOLS)} assets...")
+async def seed(db_url: str):
+    conn = await asyncpg.connect(db_url)
+    print(f"🌱 Seeding {len(SYMBOLS)} assets...\n")
 
     for item in SYMBOLS:
         symbol = item["symbol"]
-        print(f"📦 Fetching metadata for {symbol}...")
-        
         try:
-            ticker = yf.Ticker(symbol)
-            info = ticker.info
-            
-            # yf.info contains 'longName', 'sector', 'industry' etc.
+            # yfinance.Ticker.info gives us official name, sector, etc.
+            info = yf.Ticker(symbol).info
             name = info.get("longName") or info.get("shortName") or symbol
-            
-            await db.asset.upsert(
-                where={
-                    "symbol_exchange": {
-                        "symbol": symbol,
-                        "exchange": item["exchange"]
-                    }
-                },
-                data={
-                    "create": {
-                        "symbol": symbol,
-                        "exchange": item["exchange"],
-                        "name": name,
-                        "assetType": item["type"]
-                    },
-                    "update": {
-                        "name": name
-                    }
-                }
-            )
-            print(f"✅ Seeding successful for {symbol} ({name})")
-            
-        except Exception as e:
-            print(f"❌ Failed to seed {symbol}: {str(e)}")
 
-    await db.disconnect()
-    print("✨ Seeding complete!")
+            # We use an UPSERT: if the (symbol, exchange) pair already exists,
+            # only update the name. This is idempotent — safe to re-run anytime.
+            await conn.execute(
+                """
+                INSERT INTO assets (id, symbol, exchange, name, asset_type, created_at)
+                VALUES (gen_random_uuid(), $1, $2::\"Exchange\", $3, $4::\"AssetType\", now())
+                ON CONFLICT (symbol, exchange) DO UPDATE SET name = EXCLUDED.name
+                """,
+                symbol, item["exchange"], name, item["asset_type"]
+            )
+            print(f"  ✅ {symbol:<20} → {name}")
+
+        except Exception as e:
+            print(f"  ❌ {symbol:<20} → FAILED: {e}")
+
+    await conn.close()
+    print("\n✨ Seeding complete!")
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    url = os.getenv("DIRECT_URL")
+    if not url:
+        raise RuntimeError("DIRECT_URL not found in .env.local — cannot connect to DB")
+    asyncio.run(seed(url))
