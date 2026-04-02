@@ -6,7 +6,7 @@
 
 - gha that periodically checks for update, if yfinance has been updated then repackages and reuploadds the lambda
 - add a backup option if yfa fails, like alpha vantage
-- im thinking yfinance initially + Alpha Vantage as backup, we do 15min with yfinance, automatic retry, if it fails then we put it in a missed queue, and every hour check the queue and process it with Aplha vantage batched requests, so a total of 24 requests in a day even if we do it all with Alpha Vantage + nubra has a third backup option if i think i'll need it, actualy can you look it up more And then i'll observe it with my obesrvation layer if its causing too much trouble and I think this project might need to be upgraded then ill go with upstox, 300 amc is 25 a month, thats not too expensive, and I can even like start doing algorithmic tradign one day
+- im thinking yfinance initially + Alpha Vantage as backup, we do 15min with yfinance, automatic retry, if it fails then we put it in a missed queue implemented as a new table in the db, and every hour check the queue and process it with Aplha vantage batched requests, so a total of 24 requests in a day even if we do it all with Alpha Vantage + nubra has a third backup option if i think i'll need it, and then i'll observe it with my obesrvation layer if its causing too much trouble and I think this project might need to be upgraded then ill go with upstox, 300 amc is 25 a month, thats not too expensive, and I can even like start doing algorithmic tradign one day
 
 ## Todo
 

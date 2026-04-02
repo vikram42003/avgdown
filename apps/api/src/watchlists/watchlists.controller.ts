@@ -3,7 +3,7 @@ import { WatchlistsService } from "./watchlists.service";
 import { WatchlistEntryResponseDto, WatchlistEntryCreateDto, WatchlistEntryUpdateDto } from "./watchlist.dto";
 import { AuthGuard } from "@nestjs/passport";
 
-@UseGuards(AuthGuard("jwt"))
+// @UseGuards(AuthGuard("jwt"))
 @Controller("watchlists")
 export class WatchlistsController {
   constructor(private readonly watchlistsService: WatchlistsService) {}
