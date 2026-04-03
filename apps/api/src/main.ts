@@ -29,6 +29,7 @@ async function bootstrap() {
     }),
   });
 
+  // Decided to expose the Swagger docs endpoint since this is a portfolio project
   const openApiDoc = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
@@ -38,8 +39,8 @@ async function bootstrap() {
       .addBearerAuth()
       .build(),
   );
-
   SwaggerModule.setup("api", app, cleanupOpenApiDoc(openApiDoc));
+
   app.useGlobalPipes(new ZodValidationPipe());
 
   const configService = app.get(ConfigService);
