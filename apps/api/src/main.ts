@@ -1,4 +1,4 @@
-import { cleanupOpenApiDoc, ZodValidationPipe } from "nestjs-zod";
+import { cleanupOpenApiDoc } from "nestjs-zod";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
@@ -40,8 +40,6 @@ async function bootstrap() {
       .build(),
   );
   SwaggerModule.setup("api", app, cleanupOpenApiDoc(openApiDoc));
-
-  app.useGlobalPipes(new ZodValidationPipe());
 
   const configService = app.get(ConfigService);
   await app.listen(configService.getOrThrow<number>("PORT"));

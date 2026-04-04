@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { Observable, tap } from "rxjs";
 import type { Request, Response } from "express";
 import { UAParser } from "ua-parser-js";
+import { redact } from "../../utils/redact";
 
 @Injectable()
 export class LoggerInterceptor implements NestInterceptor {
@@ -17,8 +18,9 @@ export class LoggerInterceptor implements NestInterceptor {
     const http = context.switchToHttp();
     const request = http.getRequest<Request>();
     const { method, url, ip } = request;
+    const sanitizedUrl = redact(url) as string;
 
-    if (url === "/favicon.ico") return next.handle();
+    if (sanitizedUrl.split("?")[0] === "/favicon.ico") return next.handle();
 
     const ua = request.get("user-agent") || "unknown";
     const parser = new UAParser(ua);
@@ -35,11 +37,16 @@ export class LoggerInterceptor implements NestInterceptor {
           const { statusCode } = response;
           const duration = Date.now() - start;
 
-          this.internalLogger.log(`${method} ${url} ${statusCode} - ${duration}ms (${ip} - ${deviceInfo.trim()})`);
+          this.internalLogger.log(
+            `${method} ${sanitizedUrl} ${statusCode} - ${duration}ms (${ip} - ${deviceInfo.trim()})`,
+          );
         },
         error: (err: Error) => {
           const duration = Date.now() - start;
-          this.internalLogger.error(`${method} ${url} - ${duration}ms (${ip} - ${deviceInfo.trim()})`, err.stack);
+          this.internalLogger.error(
+            `${method} ${sanitizedUrl} - ${duration}ms (${ip} - ${deviceInfo.trim()})`,
+            err.stack,
+          );
         },
       }),
     );
