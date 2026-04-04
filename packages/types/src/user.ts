@@ -14,7 +14,7 @@ export const UserSchema = z.object({
 
 // Input: Frontend -> Backend
 
-export const UserRegisterSchema = UserSchema.pick({ email: true, webhookUrl: true }).extend({
+export const UserRegisterSchema = UserSchema.pick({ email: true }).extend({
   password: z.string().min(8).describe("Plain text password"),
 });
 

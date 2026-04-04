@@ -29,8 +29,19 @@ export const WatchlistEntryCreateSchema = WatchlistEntrySchema.omit({
 });
 
 // (Update)Input: Frontend -> Backend (partial)
-
-export const WatchlistEntryUpdateSchema = WatchlistEntryCreateSchema.partial();
+// When you call partial on an object with fields with default values then those fields DO GET FILLED with
+// default values if you dont send those values in the payload, so explicitly define the fields here
+export const WatchlistEntryUpdateSchema = z.object({
+  assetId: z.uuid().optional().describe("ID of the asset being tracked"),
+  smaPeriod: z
+    .number()
+    .int()
+    .min(1)
+    .max(250)
+    .optional()
+    .describe("Number of price snapshots used to calculate the SMA"),
+  isActive: z.boolean().optional().describe("Whether this watchlist entry is actively being monitored"),
+});
 
 // Response: Backend -> Frontend
 

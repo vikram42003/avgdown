@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { User } from "@avgdown/db";
 import { UserResponseSchema } from "@avgdown/types";
 import * as bcrypt from "bcrypt";
@@ -15,7 +15,9 @@ export class UsersService {
   }
 
   async findMe(user: { id: string; email: string }): Promise<UserResponseDto> {
-    return this.prisma.user.findUnique({ where: { id: user.id } }).then((user) => UserResponseSchema.parse(user));
+    const foundUser = await this.prisma.user.findUnique({ where: { id: user.id } });
+    if (!foundUser) throw new NotFoundException("User not found");
+    return UserResponseSchema.parse(foundUser);
   }
 
   async findUserByEmailHelper(email: string): Promise<User | null> {
