@@ -22,6 +22,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@avgdown/db": "workspace:*",
+    "@avgdown/types": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
@@ -42,9 +44,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@avgdown/db": "workspace:*",
     "@avgdown/eslint-config": "workspace:*",
-    "@avgdown/types": "workspace:*",
     "@avgdown/typescript-config": "workspace:*",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
