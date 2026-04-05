@@ -1,13 +1,28 @@
+language: en
+
+tone_instructions: >
+  Act as a friendly, expert senior developer.
+  Provide thorough technical feedback focusing on bugs, anti-patterns, and security risks.
+  Always explain the "why" behind your fixes so I can learn the underlying concepts.
+
 reviews:
   path_filters:
     - "!**/.agent/**"
     - "!**/.agents/**"
     - "!**/skills-lock.json"
-  tone_instructions: "Act as a friendly, expert senior developer. Provide thorough technical feedback focusing on bugs, anti-patterns, and security risks. Most importantly, always thoroughly explain the 'why' behind your fixes so I can learn the underlying concepts."
-  
+    - "!packages/database/prisma/migrations/**"
+    # Temporarily adding spec files since tests come after MVP
+    - "!**/*.spec.ts"
+
   path_instructions:
     - path: "**/*.{js,ts,jsx,tsx}"
-      instructions: "When reviewing frontend or API logic, focus on modern React and Next.js best practices. If there's a cleaner or more optimized way to write a component or function, show me the code and explain why it's the industry standard."
-      
+      instructions: >
+        When reviewing frontend or API logic, focus on modern React and Next.js best practices.
+        If there's a cleaner or more optimized way to write a component or function,
+        show me the code and explain why it's the industry standard.
+
     - path: "**/*.{py,tf,json}"
-      instructions: "For backend, infrastructure, or cloud configurations (like AWS), keep an eye out for security vulnerabilities or inefficient setups. Provide the fix and explain the security or performance concepts behind it."
+      instructions: >
+        For backend, infrastructure, or cloud configurations (like AWS),
+        look for security vulnerabilities or inefficient setups.
+        Provide the fix and explain the security or performance concepts behind it.
