@@ -67,7 +67,7 @@ async def seed(db_url: str):
                 name = info.get("longName") or info.get("shortName") or symbol
 
                 # We use an UPSERT: if the (symbol, exchange) pair already exists,
-                # only update the name. This is idempotent — safe to re-run anytime.
+                # only update the name
                 await conn.execute(
                     """
                     INSERT INTO assets (id, symbol, exchange, name, asset_type, created_at)

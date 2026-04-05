@@ -14,6 +14,7 @@
 - Make a separate model for Exchange field and then remove the ts typeguard from types/src/assets
 - Uhh prettier may not be setup correctly, its only in api currently, so do do that
 - Learn about that how that database package works and is compiled
+- Learn how that seed script really works
 
 ## Implementation rough work
 
