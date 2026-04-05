@@ -40,7 +40,6 @@ class HttpExceptionFilter extends BaseExceptionFilter {
   controllers: [AppController],
   providers: [
     AppService,
-    Logger,
     {
       provide: APP_PIPE,
       useClass: ZodValidationPipe,

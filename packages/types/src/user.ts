@@ -38,8 +38,7 @@ export const UserResponseSchema = UserSchema.omit({ passwordHash: true, googleId
 });
 
 export const AuthResponseSchema = z.object({
-  accessToken: z.string().describe("JWT access token"),
-  user: UserResponseSchema,
+  success: z.boolean().describe("Whether the authentication was successful"),
 });
 
 // Inferred Types

@@ -28,7 +28,7 @@ export const AssetResponseSchema = AssetSchema.extend({
 export const PriceSnapshotSchema = z.object({
   id: z.uuid().describe("The UUID id of the price snapshot"),
   assetId: z.uuid().describe("The assetId that this price belongs to"),
-  price: z.number().describe("The numerical price of the asset at the specific time"),
+  price: z.number().nonnegative().describe("The numerical price of the asset at the specific time"),
   fetchedAt: z.date().describe("The date and time when the price was fetched"),
 });
 

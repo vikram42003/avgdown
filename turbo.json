@@ -10,13 +10,20 @@
     },
     "@avgdown/api#build": {
       "dependsOn": ["^build", "^db:generate"],
-      "env": ["DATABASE_URL", "DIRECT_URL", "JWT_SECRET", "GOOGLE_CLIENT_SECRET", "GOOGLE_CALLBACK_URL"],
+      "env": [
+        "DATABASE_URL",
+        "DIRECT_URL",
+        "JWT_SECRET",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_CALLBACK_URL",
+        "FRONTEND_URL"
+      ],
       "outputs": ["dist/**"]
     },
     "@avgdown/api#dev": {
       "cache": false,
       "persistent": true,
-      "env": ["DATABASE_URL", "DIRECT_URL", "JWT_SECRET", "GOOGLE_CLIENT_SECRET", "GOOGLE_CALLBACK_URL"]
+      "env": ["DATABASE_URL", "DIRECT_URL", "JWT_SECRET", "GOOGLE_CLIENT_SECRET", "GOOGLE_CALLBACK_URL", "FRONTEND_URL"]
     },
     "lint": {
       "dependsOn": ["^lint"]

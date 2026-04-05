@@ -111,5 +111,8 @@ model MissedFetch {
 
   asset Asset @relation(fields: [assetId], references: [id])
 
+  @@index([assetId, resolved])
+  @@index([resolved, createdAt(sort: Desc)])
+
   @@map("missed_fetches")
 }

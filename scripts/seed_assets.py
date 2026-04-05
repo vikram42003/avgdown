@@ -55,7 +55,7 @@ SYMBOLS = [
 
 
 async def seed(db_url: str):
-    conn = await asyncpg.connect(db_url)
+    conn = await asyncpg.connect(db_url, timeout=30)
     print(f"🌱 Seeding {len(SYMBOLS)} assets...\n")
 
     for item in SYMBOLS:

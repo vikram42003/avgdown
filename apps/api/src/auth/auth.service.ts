@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { AuthResponse, UserResponse, UserResponseSchema } from "@avgdown/types";
+import { UserResponse, UserResponseSchema } from "@avgdown/types";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 
@@ -13,13 +13,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(loginDetails: UserLoginDto): Promise<AuthResponse> {
+  async login(loginDetails: UserLoginDto): Promise<string> {
     const user = await this.validateUser(loginDetails);
-    const token = this.generateToken(user);
-    return {
-      accessToken: token,
-      user,
-    };
+    return this.generateToken(user);
   }
 
   private generateToken(user: UserResponse): string {
@@ -43,14 +39,10 @@ export class AuthService {
     return UserResponseSchema.parse(user);
   }
 
-  async googleLoginOrCreateUser({ email, googleId }: { email: string; googleId: string }) {
+  async googleLoginOrCreateUser({ email, googleId }: { email: string; googleId: string }): Promise<string> {
     const user = await this.userService.upsertUser({ email, googleId });
     const userResponse = UserResponseSchema.parse(user);
 
-    const token = this.generateToken(userResponse);
-    return {
-      accessToken: token,
-      user: userResponse,
-    };
+    return this.generateToken(userResponse);
   }
 }
