@@ -25,11 +25,11 @@ export class WatchlistsController {
 
   @Patch(":id")
   update(@Param("id") id: string, @Body() updateDto: WatchlistEntryUpdateDto): Promise<WatchlistEntryResponseDto> {
-    return this.watchlistsService.update(+id, updateDto);
+    return this.watchlistsService.update(id, updateDto);
   }
 
   @Delete(":id")
   remove(@Param("id") id: string): Promise<WatchlistEntryResponseDto> {
-    return this.watchlistsService.remove(+id);
+    return this.watchlistsService.remove(id);
   }
 }

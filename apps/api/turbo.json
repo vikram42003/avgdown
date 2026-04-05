@@ -1,0 +1,30 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build", "^db:generate"],
+      "env": [
+        "DATABASE_URL",
+        "DIRECT_URL",
+        "JWT_SECRET",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_CALLBACK_URL",
+        "FRONTEND_URL"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "env": [
+        "DATABASE_URL",
+        "DIRECT_URL",
+        "JWT_SECRET",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_CALLBACK_URL",
+        "FRONTEND_URL"
+      ]
+    }
+  }
+}

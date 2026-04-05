@@ -58,29 +58,30 @@ async def seed(db_url: str):
     conn = await asyncpg.connect(db_url, timeout=30)
     print(f"🌱 Seeding {len(SYMBOLS)} assets...\n")
 
-    for item in SYMBOLS:
-        symbol = item["symbol"]
-        try:
-            # yfinance.Ticker.info gives us official name, sector, etc.
-            info = yf.Ticker(symbol).info
-            name = info.get("longName") or info.get("shortName") or symbol
+    try:
+        for item in SYMBOLS:
+            symbol = item["symbol"]
+            try:
+                # yfinance.Ticker.info gives us official name, sector, etc.
+                info = yf.Ticker(symbol).info
+                name = info.get("longName") or info.get("shortName") or symbol
 
-            # We use an UPSERT: if the (symbol, exchange) pair already exists,
-            # only update the name. This is idempotent — safe to re-run anytime.
-            await conn.execute(
-                """
-                INSERT INTO assets (id, symbol, exchange, name, asset_type, created_at)
-                VALUES (gen_random_uuid(), $1, $2::\"Exchange\", $3, $4::\"AssetType\", now())
-                ON CONFLICT (symbol, exchange) DO UPDATE SET name = EXCLUDED.name
-                """,
-                symbol, item["exchange"], name, item["asset_type"]
-            )
-            print(f"  ✅ {symbol:<20} → {name}")
+                # We use an UPSERT: if the (symbol, exchange) pair already exists,
+                # only update the name. This is idempotent — safe to re-run anytime.
+                await conn.execute(
+                    """
+                    INSERT INTO assets (id, symbol, exchange, name, asset_type, created_at)
+                    VALUES (gen_random_uuid(), $1, $2::\"Exchange\", $3, $4::\"AssetType\", now())
+                    ON CONFLICT (symbol, exchange) DO UPDATE SET name = EXCLUDED.name
+                    """,
+                    symbol, item["exchange"], name, item["asset_type"]
+                )
+                print(f"  ✅ {symbol:<20} → {name}")
 
-        except Exception as e:
-            print(f"  ❌ {symbol:<20} → FAILED: {e}")
-
-    await conn.close()
+            except Exception as e:
+                print(f"  ❌ {symbol:<20} → FAILED: {e}")
+    finally:
+        await conn.close()
     print("\n✨ Seeding complete!")
 
 

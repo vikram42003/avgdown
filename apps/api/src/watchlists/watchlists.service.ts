@@ -26,11 +26,11 @@ export class WatchlistsService {
     return assertFound(watchlistEntry, `Watchlist entry with ID ${id} not found`);
   }
 
-  async update(id: number, updateDto: WatchlistEntryUpdateDto): Promise<WatchlistEntryResponseDto> {
+  async update(id: string, updateDto: WatchlistEntryUpdateDto): Promise<WatchlistEntryResponseDto> {
     return `This action updates a #${id} watchlist` as any;
   }
 
-  async remove(id: number): Promise<WatchlistEntryResponseDto> {
+  async remove(id: string): Promise<WatchlistEntryResponseDto> {
     return `This action removes a #${id} watchlist` as any;
   }
 }
