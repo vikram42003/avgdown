@@ -6,8 +6,8 @@ import { WatchlistEntryResponseSchema } from "./watchlist.js";
 export const AlertSchema = z.object({
   id: z.uuid().describe("Unique identifier for the alert"),
   watchlistEntryId: z.uuid().describe("The UUID of the watchlist entry that triggered this alert"),
-  triggeredPrice: z.number().describe("The actual price of the asset when the alert triggered"),
-  smaValue: z.number().describe("The Simple Moving Average value at the time the alert triggered"),
+  triggeredPrice: z.coerce.number().describe("The actual price of the asset when the alert triggered"),
+  smaValue: z.coerce.number().describe("The Simple Moving Average value at the time the alert triggered"),
   delivered: z.boolean().default(false).describe("Whether the alert was successfully delivered via email/webhook"),
   deliveredAt: z.date().nullable().describe("The date and time when the alert was delivered"),
   createdAt: z.date().describe("The date and time when the alert was created"),
