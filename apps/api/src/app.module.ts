@@ -11,6 +11,7 @@ import { WatchlistsModule } from "./watchlists/watchlists.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { PrismaModule } from "./common/database/prisma/prisma.module";
+import { AssetsModule } from "./assets/assets.module";
 
 @Catch(HttpException)
 class HttpExceptionFilter extends BaseExceptionFilter {
@@ -36,6 +37,7 @@ class HttpExceptionFilter extends BaseExceptionFilter {
     AuthModule,
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ".env.local" }),
+    AssetsModule,
   ],
   controllers: [AppController],
   providers: [
