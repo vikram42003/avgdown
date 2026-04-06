@@ -37,14 +37,32 @@ export class UsersService {
       updateData.passwordHash = passwordHash;
     }
 
-    return this.prisma.user.upsert({
-      where: { email },
-      update: updateData,
-      create: {
-        email,
-        googleId,
-        passwordHash,
-      },
+    return await this.prisma.$transaction(async (tx) => {
+      let user: null | User = null;
+      if (updateData.googleId) {
+        user = await tx.user.findUnique({ where: { googleId } });
+      }
+
+      user ??= await tx.user.findUnique({ where: { email } });
+
+      if (user) {
+        return tx.user.update({
+          where: { id: user.id },
+          data: {
+            email,
+            googleId: googleId || user.googleId,
+            passwordHash: passwordHash || user.passwordHash,
+          },
+        });
+      }
+
+      return tx.user.create({
+        data: {
+          email,
+          googleId,
+          passwordHash,
+        },
+      });
     });
   }
 }

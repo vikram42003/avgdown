@@ -6,15 +6,16 @@ import { prisma } from "@avgdown/db";
 @Injectable()
 export class AssetsService {
   private readonly logger = new Logger(AssetsService.name);
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<AssetResponseDto[]> {
-    return await this.prismaService.asset.findMany();
+    return await this.prisma.asset.findMany();
   }
 
   async findOne(id: string): Promise<AssetResponseDto> {
-    const asset = await this.prismaService.asset.findUnique({ where: { id } });
+    const asset = await this.prisma.asset.findUnique({ where: { id } });
     if (asset === null) {
+      this.logger.warn(`Lookup failed: Asset with id ${id} not found`);
       throw new NotFoundException(`Asset with id ${id} not found`);
     }
     return asset;
@@ -24,9 +25,14 @@ export class AssetsService {
     return await prisma.$transaction(async (tx) => {
       const asset = await tx.asset.findUnique({ where: { id } });
       if (asset === null) {
+        this.logger.warn(`Lookup failed: Asset with id ${id} not found`);
         throw new NotFoundException(`Asset with id ${id} not found`);
       }
-      return tx.asset.delete({ where: { id } });
+
+      const deletedAsset = await tx.asset.delete({ where: { id } });
+      this.logger.log(`Asset successfully deleted: ${deletedAsset.symbol} (ID: ${id})`);
+
+      return deletedAsset;
     });
   }
 }
