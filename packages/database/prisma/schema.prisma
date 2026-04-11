@@ -30,7 +30,7 @@ enum Exchange {
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
   email        String   @unique
   passwordHash String?  @map("password_hash")
   googleId     String?  @unique @map("google_id")
@@ -44,7 +44,7 @@ model User {
 }
 
 model Asset {
-  id        String    @id @default(uuid())
+  id        String    @id @default(dbgenerated("gen_random_uuid()"))
   symbol    String
   exchange  Exchange
   name      String
@@ -60,7 +60,7 @@ model Asset {
 }
 
 model WatchlistEntry {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   userId    String   @map("user_id")
   assetId   String   @map("asset_id")
   smaPeriod Int      @default(20) @map("sma_period")
@@ -77,7 +77,7 @@ model WatchlistEntry {
 }
 
 model PriceSnapshot {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   assetId   String   @map("asset_id")
   price     Decimal  @db.Decimal(18, 8)
   fetchedAt DateTime @default(now()) @map("fetched_at")
@@ -89,7 +89,7 @@ model PriceSnapshot {
 }
 
 model Alert {
-  id               String    @id @default(uuid())
+  id               String    @id @default(dbgenerated("gen_random_uuid()"))
   watchlistEntryId String    @map("watchlist_entry_id")
   triggeredPrice   Decimal   @map("triggered_price") @db.Decimal(18, 8)
   smaValue         Decimal   @map("sma_value") @db.Decimal(18, 8)
@@ -102,7 +102,7 @@ model Alert {
 }
 
 model MissedFetch {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   assetId   String   @map("asset_id")
   provider  String   @default("yfinance")
   errorMsg  String?  @map("error_msg")
