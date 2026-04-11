@@ -1,3 +1,4 @@
+from decimal import Decimal
 from psycopg.rows import class_row
 import psycopg
 import os
@@ -43,3 +44,29 @@ def get_watchlist_entries() -> list[WatchlistEntryProjection]:
         """
         )
         return cur.fetchall()
+
+
+def add_price_snapshots_bulk(assets_to_update: list[tuple[str, Decimal]]) -> None:
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.executemany(
+            "INSERT INTO price_snapshots (asset_id, price) VALUES (%s, %s)",
+            assets_to_update,
+        )
+    conn.commit()
+
+
+def add_missed_fetch_bulk(missed_fetches: list[tuple[str, str, str]]) -> None:
+    if not missed_fetches:
+        return
+
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.executemany(
+            """
+            INSERT INTO missed_fetches (asset_id, provider, error_msg) 
+            VALUES (%s, %s, %s)
+            """,
+            missed_fetches,
+        )
+    conn.commit()

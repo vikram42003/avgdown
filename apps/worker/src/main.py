@@ -1,7 +1,8 @@
+from db import add_price_snapshots_bulk, add_missed_fetch_bulk, get_watchlist_entries
 from providers.yf import fetch_prices_bulk
 from utils import map_symbol_exchange, filter_inactive_markets
 from collections import defaultdict
-from db import get_watchlist_entries
+
 
 if __name__ == "__main__":
     # Fetch all watchlist entries (With joins on Assets and Users, since they'll be used next)
@@ -32,7 +33,25 @@ if __name__ == "__main__":
     active_symbols = filter_inactive_markets(symbol_exchange_pairs)
 
     # Fetch the newest prices for all the active assets in bulk
-    prices = fetch_prices_bulk(active_symbols)
+    # returns symbol_exchane_pairs to latest price map
+    symbol_exchange_to_price, failed_symbols = fetch_prices_bulk(active_symbols)
+
+    # Bulk update prices in the db
+    price_snapshots_to_insert = []
+    for s, p in symbol_exchange_to_price.items():
+        asset_id = entries_by_asset[s][0].asset_id
+        price_snapshots_to_insert.append((asset_id, p))
+
+    add_price_snapshots_bulk(price_snapshots_to_insert)
+
+    # Bulk update missedFetch for the failed_symbols
+    missed_fetches_to_insert = []
+    for s, error_msg in failed_symbols.items():
+        asset_id = entries_by_asset[s][0].asset_id
+        missed_fetches_to_insert.append((asset_id, "yfinance", error_msg))
+
+    if missed_fetches_to_insert:
+        add_missed_fetch_bulk(missed_fetches_to_insert)
 
     # Fetch the latest price of the assets and store it in the db
     # The fetch with yfinance function will automatically create a mised fetch entry if it fails
