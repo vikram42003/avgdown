@@ -42,6 +42,9 @@
 
 ## Special Notes for final documentation
 
+### Zero-Config Environment Files
+Every application in the monorepo (`apps/api`, `apps/web`, `apps/worker`) requires its own `.env` or `.env.local` file for local development. We do not use a single shared root `.env` because Vercel and AWS Lambda expect environment variables to be scoped to their specific deployments in production.
+
 ### 1. Data Fan-Out Architecture (The "Asset-First" Approach)
 
 The system is built on an **Asset-First** architectural pattern.
@@ -71,4 +74,23 @@ The system maps domain driven design strictly into Postgres models. Each model s
 
 ## Post-MVP Improvements
 
-1. **OAuth Error Redirects**: Currently, OAuth exceptions (e.g., Google rejecting the login or a database upsert failure during callback) return raw JSON errors to the browser (e.g., HTTP 401 or 500). Post-MVP, `googleOAuthCallback` should wrap its logic in a `try/catch` and gracefully redirect back to the frontend with an error parameter (e.g., `res.redirect(\`${redirectURL}?error=AuthFailed\`)`). This ensures the React application can parse the URL and display a localized toast notification rather than crashing the user out to a raw JSON screen.
+1. **Time-Weighted SMA (snapshot gap drift)**:
+   The current SMA implementation is **snapshot-counted, not time-weighted**. The query is:
+   ```sql
+   SELECT price FROM price_snapshots
+   WHERE asset_id = $1
+   ORDER BY fetched_at DESC
+   LIMIT $2  -- sma_period
+   ```
+   This means `sma_period = 20` always means "average the last 20 prices we have stored", regardless of the real-time gaps between those snapshots.
+
+   **The drift:** When yfinance fails and Alpha Vantage backfills with one hourly snapshot instead of four 15-minute ones, the effective SMA window silently expands in clock-time (e.g., a "20-period SMA" might now cover 5h45min instead of 5h). The SMA also becomes slightly less sensitive to price moves that happened during the outage window since fewer data points represent that period.
+
+   **Why this is acceptable for now:** For a DCA alerter operating on trend timescales (days/weeks), a fraction of a percent drift in SMA value from a 45-minute gap won't produce false triggers or miss real ones. The signal is directionally correct.
+
+   **Future fix (if moving to a reliable API with no gaps):** Replace with a true time-weighted average:
+   - Weight each snapshot by the duration it "represents" (i.e., time until the next snapshot).
+   - Or use a fixed time window (`WHERE fetched_at > NOW() - INTERVAL '5 hours'`) instead of `LIMIT N`.
+   - Or switch to EMA (`alpha * price_new + (1 - alpha) * ema_prev`) which is inherently gap-tolerant and only needs the previous EMA value.
+
+2. **OAuth Error Redirects**: Currently, OAuth exceptions (e.g., Google rejecting the login or a database upsert failure during callback) return raw JSON errors to the browser (e.g., HTTP 401 or 500). Post-MVP, `googleOAuthCallback` should wrap its logic in a `try/catch` and gracefully redirect back to the frontend with an error parameter (e.g., `res.redirect(\`${redirectURL}?error=AuthFailed\`)`). This ensures the React application can parse the URL and display a localized toast notification rather than crashing the user out to a raw JSON screen.
