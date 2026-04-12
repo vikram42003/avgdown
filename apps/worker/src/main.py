@@ -1,3 +1,4 @@
+from db import get_price_snapshots_bulk
 from datetime import datetime, timezone
 from db import add_price_snapshots_bulk, add_missed_fetch_bulk, get_watchlist_entries
 from providers.yf import fetch_prices_bulk
@@ -89,7 +90,7 @@ if __name__ == "__main__":
         asset_id_to_highest_sma[asset_id] = max(entry.sma_period for entry in entries)
 
     # Get price snapshots for the assets in bulk
-    get_price_snapshots_bulk(asset_id_to_highest_sma.keys())
+    get_price_snapshots_bulk(asset_id_to_highest_sma)
 
 
 """
