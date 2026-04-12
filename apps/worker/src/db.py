@@ -1,3 +1,4 @@
+from models import PriceSnapshot
 from decimal import Decimal
 from psycopg.rows import class_row
 import psycopg
@@ -70,3 +71,8 @@ def add_missed_fetch_bulk(missed_fetches: list[tuple[str, str, str]]) -> None:
             missed_fetches,
         )
     conn.commit()
+
+def get_price_snapshots_bulk(asset_id_to_highest_sma: dict[str, int]) -> dict[str, list[Decimal]]:
+    conn = get_db()
+    with conn.cursor(row_factory=class_row(PriceSnapshot)) as cur:
+        cur.execute
