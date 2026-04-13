@@ -136,3 +136,20 @@ def get_price_snapshots_bulk(
             grouped_prices[snapshot.asset_id].append(snapshot.price)
 
         return grouped_prices
+
+
+def get_recently_alerted_entries(entry_ids: list[str]) -> set[str]:
+    """Returns a set of watchlist_entry_ids that had an alert sent in the last 24 hours"""
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT DISTINCT watchlist_entry_id 
+            FROM alerts 
+            WHERE watchlist_entry_id = ANY(%s)
+            AND created_at > NOW() - INTERVAL '24 hours'
+            """,
+            (entry_ids,),
+        )
+
+        return {row[0] for row in cur.fetchall()}

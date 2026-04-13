@@ -115,8 +115,27 @@ if __name__ == "__main__":
     # Get price snapshots for the assets in bulk
     price_snapshots_by_asset_id = get_price_snapshots_bulk(highest_sma_by_asset_id)
 
-    # Calculate smas
-    process_sma(entries_by_symbol, price_snapshots_by_asset_id)
+    # Calculate smas to see what wants to fire
+    alerts_by_user = process_sma(entries_by_symbol, price_snapshots_by_asset_id)
+
+    # Filter out alerts that were sent out in the last 24 hours
+    pending_entry_ids = []
+    for user_alerts in alerts_by_user.values():
+        pending_entry_ids.extend(user_alerts.keys())
+
+    if pending_entry_ids:
+        # Ask DB which ones fired in the last 24 hours
+        recently_alerted_ids = get_recently_alerted_entries(pending_entry_ids)
+        
+        # Prune them from our dictionary so we don't send them
+        for user_id in list(alerts_by_user.keys()):
+            for entry_id in recently_alerted_ids:
+                if entry_id in alerts_by_user[user_id]:
+                    del alerts_by_user[user_id][entry_id]
+            
+            # Clean up empty user dicts
+            if not alerts_by_user[user_id]:
+                del alerts_by_user[user_id]
 
     # Send alerts for smas that cross the threshold
 
