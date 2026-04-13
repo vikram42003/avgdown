@@ -72,7 +72,7 @@ def add_missed_fetch_bulk(missed_fetches: list[tuple[str, str, str]]) -> None:
 
 
 def get_price_snapshots_bulk(
-    asset_id_to_highest_sma: dict[str, int],
+    highest_sma_by_asset_id: dict[str, int],
 ) -> dict[str, list[Decimal]]:
     """
     Fetches the N most recent price snapshots per asset in a single DB query,
@@ -81,17 +81,17 @@ def get_price_snapshots_bulk(
     Returns a dict mapping asset_id -> list of prices (newest first),
     ready to calculate the SMA by averaging the list.
     """
-    if not asset_id_to_highest_sma:
+    if not highest_sma_by_asset_id:
         return {}
 
     conn = get_db()
     with conn.cursor(row_factory=class_row(PriceSnapshot)) as cur:
         # Build the string for the VALUES list
-        values_placeholder = ",".join(["(%s, %s)"] * len(asset_id_to_highest_sma))
+        values_placeholder = ",".join(["(%s, %s)"] * len(highest_sma_by_asset_id))
 
         # Flatten the dict into a list of tuples
         flat_params = []
-        for asset_id, sma_period in asset_id_to_highest_sma.items():
+        for asset_id, sma_period in highest_sma_by_asset_id.items():
             flat_params.extend([asset_id, sma_period])
 
         # How this query works:

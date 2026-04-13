@@ -1,12 +1,17 @@
+from decimal import Decimal
+from models import WatchlistEntryProjection
 from db import get_price_snapshots_bulk
 from datetime import datetime, timezone
 from db import add_price_snapshots_bulk, add_missed_fetch_bulk, get_watchlist_entries
 from providers.yf import fetch_prices_bulk
 from utils import map_symbol_exchange, filter_inactive_markets
 from collections import defaultdict
+from logic.sma import sma_val_below_average
 
 
-def process_watchlist_entries(watchlist_entries):
+def process_watchlist_entries(
+    watchlist_entries: list[WatchlistEntryProjection],
+) -> tuple[dict[str, list[WatchlistEntryProjection]], list[str]]:
     """Groups watchlist entries by asset and filters for active markets"""
 
     # Group entries by asset, building (ticker, exchange) pairs for the market filter
@@ -33,7 +38,8 @@ def process_watchlist_entries(watchlist_entries):
     # Filter out assets whose markets are closed right now
     active_symbols = filter_inactive_markets(symbol_exchange_pairs)
 
-    return entries_by_asset, active_symbols
+    # change entries_by_asset from defaultdict to dict
+    return dict(entries_by_asset), active_symbols
 
 
 def process_alpha_vantage_backfill():
@@ -52,21 +58,38 @@ def process_alpha_vantage_backfill():
         # 4. Save successful prices AND mark them as resolved in missed_fetches
 
 
+def process_sma(
+    entries_by_symbol: dict[str, list[WatchlistEntryProjection]],
+    price_snapshots_by_asset_id: dict[str, list[Decimal]],
+) -> dict[str, dict[str, dict]]:
+    """process the sma based on the strategy chosen by the user"""
+    # Controls how much "below" the price must be below the average for an alert to be triggered
+    SMA_VAL_BELOW_AVERAGE_DEVIATION_THRESHOLD = 0.02
+
+    alerts_by_user: dict[str, dict[str, dict]] = defaultdict(dict)
+    
+    sma_val_below_average(
+        entries_by_symbol, price_snapshots_by_asset_id, alerts_by_user, SMA_VAL_BELOW_AVERAGE_DEVIATION_THRESHOLD
+    )
+
+    return dict(alerts_by_user)
+
+
 if __name__ == "__main__":
     # Fetch all watchlist entries (With joins on Assets and Users, since they'll be used next)
     watchlist_entries = get_watchlist_entries()
 
-    # Group entries by asset and filter for active markets
-    entries_by_asset, active_symbols = process_watchlist_entries(watchlist_entries)
+    # Group entries by symbol and filter out symbols whose markets are inactive
+    # symbols get mapped to exchange at this point.Eg. Symbol - RELIANCE and Exchange - NSE -> RELIANCE.NS
+    entries_by_symbol, active_symbols = process_watchlist_entries(watchlist_entries)
 
     # Fetch the newest prices for all the active assets in bulk
-    # returns symbol_exchane_pairs to latest price map
-    symbol_exchange_to_price, failed_symbols = fetch_prices_bulk(active_symbols)
+    prices_by_symbol, failed_symbols = fetch_prices_bulk(active_symbols)
 
     # Bulk update prices in the db
     price_snapshots_to_insert = []
-    for s, p in symbol_exchange_to_price.items():
-        asset_id = entries_by_asset[s][0].asset_id
+    for s, p in prices_by_symbol.items():
+        asset_id = entries_by_symbol[s][0].asset_id
         price_snapshots_to_insert.append((asset_id, p))
 
     add_price_snapshots_bulk(price_snapshots_to_insert)
@@ -74,7 +97,7 @@ if __name__ == "__main__":
     # Bulk update missedFetch for the failed_symbols
     missed_fetches_to_insert = []
     for s, error_msg in failed_symbols.items():
-        asset_id = entries_by_asset[s][0].asset_id
+        asset_id = entries_by_symbol[s][0].asset_id
         missed_fetches_to_insert.append((asset_id, "yfinance", error_msg))
 
     if missed_fetches_to_insert:
@@ -84,13 +107,20 @@ if __name__ == "__main__":
     process_alpha_vantage_backfill()
 
     # For each asset, get the max sma period asked by a user, with that we can calculate sma for that asset for any user whose sma <= max
-    asset_id_to_highest_sma = {}
-    for entries in entries_by_asset.values():
+    highest_sma_by_asset_id = {}
+    for entries in entries_by_symbol.values():
         asset_id = entries[0].asset_id
-        asset_id_to_highest_sma[asset_id] = max(entry.sma_period for entry in entries)
+        highest_sma_by_asset_id[asset_id] = max(entry.sma_period for entry in entries)
 
     # Get price snapshots for the assets in bulk
-    get_price_snapshots_bulk(asset_id_to_highest_sma)
+    price_snapshots_by_asset_id = get_price_snapshots_bulk(highest_sma_by_asset_id)
+
+    # Calculate smas
+    process_sma(entries_by_symbol, price_snapshots_by_asset_id)
+
+    # Send alerts for smas that cross the threshold
+
+    # bulk add alerts to db
 
 
 """

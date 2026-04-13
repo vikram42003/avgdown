@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 
 # Trading hours in UTC for each exchange
 # These are approximate — does not account for early closes or regional holidays
@@ -54,3 +55,10 @@ def map_symbol_exchange(symbol: str, exchange: str) -> str:
         return symbol
     else:
         raise ValueError(f"Unsupported exchange: {exchange}")
+
+def generate_sma_drop_message(symbol: str, current_price: Decimal, sma_value: Decimal, period: int) -> str:
+    """Single source of truth for SMA alert messages"""
+    return (
+        f"The current value for {symbol} is trading below the average SMA value.\\n"
+        f"Current value: {current_price:.2f} | Average SMA for {period} period: {sma_value:.2f}"
+    )

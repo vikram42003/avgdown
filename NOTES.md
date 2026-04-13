@@ -135,3 +135,8 @@ An alternative approach is using `ROW_NUMBER() OVER (PARTITION BY asset_id ORDER
    - Or switch to EMA (`alpha * price_new + (1 - alpha) * ema_prev`) which is inherently gap-tolerant and only needs the previous EMA value.
 
 2. **OAuth Error Redirects**: Currently, OAuth exceptions (e.g., Google rejecting the login or a database upsert failure during callback) return raw JSON errors to the browser (e.g., HTTP 401 or 500). Post-MVP, `googleOAuthCallback` should wrap its logic in a `try/catch` and gracefully redirect back to the frontend with an error parameter (e.g., `res.redirect(\`${redirectURL}?error=AuthFailed\`)`). This ensures the React application can parse the URL and display a localized toast notification rather than crashing the user out to a raw JSON screen.
+
+3. **Advanced Alert Triggers (Post-MVP)**: 
+   The MVP implements a simple static buffer (e.g., `Price < SMA * 0.98`) to detect crashes/dip buying opportunities. For future iterations:
+   - **Math-Derived Thresholds (Standard Deviation)**: Instead of a static percentage like 2%, compute the Standard Deviation (σ) of the price history. Alert when the price drops below the Lower Bollinger Band (`SMA - 2σ`). This dynamically scales the threshold based on the asset's inherent volatility (e.g., S&P500 requires a smaller drop to trigger than a crypto coin).
+   - **User-Defined Strategies**: Add columns to `WatchlistEntry` like `alertStrategy` (enum: `PERCENTAGE_DROP`, `BOLLINGER_BAND`) and `thresholdValue` to let power users configure their own deviation tolerances, moving the control entirely into the user's hands.

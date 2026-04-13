@@ -19,21 +19,23 @@ def fetch_prices_bulk(
             progress=False,
         )
 
-        symbol_exchange_to_price = {}
+        prices_by_symbol = {}
         failed_symbols = {}
         # The returned data is a pandas dataframe !!!!
-        for ticker in symbols:
+        for symbol in symbols:
             try:
-                price = data[ticker]["Close"].iloc[-1]
+                price = data[symbol]["Close"].iloc[-1]
                 if math.isnan(price):
-                    failed_symbols[ticker] = "yfinance returned NaN for this timeframe"
+                    failed_symbols[symbol] = "yfinance returned NaN for this timeframe"
                 else:
-                    symbol_exchange_to_price[ticker] = float(price)
+                    prices_by_symbol[symbol] = float(price)
             except KeyError:
-                failed_symbols[ticker] = "Ticker completely missing from yfinance response"
+                failed_symbols[symbol] = (
+                    "Ticker completely missing from yfinance response"
+                )
             except IndexError:
-                failed_symbols[ticker] = "Empty price series returned by yfinance"
-        return (symbol_exchange_to_price, failed_symbols)
+                failed_symbols[symbol] = "Empty price series returned by yfinance"
+        return (prices_by_symbol, failed_symbols)
 
     except Exception as e:
         # Handles complete request failure or other uncaught errors
