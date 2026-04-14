@@ -1,3 +1,4 @@
+from db import add_alerts_bulk
 from decimal import Decimal
 from datetime import datetime, timezone
 from models import WatchlistEntryProjection, TriggeredAlert
@@ -140,8 +141,11 @@ if __name__ == "__main__":
     # Send alerts for smas that cross the threshold
 
     # bulk add alerts to db
-    
-
+    flat_alerts_to_insert = []
+    for user_alerts in alerts_by_user.values():
+        flat_alerts_to_insert.extend(user_alerts.values())
+        
+    add_alerts_bulk(flat_alerts_to_insert)
 """
 Well, imagine we do have a watchlist in our db, now what the worker must do is
 fetch all the watchlist entries that are active first and like track all the assets we have to fetch right now
