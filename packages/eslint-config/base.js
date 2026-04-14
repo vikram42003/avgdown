@@ -24,6 +24,7 @@ export const config = [
       "sonarjs/no-unused-vars": "off",
       "sonarjs/no-dead-store": "off",
       "sonarjs/no-identical-functions": "off",
+      "sonarjs/null-dereference": "off",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {

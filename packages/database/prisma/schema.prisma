@@ -30,7 +30,7 @@ enum Exchange {
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
   email        String   @unique
   passwordHash String?  @map("password_hash")
   googleId     String?  @unique @map("google_id")
@@ -44,7 +44,7 @@ model User {
 }
 
 model Asset {
-  id        String    @id @default(uuid())
+  id        String    @id @default(dbgenerated("gen_random_uuid()"))
   symbol    String
   exchange  Exchange
   name      String
@@ -60,7 +60,7 @@ model Asset {
 }
 
 model WatchlistEntry {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   userId    String   @map("user_id")
   assetId   String   @map("asset_id")
   smaPeriod Int      @default(20) @map("sma_period")
@@ -69,7 +69,7 @@ model WatchlistEntry {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asset  Asset   @relation(fields: [assetId], references: [id])
+  asset  Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
   alerts Alert[]
 
   @@unique([userId, assetId])
@@ -77,39 +77,39 @@ model WatchlistEntry {
 }
 
 model PriceSnapshot {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   assetId   String   @map("asset_id")
   price     Decimal  @db.Decimal(18, 8)
   fetchedAt DateTime @default(now()) @map("fetched_at")
 
-  asset Asset @relation(fields: [assetId], references: [id])
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId, fetchedAt(sort: Desc)])
   @@map("price_snapshots")
 }
 
 model Alert {
-  id               String    @id @default(uuid())
+  id               String    @id @default(dbgenerated("gen_random_uuid()"))
   watchlistEntryId String    @map("watchlist_entry_id")
   triggeredPrice   Decimal   @map("triggered_price") @db.Decimal(18, 8)
   smaValue         Decimal   @map("sma_value") @db.Decimal(18, 8)
   delivered        Boolean   @default(false)
   deliveredAt      DateTime? @map("delivered_at")
   createdAt        DateTime  @default(now()) @map("created_at")
-  watchlistEntry WatchlistEntry @relation(fields: [watchlistEntryId], references: [id])
+  watchlistEntry WatchlistEntry @relation(fields: [watchlistEntryId], references: [id], onDelete: Cascade)
 
   @@map("alerts")
 }
 
 model MissedFetch {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   assetId   String   @map("asset_id")
   provider  String   @default("yfinance")
   errorMsg  String?  @map("error_msg")
   resolved  Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 
-  asset Asset @relation(fields: [assetId], references: [id])
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId, resolved])
   @@index([resolved, createdAt(sort: Desc)])

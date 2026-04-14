@@ -1,13 +1,15 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { User } from "@avgdown/db";
 import { UserResponseSchema } from "@avgdown/types";
 import * as bcrypt from "bcrypt";
 
 import { UserResponseDto } from "./users.dto";
 import { PrismaService } from "../common/database/prisma/prisma.service";
+import { truncateId, redactEmail } from "../common/utils/redact";
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<UserResponseDto[]> {
@@ -16,12 +18,11 @@ export class UsersService {
 
   async findMe(user: { id: string; email: string }): Promise<UserResponseDto> {
     const foundUser = await this.prisma.user.findUnique({ where: { id: user.id } });
-    if (!foundUser) throw new NotFoundException("User not found");
+    if (!foundUser) {
+      this.logger.warn(`Lookup failed: User with id ${truncateId(user.id)} not found`);
+      throw new NotFoundException("User not found");
+    }
     return UserResponseSchema.parse(foundUser);
-  }
-
-  async findUserByEmailHelper(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { email } });
   }
 
   async upsertUser(data: { email: string; password?: string; googleId?: string }) {
@@ -37,14 +38,47 @@ export class UsersService {
       updateData.passwordHash = passwordHash;
     }
 
-    return this.prisma.user.upsert({
-      where: { email },
-      update: updateData,
-      create: {
-        email,
-        googleId,
-        passwordHash,
-      },
+    return await this.prisma.$transaction(async (tx) => {
+      let user: null | User = null;
+      if (updateData.googleId) {
+        user = await tx.user.findUnique({ where: { googleId } });
+      }
+
+      user ??= await tx.user.findUnique({ where: { email } });
+
+      if (user) {
+        if (user.email !== email) {
+          this.logger.log(
+            `Google email drift detected: Updating email for user ${truncateId(user.id)} from ${redactEmail(user.email)} to ${redactEmail(email)}`,
+          );
+        }
+
+        if (!user.googleId && googleId) {
+          this.logger.log(`OAuth Link: Linking Google account to existing email-based user ${truncateId(user.id)}`);
+        }
+
+        return tx.user.update({
+          where: { id: user.id },
+          data: {
+            email,
+            googleId: googleId || user.googleId,
+            passwordHash: passwordHash || user.passwordHash,
+          },
+        });
+      }
+
+      this.logger.log(`New user registered: ${redactEmail(email)} ${googleId ? "(via Google)" : "(via Credentials)"}`);
+      return tx.user.create({
+        data: {
+          email,
+          googleId,
+          passwordHash,
+        },
+      });
     });
+  }
+
+  async findUserByEmailHelper(email: string): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: { email } });
   }
 }
