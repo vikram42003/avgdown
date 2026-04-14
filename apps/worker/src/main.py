@@ -1,11 +1,11 @@
 from decimal import Decimal
-from models import WatchlistEntryProjection
-from db import get_price_snapshots_bulk
 from datetime import datetime, timezone
-from db import add_price_snapshots_bulk, add_missed_fetch_bulk, get_watchlist_entries
+from models import WatchlistEntryProjection, TriggeredAlert
+from collections import defaultdict
+
+from db import get_price_snapshots_bulk, get_recently_alerted_entries, add_price_snapshots_bulk, add_missed_fetch_bulk, get_watchlist_entries
 from providers.yf import fetch_prices_bulk
 from utils import map_symbol_exchange, filter_inactive_markets
-from collections import defaultdict
 from logic.sma import sma_val_below_average
 
 
@@ -61,12 +61,12 @@ def process_alpha_vantage_backfill():
 def process_sma(
     entries_by_symbol: dict[str, list[WatchlistEntryProjection]],
     price_snapshots_by_asset_id: dict[str, list[Decimal]],
-) -> dict[str, dict[str, dict]]:
+) -> dict[str, dict[str, TriggeredAlert]]:
     """process the sma based on the strategy chosen by the user"""
     # Controls how much "below" the price must be below the average for an alert to be triggered
     SMA_VAL_BELOW_AVERAGE_DEVIATION_THRESHOLD = 0.02
 
-    alerts_by_user: dict[str, dict[str, dict]] = defaultdict(dict)
+    alerts_by_user: dict[str, dict[str, TriggeredAlert]] = defaultdict(dict)
     
     sma_val_below_average(
         entries_by_symbol, price_snapshots_by_asset_id, alerts_by_user, SMA_VAL_BELOW_AVERAGE_DEVIATION_THRESHOLD
@@ -127,7 +127,7 @@ if __name__ == "__main__":
         # Ask DB which ones fired in the last 24 hours
         recently_alerted_ids = get_recently_alerted_entries(pending_entry_ids)
         
-        # Prune them from our dictionary so we don't send them
+        # Prune them from our dictionary so we don't send them again
         for user_id in list(alerts_by_user.keys()):
             for entry_id in recently_alerted_ids:
                 if entry_id in alerts_by_user[user_id]:
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     # Send alerts for smas that cross the threshold
 
     # bulk add alerts to db
-
+    
 
 """
 Well, imagine we do have a watchlist in our db, now what the worker must do is

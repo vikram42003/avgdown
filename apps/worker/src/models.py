@@ -3,12 +3,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from datetime import datetime
 
+
 @dataclass
 class User:
     id: str
     email: str
     webhook_url: Optional[str]
-    
+
 
 @dataclass
 class Asset:
@@ -31,6 +32,7 @@ class WatchlistEntry:
     created_at: datetime
     updated_at: datetime
 
+
 @dataclass
 class WatchlistEntryProjection:
     id: str
@@ -43,6 +45,7 @@ class WatchlistEntryProjection:
     asset_id: str
     asset_symbol: str
     asset_exchange: str
+
 
 @dataclass
 class PriceSnapshot:
@@ -61,6 +64,17 @@ class Alert:
     delivered: bool
     delivered_at: Optional[datetime]
     created_at: datetime
+
+
+@dataclass
+class TriggeredAlert:
+    message: str
+    watchlist_entry_id: str
+    triggered_price: Decimal
+    delivered: bool
+    sma_value: Decimal
+    user_email: str
+    webhook_url: Optional[str]
 
 
 @dataclass

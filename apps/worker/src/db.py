@@ -1,4 +1,4 @@
-from models import PriceSnapshot, WatchlistEntryProjection
+from models import PriceSnapshot, WatchlistEntryProjection, TriggeredAlert
 from decimal import Decimal
 from psycopg.rows import class_row
 import psycopg
@@ -46,12 +46,16 @@ def get_watchlist_entries() -> list[WatchlistEntryProjection]:
 
 
 def add_price_snapshots_bulk(assets_to_update: list[tuple[str, Decimal]]) -> None:
+    if not assets_to_update:
+        return
+
     conn = get_db()
+
     with conn.cursor() as cur:
-        cur.executemany(
-            "INSERT INTO price_snapshots (asset_id, price) VALUES (%s, %s)",
-            assets_to_update,
-        )
+        with cur.copy("COPY price_snapshots (asset_id, price) FROM STDIN") as copy:
+            for asset_id, price in assets_to_update:
+                copy.write_row((asset_id, price))
+
     conn.commit()
 
 
@@ -60,14 +64,14 @@ def add_missed_fetch_bulk(missed_fetches: list[tuple[str, str, str]]) -> None:
         return
 
     conn = get_db()
+
     with conn.cursor() as cur:
-        cur.executemany(
-            """
-            INSERT INTO missed_fetches (asset_id, provider, error_msg) 
-            VALUES (%s, %s, %s)
-            """,
-            missed_fetches,
-        )
+        with cur.copy(
+            "COPY missed_fetches (asset_id, provider, error_msg) FROM STDIN"
+        ) as copy:
+            for asset_id, provider, error_msg in missed_fetches:
+                copy.write_row((asset_id, provider, error_msg))
+
     conn.commit()
 
 
@@ -153,3 +157,26 @@ def get_recently_alerted_entries(entry_ids: list[str]) -> set[str]:
         )
 
         return {row[0] for row in cur.fetchall()}
+
+
+def add_alerts_bulk(alerts_to_add: list[TriggeredAlert]) -> None:
+    if not alerts_to_add:
+        return
+
+    conn = get_db()
+
+    with conn.cursor() as cur:
+        with cur.copy(
+            "COPY alerts (watchlist_entry_id, triggered_price, sma_value, delivered) FROM STDIN"
+        ) as copy:
+            for alert in alerts_to_add:
+                copy.write_row(
+                    (
+                        alert.watchlist_entry_id,
+                        alert.triggered_price,
+                        alert.sma_value,
+                        alert.delivered,
+                    )
+                )
+
+    conn.commit()

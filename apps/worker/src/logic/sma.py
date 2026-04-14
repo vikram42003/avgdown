@@ -1,13 +1,13 @@
 from decimal import Decimal
-from models import WatchlistEntryProjection
+from models import WatchlistEntryProjection, TriggeredAlert
 from utils import generate_sma_drop_message
 
 
 def sma_val_below_average(
     entries_by_symbol: dict[str, list[WatchlistEntryProjection]],
     price_snapshots_by_asset_id: dict[str, list[Decimal]],
-    alerts_by_user: dict[str, dict[str, dict]],
-    deviation_threshold: float
+    alerts_by_user: dict[str, dict[str, TriggeredAlert]],
+    deviation_threshold: float,
 ) -> None:
     """Calculates the SMA for each watchlist entry and add to alerts_by_user if the price is below the SMA"""
 
@@ -16,29 +16,31 @@ def sma_val_below_average(
         for entry in entries:
             snapshots = price_snapshots_by_asset_id.get(entry.asset_id, [])
             # Only use up to sma_period snapshots
-            snapshots = snapshots[:entry.sma_period]
-            
+            snapshots = snapshots[: entry.sma_period]
+
             if not snapshots:
                 continue
 
             # Need both as Decimals for precision
             sma_value = sum(snapshots) / entry.sma_period
             cur_latest_price = snapshots[0]
-            
+
             threshold_multiplier = Decimal(str(1 - deviation_threshold))
-            
+
             if cur_latest_price < (sma_value * threshold_multiplier):
                 message = generate_sma_drop_message(
-                    symbol=entry.asset_symbol, 
-                    current_price=cur_latest_price, 
-                    sma_value=sma_value, 
-                    period=entry.sma_period
+                    symbol=entry.asset_symbol,
+                    current_price=cur_latest_price,
+                    sma_value=sma_value,
+                    period=entry.sma_period,
                 )
-                
-                alerts_by_user[entry.user_id][entry.id] = {
-                    "message": message,
-                    "triggered_price": cur_latest_price,
-                    "sma_value": sma_value,
-                    "user_email": entry.user_email,
-                    "webhook_url": entry.user_webhook_url
-                }
+
+                alerts_by_user[entry.user_id][entry.id] = TriggeredAlert(
+                    message=message,
+                    watchlist_entry_id=entry.id,
+                    triggered_price=cur_latest_price,
+                    delivered=False,
+                    sma_value=sma_value,
+                    user_email=entry.user_email,
+                    webhook_url=entry.user_webhook_url,
+                )
