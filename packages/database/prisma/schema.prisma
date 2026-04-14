@@ -69,7 +69,7 @@ model WatchlistEntry {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asset  Asset   @relation(fields: [assetId], references: [id])
+  asset  Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
   alerts Alert[]
 
   @@unique([userId, assetId])
@@ -82,7 +82,7 @@ model PriceSnapshot {
   price     Decimal  @db.Decimal(18, 8)
   fetchedAt DateTime @default(now()) @map("fetched_at")
 
-  asset Asset @relation(fields: [assetId], references: [id])
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId, fetchedAt(sort: Desc)])
   @@map("price_snapshots")
@@ -96,7 +96,7 @@ model Alert {
   delivered        Boolean   @default(false)
   deliveredAt      DateTime? @map("delivered_at")
   createdAt        DateTime  @default(now()) @map("created_at")
-  watchlistEntry WatchlistEntry @relation(fields: [watchlistEntryId], references: [id])
+  watchlistEntry WatchlistEntry @relation(fields: [watchlistEntryId], references: [id], onDelete: Cascade)
 
   @@map("alerts")
 }
@@ -109,7 +109,7 @@ model MissedFetch {
   resolved  Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 
-  asset Asset @relation(fields: [assetId], references: [id])
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId, resolved])
   @@index([resolved, createdAt(sort: Desc)])
