@@ -22,7 +22,7 @@ def sma_val_below_average(
                 continue
 
             # Need both as Decimals for precision
-            sma_value = sum(snapshots) / entry.sma_period
+            sma_value = sum(snapshots) / len(snapshots)
             cur_latest_price = snapshots[0]
 
             threshold_multiplier = Decimal(str(1 - deviation_threshold))

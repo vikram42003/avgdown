@@ -91,7 +91,7 @@ if __name__ == "__main__":
     price_snapshots_to_insert = []
     for s, p in prices_by_symbol.items():
         asset_id = entries_by_symbol[s][0].asset_id
-        price_snapshots_to_insert.append((asset_id, p))
+        price_snapshots_to_insert.append((asset_id, Decimal(str(p))))
 
     add_price_snapshots_bulk(price_snapshots_to_insert)
 

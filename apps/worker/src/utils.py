@@ -59,6 +59,6 @@ def map_symbol_exchange(symbol: str, exchange: str) -> str:
 def generate_sma_drop_message(symbol: str, current_price: Decimal, sma_value: Decimal, period: int) -> str:
     """Single source of truth for SMA alert messages"""
     return (
-        f"The current value for {symbol} is trading below the average SMA value.\\n"
+        f"The current value for {symbol} is trading below the average SMA value.\n"
         f"Current value: {current_price:.2f} | Average SMA for {period} period: {sma_value:.2f}"
     )
