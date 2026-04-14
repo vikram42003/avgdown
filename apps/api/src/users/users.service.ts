@@ -5,6 +5,7 @@ import * as bcrypt from "bcrypt";
 
 import { UserResponseDto } from "./users.dto";
 import { PrismaService } from "../common/database/prisma/prisma.service";
+import { truncateId, redactEmail } from "../common/utils/redact";
 
 @Injectable()
 export class UsersService {
@@ -18,7 +19,7 @@ export class UsersService {
   async findMe(user: { id: string; email: string }): Promise<UserResponseDto> {
     const foundUser = await this.prisma.user.findUnique({ where: { id: user.id } });
     if (!foundUser) {
-      this.logger.warn(`Lookup failed: User with id ${user.id} not found`);
+      this.logger.warn(`Lookup failed: User with id ${truncateId(user.id)} not found`);
       throw new NotFoundException("User not found");
     }
     return UserResponseSchema.parse(foundUser);
@@ -48,12 +49,12 @@ export class UsersService {
       if (user) {
         if (user.email !== email) {
           this.logger.log(
-            `Google email drift detected: Updating email for user ${user.id} from ${user.email} to ${email}`,
+            `Google email drift detected: Updating email for user ${truncateId(user.id)} from ${redactEmail(user.email)} to ${redactEmail(email)}`,
           );
         }
 
         if (!user.googleId && googleId) {
-          this.logger.log(`OAuth Link: Linking Google account to existing email-based user ${user.id}`);
+          this.logger.log(`OAuth Link: Linking Google account to existing email-based user ${truncateId(user.id)}`);
         }
 
         return tx.user.update({
@@ -66,7 +67,7 @@ export class UsersService {
         });
       }
 
-      this.logger.log(`New user registered: ${email} ${googleId ? "(via Google)" : "(via Credentials)"}`);
+      this.logger.log(`New user registered: ${redactEmail(email)} ${googleId ? "(via Google)" : "(via Credentials)"}`);
       return tx.user.create({
         data: {
           email,

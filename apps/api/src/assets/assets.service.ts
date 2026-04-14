@@ -34,7 +34,7 @@ export class AssetsService {
         tx.alert.count({ where: { watchlistEntry: { assetId: id } } }),
         tx.watchlistEntry.count({ where: { assetId: id } }),
         tx.priceSnapshot.count({ where: { assetId: id } }),
-        tx.missedFetch.count({ where: { assetId: id } })
+        tx.missedFetch.count({ where: { assetId: id } }),
       ]);
 
       this.logger.warn(`Cascading delete will permanently remove:`);
