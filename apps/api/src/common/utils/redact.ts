@@ -55,12 +55,21 @@ export function redact(input: unknown): unknown {
 }
 
 export function truncateId(id?: string | null): string {
-  return id ? (id.split("-")[0] ?? "[MISSING_ID]") : "[MISSING_ID]";
+  if (!id) return "[MISSING_ID]";
+  const prefix = id.split("-", 1)[0];
+  return prefix || "[MISSING_ID]";
 }
 
 export function redactEmail(email?: string | null): string {
-  if (!email) return "[REDACTED]";
-  const [local, domain] = email.split("@");
-  if (!local || !domain) return "[REDACTED]";
+  if (!email) return REDACTED_VALUE;
+
+  const at = email.indexOf("@");
+  if (at <= 0 || at !== email.lastIndexOf("@") || at === email.length - 1) {
+    return REDACTED_VALUE;
+  }
+
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+
   return `${local.charAt(0)}***${local.at(-1) || ""}@${domain}`;
 }

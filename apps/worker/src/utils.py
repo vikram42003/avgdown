@@ -51,7 +51,7 @@ def map_symbol_exchange(symbol: str, exchange: str) -> str:
         return f"{symbol}.BO"
     elif exchange in {"NASDAQ", "NYSE"}:
         return symbol
-    elif exchange == "BINANCE":
+    elif exchange in {"BINANCE", "COINBASE"}:
         return symbol
     else:
         raise ValueError(f"Unsupported exchange: {exchange}")
