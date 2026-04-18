@@ -72,6 +72,7 @@ class TriggeredAlert:
     watchlist_entry_id: str
     triggered_price: Decimal
     delivered: bool
+    symbol: str
     sma_value: Decimal
     user_email: str
     webhook_url: Optional[str]

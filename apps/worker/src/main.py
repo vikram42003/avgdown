@@ -3,6 +3,7 @@ from decimal import Decimal
 from datetime import datetime, timezone
 from models import WatchlistEntryProjection, TriggeredAlert
 from collections import defaultdict
+from providers.ses import send_alerts_via_email
 
 from db import (
     get_price_snapshots_bulk,
@@ -86,8 +87,6 @@ def process_sma(
 
 
 def lambda_handler(event, context):
-    return "THE LAMBDA IS ALIVE"
-
     # Fetch all watchlist entries (With joins on Assets and Users, since they'll be used next)
     watchlist_entries = get_watchlist_entries()
 
@@ -150,6 +149,7 @@ def lambda_handler(event, context):
                 del alerts_by_user[user_id]
 
     # Send alerts for smas that cross the threshold
+    send_alerts_via_email(alerts_by_user)
 
     # bulk add alerts to db
     flat_alerts_to_insert = []

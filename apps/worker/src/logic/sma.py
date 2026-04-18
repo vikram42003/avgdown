@@ -40,6 +40,7 @@ def sma_val_below_average(
                     watchlist_entry_id=entry.id,
                     triggered_price=cur_latest_price,
                     delivered=False,
+                    symbol=symbol,
                     sma_value=sma_value,
                     user_email=entry.user_email,
                     webhook_url=entry.user_webhook_url,
