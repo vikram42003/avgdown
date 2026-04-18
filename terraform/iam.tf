@@ -21,3 +21,23 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
   role       = aws_iam_role.avgdown_lambda_iam_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
+
+resource "aws_iam_role_policy" "lambda_ses" {
+  name = "lambda-ses-send"
+  role = aws_iam_role.avgdown_lambda_iam_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail",
+          "ses:SendEmailV2"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
