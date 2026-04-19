@@ -151,7 +151,7 @@ def get_recently_alerted_entries(entry_ids: list[str]) -> set[str]:
             SELECT DISTINCT watchlist_entry_id 
             FROM alerts 
             WHERE watchlist_entry_id = ANY(%s)
-            AND created_at > NOW() - INTERVAL '24 hours'
+            AND delivered_at > NOW() - INTERVAL '24 hours'
             AND delivered = true
             """,
             (entry_ids,),

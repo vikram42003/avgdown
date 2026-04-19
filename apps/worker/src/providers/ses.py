@@ -1,9 +1,17 @@
 import os
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 from models import TriggeredAlert
 
-ses = boto3.client("sesv2")
+# Set strict timeouts so SES doesn't hang longer than the Lambda timeout (10s)
+ses_config = Config(
+    connect_timeout=2,
+    read_timeout=5,
+    retries={'max_attempts': 2}
+)
+
+ses = boto3.client("sesv2", config=ses_config)
 
 
 def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
@@ -15,11 +23,11 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
         if not alert_by_entry_ids:
             continue
 
-        # Eliminate duplicate symbol names from email title by using a set
         symbols = set()
         messages = []
         user_email = None
-        for entry_id, alert in alert_by_entry_ids.items():
+        # Loop over values since entry_id is unused here
+        for alert in alert_by_entry_ids.values():
             if user_email is None:
                 user_email = alert.user_email
 
@@ -46,13 +54,13 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
 
             alerts_successfully_sent.extend(alert_by_entry_ids.keys())
 
-            print(f"Successfully sent alert to {user_email}")
+            # Redact email from logs to protect PII
+            print(f"Successfully sent alert to user_id: {next(iter(alert_by_entry_ids.values())).watchlist_entry_id[:8]}...")
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
-            # SES throws this if the email isn't verified in Sandbox mode
             if error_code == "MessageRejected":
-                print(f"Skipped {user_email}: Not verified in SES Sandbox.")
+                print(f"Skipped: Recipient not verified in SES Sandbox. Code: {error_code}")
             else:
-                print(f"Failed to send to {user_email}: {e}")
+                print(f"Failed to send alert. SES Error: {error_code}")
 
     return alerts_successfully_sent
