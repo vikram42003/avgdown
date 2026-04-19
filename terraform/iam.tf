@@ -39,7 +39,7 @@ resource "aws_iam_role_policy" "lambda_ses" {
         # Enforce that the 'From' address header must match our verified identity to prevent header spoofing.
         Condition = {
           StringEquals = {
-            "ses:FromAddress" = var.SES_EMAIL_IDENTITY
+            "ses:FromAddress" = var.ses_email_identity
           }
         }
       }

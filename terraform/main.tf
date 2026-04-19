@@ -17,10 +17,10 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  region = "ap-south-1"
-  profile = "terraform-cli-user"
+  region = var.aws_region
+  profile = var.aws_profile
 
   assume_role {
-    role_arn = "arn:aws:iam::703671923984:role/TerraformDeployRole"
+    role_arn = var.terraform_deploy_role_arn
   }
 }

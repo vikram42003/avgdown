@@ -3,7 +3,8 @@ resource "aws_sesv2_configuration_set" "ses_configs" {
 }
 
 resource "aws_sesv2_email_identity" "ses_email" {
-  email_identity = var.SES_EMAIL_IDENTITY
+  email_identity         = var.ses_email_identity
+  configuration_set_name = aws_sesv2_configuration_set.ses_configs.configuration_set_name
 }
 
 

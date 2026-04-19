@@ -22,7 +22,7 @@ data "archive_file" "lambda_layer_zip" {
   type        = "zip"
   source_dir  = "${path.module}/dist/layer"
   output_path = "${path.module}/dist/layer.zip"
-  
+
   # Wait for the pip install to finish
   depends_on = [terraform_data.lambda_layer_build]
 }
@@ -38,6 +38,27 @@ resource "aws_s3_object" "lambda_layer_zip" {
   key         = "layers/worker_deps_${data.archive_file.lambda_layer_zip.output_md5}.zip"
   source      = data.archive_file.lambda_layer_zip.output_path
   source_hash = data.archive_file.lambda_layer_zip.output_md5
+}
+
+resource "aws_s3_bucket_public_access_block" "lambda_artifacts" {
+  bucket                  = aws_s3_bucket.lambda_artifacts.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "lambda_artifacts" {
+  bucket = aws_s3_bucket.lambda_artifacts.id
+
+  rule {
+    id     = "delete-old-layer-zips"
+    status = "Enabled"
+
+    expiration {
+      days = 7
+    }
+  }
 }
 
 # Create the Layer resource from S3

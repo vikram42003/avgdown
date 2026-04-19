@@ -28,8 +28,8 @@ resource "aws_lambda_function" "avgdown_lambda_function" {
     variables = {
       ENVIRONMENT        = "production"
       LOG_LEVEL          = "info"
-      SES_EMAIL_IDENTITY = var.SES_EMAIL_IDENTITY
-      DATABASE_URL       = var.DATABASE_URL
+      SES_EMAIL_IDENTITY = var.ses_email_identity
+      DATABASE_URL       = var.database_url
     }
   }
 
