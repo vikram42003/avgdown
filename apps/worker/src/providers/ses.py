@@ -10,6 +10,7 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
     """Send alerts to users via email"""
     sender = os.environ["SES_EMAIL_IDENTITY"]
 
+    alerts_successfully_sent = []
     for user_id, alert_by_entry_ids in alerts_by_user.items():
         # We want to send each user a single email for all the events that
         # have triggered during this lambda execution
@@ -18,7 +19,7 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
         symbols = set()
         messages = []
         user_email = None
-        for alert in alert_by_entry_ids.values():
+        for entry_id, alert in alert_by_entry_ids.items():
             if user_email is None:
                 user_email = alert.user_email
 
@@ -43,8 +44,7 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
                 Content=content,
             )
 
-            for alert in alert_by_entry_ids.values():
-                alert.delivered = True
+            alerts_successfully_sent.extend(alert_by_entry_ids.keys())
 
             print(f"Successfully sent alert to {user_email}")
         except ClientError as e:
@@ -54,3 +54,5 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
                 print(f"Skipped {user_email}: Not verified in SES Sandbox.")
             else:
                 print(f"Failed to send to {user_email}: {e}")
+
+    return alerts_successfully_sent

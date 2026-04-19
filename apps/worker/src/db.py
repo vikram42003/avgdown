@@ -143,7 +143,7 @@ def get_price_snapshots_bulk(
 
 
 def get_recently_alerted_entries(entry_ids: list[str]) -> set[str]:
-    """Returns a set of watchlist_entry_ids that had an alert sent in the last 24 hours"""
+    """Returns a set of watchlist_entry_ids that had an alert successfully sent in the last 24 hours"""
     conn = get_db()
     with conn.cursor() as cur:
         cur.execute(
@@ -152,6 +152,7 @@ def get_recently_alerted_entries(entry_ids: list[str]) -> set[str]:
             FROM alerts 
             WHERE watchlist_entry_id = ANY(%s)
             AND created_at > NOW() - INTERVAL '24 hours'
+            AND delivered = true
             """,
             (entry_ids,),
         )
@@ -179,4 +180,23 @@ def add_alerts_bulk(alerts_to_add: list[TriggeredAlert]) -> None:
                     )
                 )
 
+    conn.commit()
+
+
+def mark_alerts_as_delivered(watchlist_entry_ids: list[str]) -> None:
+    """Updates alerts to delivered=true for the given entry IDs in the last 24 hours"""
+    if not watchlist_entry_ids:
+        return
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE alerts 
+            SET delivered = true, delivered_at = NOW()
+            WHERE watchlist_entry_id = ANY(%s)
+            AND delivered = false
+            AND created_at > NOW() - INTERVAL '24 hours'
+            """,
+            (watchlist_entry_ids,),
+        )
     conn.commit()

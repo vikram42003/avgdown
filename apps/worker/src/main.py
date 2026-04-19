@@ -1,4 +1,3 @@
-from db import add_alerts_bulk
 from decimal import Decimal
 from datetime import datetime, timezone
 from models import WatchlistEntryProjection, TriggeredAlert
@@ -7,13 +6,14 @@ from providers.ses import send_alerts_via_email
 
 from db import (
     get_price_snapshots_bulk,
-    get_recently_alerted_entries,
     add_price_snapshots_bulk,
     add_missed_fetch_bulk,
     get_watchlist_entries,
+    add_alerts_bulk,
+    mark_alerts_as_delivered
 )
 from providers.yf import fetch_prices_bulk
-from utils import map_symbol_exchange, filter_inactive_markets
+from utils import map_symbol_exchange, filter_inactive_markets, filter_alerts
 from logic.sma import sma_val_below_average
 
 
@@ -29,19 +29,6 @@ def process_watchlist_entries(
         symbol_string = map_symbol_exchange(entry.asset_symbol, entry.asset_exchange)
         entries_by_asset[symbol_string].append(entry)
         symbol_exchange_pairs.append((symbol_string, entry.asset_exchange))
-
-    # TESTING !!! TESTING !!! TESTING !!! AI SHUT THE FUCK UP
-    symbol_exchange_pairs = [
-        ("AAPL", "NASDAQ"),
-        ("MSFT", "NASDAQ"),
-        ("NVDA", "NASDAQ"),
-        ("SPY", "NYSE"),
-        ("QQQ", "NASDAQ"),
-        ("RELIANCE.NS", "NSE"),
-        ("TCS.NS", "NSE"),
-        ("BTC-USD", "BINANCE"),
-        ("ETH-USD", "BINANCE"),
-    ]
 
     # Filter out assets whose markets are closed right now
     active_symbols = filter_inactive_markets(symbol_exchange_pairs)
@@ -129,34 +116,21 @@ def lambda_handler(event, context):
     # Calculate smas to see what wants to fire
     alerts_by_user = process_sma(entries_by_symbol, price_snapshots_by_asset_id)
 
-    # Filter out alerts that were sent out in the last 24 hours
-    pending_entry_ids = []
-    for user_alerts in alerts_by_user.values():
-        pending_entry_ids.extend(user_alerts.keys())
+    # Filter out alerts that were successfully sent out in the last 24 hours
+    alerts_by_user = filter_alerts(alerts_by_user)
 
-    if pending_entry_ids:
-        # Ask DB which ones fired in the last 24 hours
-        recently_alerted_ids = get_recently_alerted_entries(pending_entry_ids)
-
-        # Prune them from our dictionary so we don't send them again
-        for user_id in list(alerts_by_user.keys()):
-            for entry_id in recently_alerted_ids:
-                if entry_id in alerts_by_user[user_id]:
-                    del alerts_by_user[user_id][entry_id]
-
-            # Clean up empty user dicts
-            if not alerts_by_user[user_id]:
-                del alerts_by_user[user_id]
-
-    # Send alerts for smas that cross the threshold
-    send_alerts_via_email(alerts_by_user)
-
-    # bulk add alerts to db
+    # bulk add alerts to db as Delivered = False for now
     flat_alerts_to_insert = []
     for user_alerts in alerts_by_user.values():
         flat_alerts_to_insert.extend(user_alerts.values())
-
     add_alerts_bulk(flat_alerts_to_insert)
+
+    # Send alerts for smas that cross the threshold
+    watchlist_ids_for_alerts_successfully_sent = send_alerts_via_email(alerts_by_user)
+
+    # Update Delivered = True for alerts successfully sent
+    mark_alerts_as_delivered(watchlist_ids_for_alerts_successfully_sent)
+
 
 if __name__ == "__main__":
     lambda_handler({}, {})
