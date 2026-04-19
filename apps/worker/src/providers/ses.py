@@ -11,11 +11,11 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
     sender = os.environ["SES_EMAIL_IDENTITY"]
 
     alerts_successfully_sent = []
-    for user_id, alert_by_entry_ids in alerts_by_user.items():
-        # We want to send each user a single email for all the events that
-        # have triggered during this lambda execution
+    for alert_by_entry_ids in alerts_by_user.values():
+        if not alert_by_entry_ids:
+            continue
 
-        # Eliminate duplicate symbol names from email title
+        # Eliminate duplicate symbol names from email title by using a set
         symbols = set()
         messages = []
         user_email = None
@@ -29,7 +29,7 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
         content = {
             "Simple": {
                 "Subject": {
-                    "Data": f"AvgDown: Price Alert Triggered! for {",".join(symbols)}"
+                    "Data": f"AvgDown: Price Alert Triggered! for {', '.join(sorted(symbols))}"
                 },
                 "Body": {"Text": {"Data": "\n".join(messages)}},
             }
