@@ -1,16 +1,19 @@
 import { PlusIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   return (
     <section className="">
       {/* Putting down all the stuff i might need on this page in a div */}
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center mb-6">
         <h2 className="font-bold text-4xl">Overview</h2>
-        <button className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white text-black font-medium cursor-pointer hover:bg-gray-200">
-          <PlusIcon className="w-4 h-4" />
+
+        <Button size="lg" className="rounded-md">
+          <PlusIcon />
           Create New Watchlist
-        </button>
+        </Button>
       </div>
+
       <div>
         <div>
           graphs for like the stock prices, updates every 15 min in tandem with our lambda worker some stat cards or
