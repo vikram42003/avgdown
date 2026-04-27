@@ -1,5 +1,6 @@
 import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import DashboardSummaryCards from "@/components/dashboard/DashboardSummaryCards";
 
 export default function Dashboard() {
   return (
@@ -16,6 +17,7 @@ export default function Dashboard() {
 
       <div>
         <div>
+          <DashboardSummaryCards />
           graphs for like the stock prices, updates every 15 min in tandem with our lambda worker some stat cards or
           whatever like alerts triggered in last week, watchlists youre tracking all that
         </div>

@@ -11,6 +11,16 @@
   backdrop-filter: blur(12px);
 }
 
+@utility glass-primary {
+  background: linear-gradient(
+    135deg,
+    oklch(from var(--primary) l c h / 0.18) 0%,
+    oklch(from var(--card) l c h / 0.75) 100%
+  );
+  border: 1px solid oklch(from var(--primary) l c h / 0.3);
+  backdrop-filter: blur(12px);
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);

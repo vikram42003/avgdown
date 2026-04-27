@@ -26,8 +26,8 @@ export default function RootLayout({
       <body>
         <Providers>
           <AppSidebar />
-          <main className="w-0 flex-1 p-6 lg:p-10">
-            <SidebarTrigger className="mb-4" />
+          <main className="w-0 flex-1 px-6 py-4 lg:px-10 lg:py-6">
+            <SidebarTrigger className="scale-125 mb-4 -ml-1"/>
             {children}
           </main>
         </Providers>
