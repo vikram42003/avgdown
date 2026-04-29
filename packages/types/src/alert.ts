@@ -21,7 +21,23 @@ export const AlertResponseSchema = AlertSchema.omit({ watchlistEntryId: true }).
   createdAt: z.union([z.date(), z.iso.datetime()]).describe("ISO timestamp when the alert was created"),
 });
 
+// Lean Recent Alert for Dashboard
+export const RecentAlertSchema = z.object({
+  id: z.uuid(),
+  triggeredPrice: z.coerce.number(),
+  smaValue: z.coerce.number(),
+  createdAt: z.union([z.date(), z.iso.datetime()]),
+  watchlistEntry: z.object({
+    smaPeriod: z.number(),
+    asset: z.object({
+      symbol: z.string(),
+      name: z.string()
+    })
+  })
+});
+
 // Inferred Types
 
 export type Alert = z.infer<typeof AlertSchema>;
 export type AlertResponse = z.infer<typeof AlertResponseSchema>;
+export type RecentAlertResponse = z.infer<typeof RecentAlertSchema>;
