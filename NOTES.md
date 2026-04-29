@@ -15,6 +15,7 @@
 - Uhh prettier may not be setup correctly, its only in api currently, so do do that
 - Learn about that how that database package works and is compiled
 - Learn how that seed script really works
+- Add a lifecycle rule that deletes any price snapshot older than the longest SMA period from any watchlist for that particular asset
 
 ## Implementation rough work
 
