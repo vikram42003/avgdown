@@ -2,6 +2,7 @@ import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DashboardSummaryCards from "@/components/dashboard/DashboardSummaryCards";
 import RecentAlerts from "@/components/dashboard/RecentAlerts";
+import WatchlistCharts from "@/components/dashboard/WatchlistCharts";
 
 export default function Dashboard() {
   return (
@@ -18,12 +19,11 @@ export default function Dashboard() {
 
       <DashboardSummaryCards />
 
-      <div className="flex min-h-0 flex-1 gap-12 mt-6">
-        <div className="flex-1 bg-red-500/20 rounded-xl p-4">
-          graphs for like the stock prices, updates every 15 min in tandem with our lambda worker some stat cards or
-          whatever like alerts triggered in last week, watchlists youre tracking all that
+      <div className="flex min-h-0 flex-1 gap-8 mt-6">
+        <div className="flex-7/10 glass-primary rounded-xl p-4">
+          <WatchlistCharts />
         </div>
-        <div className="w-80 glass-primary rounded-xl p-4">
+        <div className="flex-3/10 glass-primary rounded-xl p-4">
           <RecentAlerts />
         </div>
       </div>

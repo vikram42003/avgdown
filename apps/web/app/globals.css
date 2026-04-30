@@ -144,3 +144,9 @@
     @apply font-sans;
   }
 }
+
+.custom-scrollbar-primary {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--background);
+}
