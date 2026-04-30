@@ -4,7 +4,7 @@ import {
   WatchlistEntryResponseDto,
   WatchlistEntryCreateDto,
   WatchlistEntryUpdateDto,
-  PriceSnapshotResponseDto,
+  ChartDataDto,
   RecentAlertDto,
 } from "./watchlist.dto";
 import { AuthGuard } from "@nestjs/passport";
@@ -31,8 +31,8 @@ export class WatchlistsController {
   }
 
   @Get(":entryId/chart-data")
-  getChartData(@Param("entryId") entryId: string): Promise<PriceSnapshotResponseDto[]> {
-    return this.watchlistsService.getChartData(entryId);
+  getChartData(@Req() request: AuthenticatedRequest, @Param("entryId") entryId: string): Promise<ChartDataDto> {
+    return this.watchlistsService.getChartData(request.user.id, entryId);
   }
 
   @Get(":id")

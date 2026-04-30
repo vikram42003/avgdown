@@ -4,7 +4,7 @@ import {
   WatchlistEntryCreateDto,
   WatchlistEntryUpdateDto,
   WatchlistEntryResponseDto,
-  PriceSnapshotResponseDto,
+  ChartDataDto,
   RecentAlertDto,
 } from "./watchlist.dto";
 
@@ -77,10 +77,10 @@ export class WatchlistsService {
     }));
   }
 
-  async getChartData(entryId: string): Promise<PriceSnapshotResponseDto[]> {
-    // First resolve the assetId from the watchlist entry
+  async getChartData(userId: string, entryId: string): Promise<ChartDataDto> {
+    // First resolve the assetId from the watchlist entry and verify ownership
     const entry = await this.prisma.watchlistEntry.findUnique({
-      where: { id: entryId },
+      where: { id: entryId, userId },
       select: { assetId: true, smaPeriod: true },
     });
 
@@ -88,13 +88,23 @@ export class WatchlistsService {
 
     const priceSnapshots = await this.prisma.priceSnapshot.findMany({
       where: { assetId: entry.assetId },
-      orderBy: { fetchedAt: "asc" },
+      orderBy: { fetchedAt: "desc" },
       take: entry.smaPeriod,
     });
 
-    return priceSnapshots.map((p) => ({
+    priceSnapshots.reverse();
+    const chronologicalPrices = priceSnapshots.map((p) => ({
       ...p,
       price: p.price.toNumber(),
     }));
+
+    const sum = chronologicalPrices.reduce((acc, curr) => acc + curr.price, 0);
+    const currentSma = chronologicalPrices.length > 0 ? sum / chronologicalPrices.length : 0;
+
+    return {
+      prices: chronologicalPrices,
+      currentSma,
+      smaPeriod: entry.smaPeriod,
+    };
   }
 }

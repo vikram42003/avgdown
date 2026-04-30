@@ -6,6 +6,7 @@ import {
   PriceSnapshotResponseSchema,
   AlertResponseSchema,
   RecentAlertSchema,
+  PriceSnapshotChartDataSchema,
 } from "@avgdown/types";
 
 export class WatchlistEntryResponseDto extends createZodDto(WatchlistEntryResponseSchema) {}
@@ -14,3 +15,4 @@ export class WatchlistEntryCreateDto extends createZodDto(WatchlistEntryCreateSc
 export class PriceSnapshotResponseDto extends createZodDto(PriceSnapshotResponseSchema) {}
 export class AlertResponseDto extends createZodDto(AlertResponseSchema) {}
 export class RecentAlertDto extends createZodDto(RecentAlertSchema) {}
+export class ChartDataDto extends createZodDto(PriceSnapshotChartDataSchema) {}
