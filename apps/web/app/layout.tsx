@@ -22,11 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("antialiased dark", geistSans.variable, geistMono.variable, raleway.variable)}>
-      <body>
+    <html lang="en" className={cn("h-full antialiased dark", geistSans.variable, geistMono.variable, raleway.variable)}>
+      <body className="h-dvh">
         <Providers>
           <AppSidebar />
-          <main className="w-0 flex-1 px-6 py-4 lg:px-10 lg:py-6">
+          <main className="flex min-w-0 flex-1 flex-col px-6 py-4 lg:px-10 lg:py-6">
             <SidebarTrigger className="scale-125 mb-4 -ml-1"/>
             {children}
           </main>

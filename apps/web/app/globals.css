@@ -6,7 +6,7 @@
 
 /* --- Premium Utility Classes --- */
 @utility glass {
-  background-color: oklch(from var(--card) l c h / 0.7);
+  background-color: oklch(from var(--primary) l c h / 0.1);
   border: 1px solid var(--border);
   backdrop-filter: blur(12px);
 }
