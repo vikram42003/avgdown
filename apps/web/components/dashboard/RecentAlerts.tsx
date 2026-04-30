@@ -19,7 +19,7 @@ const mockRecentAlert: RecentAlertResponse = {
 const RecentAlerts = () => {
   return (
     <div>
-      <h4 className="font-semibold text-lg mb-4 ml-4">Recent Alerts</h4>
+      <h3 className="font-semibold text-lg mb-4 ml-4">Recent Alerts</h3>
       <div className="space-y-3 max-h-155  overflow-y-auto custom-scrollbar-primary">
         {new Array(10).fill(0).map(() => {
           return <AlertCard key={crypto.randomUUID()} alert={mockRecentAlert} />;

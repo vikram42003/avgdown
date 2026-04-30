@@ -6,8 +6,12 @@
 28 April 2026 - Evening
 - [x] Decide on the remaining design for dashboard page
       - it'll be graphs of prices with line for alert on left side and recent alerts on right side
-- [-] Add an endpoint to fetch recent price data - PARTIALLY DONE ON 28 April 2026 Evening
+- [-] Add an endpoint to fetch recent price data
 
 29 April 2026 - Afternoon
 - [x] Add an endpoint to fetch recent price data
-- [ ] Style Recent Alerts component
+- [-] Style Recent Alerts component
+
+30 April 2026 - Evening
+- [x] Fully style Alerts component
+- [x] Fully style watchlists component
