@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { WatchlistEntryResponseSchema } from "./watchlist.js";
+import { SupportedExchangesEnum } from "./asset.js";
 
 // Base
 
@@ -31,9 +32,10 @@ export const RecentAlertSchema = z.object({
     smaPeriod: z.number(),
     asset: z.object({
       symbol: z.string(),
-      name: z.string()
-    })
-  })
+      name: z.string(),
+      exchange: SupportedExchangesEnum,
+    }),
+  }),
 });
 
 // Inferred Types

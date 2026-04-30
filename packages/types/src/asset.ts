@@ -45,3 +45,11 @@ export type AssetResponse = z.infer<typeof AssetResponseSchema>;
 
 export type PriceSnapshot = z.infer<typeof PriceSnapshotSchema>;
 export type PriceSnapshotResponse = z.infer<typeof PriceSnapshotResponseSchema>;
+
+export const PriceSnapshotChartDataSchema = z.object({
+  prices: z.array(PriceSnapshotResponseSchema),
+  currentSma: z.number(),
+  smaPeriod: z.number(),
+});
+
+export type PriceSnapshotChartDataResponse = z.infer<typeof PriceSnapshotChartDataSchema>;
