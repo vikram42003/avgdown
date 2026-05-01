@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { GaugeIcon, ListIcon, BellIcon, GearIcon, ChartLineUpIcon } from "@phosphor-icons/react";
+import { GaugeIcon, ListIcon, BellIcon, GearIcon, ChartLineUpIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import AccountProfile from "./AccountProfile";
 
@@ -19,6 +19,7 @@ const navItems = [
   { label: "Overview", icon: GaugeIcon, href: "/" },
   { label: "Watchlists", icon: ListIcon, href: "/watchlists" },
   { label: "Alerts", icon: BellIcon, href: "/alerts" },
+  { label: "Browse Assets", icon: MagnifyingGlassIcon, href: "/browse-assets" },
 ];
 
 const bottomNavItems = [{ label: "Settings", icon: GearIcon, href: "/settings" }];
@@ -35,7 +36,9 @@ export function AppSidebar() {
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary/20 text-chart-1 shrink-0">
                   <ChartLineUpIcon weight="bold" />
                 </div>
-                <span className="font-semibold tracking-tight text-xl">Avg<span className="text-chart-1">Down</span></span>
+                <span className="font-semibold tracking-tight text-xl">
+                  Avg<span className="text-chart-1">Down</span>
+                </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
