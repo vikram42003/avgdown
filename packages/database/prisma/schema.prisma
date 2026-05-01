@@ -54,6 +54,7 @@ model Asset {
   watchlistEntries WatchlistEntry[]
   priceSnapshots   PriceSnapshot[]
   missedFetches    MissedFetch[]
+  dailySmaSnapshots DailySmaSnapshot[]
 
   @@unique([symbol, exchange])
   @@map("assets")
@@ -115,4 +116,18 @@ model MissedFetch {
   @@index([resolved, createdAt(sort: Desc)])
 
   @@map("missed_fetches")
+}
+
+model DailySmaSnapshot {
+  id       String   @id @default(dbgenerated("gen_random_uuid()"))
+  assetId  String   @map("asset_id")
+  period   Int
+  smaValue Decimal  @map("sma_value") @db.Decimal(18, 8)
+  date     DateTime @map("date") @db.Date
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, period, date])
+  @@index([assetId, period, date(sort: Desc)])
+  @@map("daily_sma_snapshots")
 }
