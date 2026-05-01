@@ -30,7 +30,7 @@
 17. Logging: Implement structured, centralized logging across the stack.
 18. Theme Toggle: Add a Dark/Light mode switch in the settings tab.
 19. Landing Page: Build a public landing page at the root `/` and move the main app to `/dashboard`.
-20. Implement the Obseervability layer
+20. Implement the Observability layer
 21. Update Documentation and make charts/graphs and shit for it
 22. GO THROUGH THE GUIDE.md AND SEE IF THERES ANYTHING ELSE LEFT
 
