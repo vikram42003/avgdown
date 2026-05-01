@@ -5,9 +5,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { formatCurrency, getCurrencySymbol } from "@/lib/formatters";
 import type { Exchange } from "@avgdown/types";
 
-// ---------------------------------------------------------------------------
-// Mock data — mirrors the shape of PriceSnapshotChartDataResponse + metadata
-// ---------------------------------------------------------------------------
+// Mock data - mirrors the shape of PriceSnapshotChartDataResponse + metadata
 
 interface ChartDataPoint {
   /** ISO string — used as X-axis label */
@@ -86,16 +84,14 @@ const MOCK_WATCHLISTS: WatchlistChartEntry[] = [
 ];
 
 // Inject a mock alert on the last point of the first watchlist
-const btcData = MOCK_WATCHLISTS[0].data;
+const btcData = MOCK_WATCHLISTS[0]!.data;
 const alertIdx = btcData.length - 1;
-MOCK_WATCHLISTS[0].alertPoint = {
-  fetchedAt: btcData[alertIdx].fetchedAt,
-  price: btcData[alertIdx].price,
+MOCK_WATCHLISTS[0]!.alertPoint = {
+  fetchedAt: btcData[alertIdx]!.fetchedAt,
+  price: btcData[alertIdx]!.price,
 };
 
-// ---------------------------------------------------------------------------
-// Chart config — keys must match the `dataKey` props on <Line>
-// ---------------------------------------------------------------------------
+// Chart config - keys must match the `dataKey` props on <Line>
 
 const chartConfig = {
   price: {
