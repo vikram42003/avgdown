@@ -1,6 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/common/database/prisma/prisma.service";
-import { WatchlistEntryCreateDto, WatchlistEntryUpdateDto, WatchlistEntryResponseDto } from "./watchlist.dto";
+import {
+  WatchlistEntryCreateDto,
+  WatchlistEntryUpdateDto,
+  WatchlistEntryResponseDto,
+  ChartDataDto,
+  RecentAlertDto,
+} from "./watchlist.dto";
 
 import { assertFound } from "src/common/utils/assert-found";
 
@@ -32,5 +38,74 @@ export class WatchlistsService {
 
   async remove(id: string): Promise<WatchlistEntryResponseDto> {
     return `This action removes a #${id} watchlist` as any;
+  }
+
+  async getRecentAlerts(userId: string): Promise<RecentAlertDto[]> {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const alerts = await this.prisma.alert.findMany({
+      where: {
+        watchlistEntry: { userId },
+        createdAt: { gte: sevenDaysAgo },
+      },
+      select: {
+        id: true,
+        triggeredPrice: true,
+        smaValue: true,
+        createdAt: true,
+        watchlistEntry: {
+          select: {
+            smaPeriod: true,
+            asset: {
+              select: {
+                symbol: true,
+                name: true,
+                exchange: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+
+    return alerts.map((alert) => ({
+      ...alert,
+      triggeredPrice: alert.triggeredPrice.toNumber(),
+      smaValue: alert.smaValue.toNumber(),
+    }));
+  }
+
+  async getChartData(userId: string, entryId: string): Promise<ChartDataDto> {
+    // First resolve the assetId from the watchlist entry and verify ownership
+    const entry = await this.prisma.watchlistEntry.findUnique({
+      where: { id: entryId, userId },
+      select: { assetId: true, smaPeriod: true },
+    });
+
+    if (!entry) throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
+
+    const priceSnapshots = await this.prisma.priceSnapshot.findMany({
+      where: { assetId: entry.assetId },
+      orderBy: { fetchedAt: "desc" },
+      take: entry.smaPeriod,
+    });
+
+    priceSnapshots.reverse();
+    const chronologicalPrices = priceSnapshots.map((p) => ({
+      ...p,
+      price: p.price.toNumber(),
+    }));
+
+    const sum = chronologicalPrices.reduce((acc, curr) => acc + curr.price, 0);
+    const currentSma = chronologicalPrices.length > 0 ? sum / chronologicalPrices.length : 0;
+
+    return {
+      prices: chronologicalPrices,
+      currentSma,
+      smaPeriod: entry.smaPeriod,
+    };
   }
 }
