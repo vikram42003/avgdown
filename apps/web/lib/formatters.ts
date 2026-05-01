@@ -23,6 +23,9 @@ export function formatCurrency(value: number, exchange: Exchange): string {
 export const formatRelativeTime = (date: Date | string | number): string => {
   const now = Date.now();
   const created = new Date(date).getTime();
+
+  if (!Number.isFinite(created)) return "Invalid date";
+
   const diffInMs = now - created;
 
   // Define constants in milliseconds

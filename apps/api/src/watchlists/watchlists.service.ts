@@ -61,6 +61,7 @@ export class WatchlistsService {
               select: {
                 symbol: true,
                 name: true,
+                exchange: true,
               },
             },
           },
