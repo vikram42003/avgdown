@@ -61,6 +61,7 @@ export class WatchlistsService {
               select: {
                 symbol: true,
                 name: true,
+                exchange: true,
               },
             },
           },
@@ -86,25 +87,37 @@ export class WatchlistsService {
 
     if (!entry) throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
 
+    const HISTORY_WINDOW = 40;
+
+    // Fetch the last HISTORY_WINDOW 15-min price snapshots (the chart's price line)
     const priceSnapshots = await this.prisma.priceSnapshot.findMany({
       where: { assetId: entry.assetId },
       orderBy: { fetchedAt: "desc" },
-      take: entry.smaPeriod,
+      take: HISTORY_WINDOW,
+    });
+    priceSnapshots.reverse();
+
+    const prices = priceSnapshots.map((p) => ({ ...p, price: p.price.toNumber() }));
+
+    // Fetch the last HISTORY_WINDOW daily SMA values for this asset+period
+    const dailySmaRows = await this.prisma.dailySmaSnapshot.findMany({
+      where: { assetId: entry.assetId, period: entry.smaPeriod },
+      orderBy: { date: "desc" },
+      take: HISTORY_WINDOW,
+      select: { date: true, smaValue: true },
     });
 
-    priceSnapshots.reverse();
-    const chronologicalPrices = priceSnapshots.map((p) => ({
-      ...p,
-      price: p.price.toNumber(),
-    }));
+    // Build a date -> sma_value lookup (dates are stored as YYYY-MM-DD midnight UTC)
+    const smaByDate = new Map(
+      dailySmaRows.map((r) => [r.date.toISOString().slice(0, 10), r.smaValue.toNumber()]),
+    );
 
-    const sum = chronologicalPrices.reduce((acc, curr) => acc + curr.price, 0);
-    const currentSma = chronologicalPrices.length > 0 ? sum / chronologicalPrices.length : 0;
+    // Align the SMA to price points by day. Each 15-min snapshot maps to the SMA for that day.
+    const sma = prices.map((p) => {
+      const day = p.fetchedAt.toISOString().slice(0, 10);
+      return smaByDate.get(day) ?? null;
+    });
 
-    return {
-      prices: chronologicalPrices,
-      currentSma,
-      smaPeriod: entry.smaPeriod,
-    };
+    return { prices, sma, smaPeriod: entry.smaPeriod };
   }
 }
