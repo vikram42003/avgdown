@@ -1,5 +1,3 @@
-from decimal import Decimal
-from collections import defaultdict
 from db import get_watchlist_entries, upsert_daily_sma_bulk
 from providers.yf import fetch_daily_sma_bulk
 from utils import map_symbol_exchange
@@ -19,14 +17,21 @@ def sma_worker_handler(event, context):
         print("No active watchlist entries — nothing to compute.")
         return
 
-    # Build the unique (yf_symbol, period) pairs and track asset_id per symbol
-    asset_id_by_symbol: dict[str, str] = {}
+    # Build the unique (yf_symbol, period) pairs and track asset_ids per symbol.
+    # A set is used because multiple DB assets can map to the same yf_symbol
+    # (e.g. AAPL on NASDAQ and NYSE both become "AAPL", BTC-USD on Binance and
+    # Coinbase both become "BTC-USD"). The SMA value is the same for all of them
+    # since it comes from the same price data - we just need every asset_id to
+    # get its row in daily_sma_snapshots.
+    asset_ids_by_symbol: dict[str, set[str]] = {}
     seen: set[tuple[str, int]] = set()
     symbol_period_pairs: list[tuple[str, int]] = []
 
     for entry in watchlist_entries:
         yf_symbol = map_symbol_exchange(entry.asset_symbol, entry.asset_exchange)
-        asset_id_by_symbol[yf_symbol] = entry.asset_id
+        if yf_symbol not in asset_ids_by_symbol:
+            asset_ids_by_symbol[yf_symbol] = set()
+        asset_ids_by_symbol[yf_symbol].add(entry.asset_id)
         pair = (yf_symbol, entry.sma_period)
         if pair not in seen:
             seen.add(pair)
@@ -39,12 +44,13 @@ def sma_worker_handler(event, context):
     if failed_pairs:
         print(f"Failed to fetch SMA for: {failed_pairs}")
 
-    # Flatten into (asset_id, period, date, sma_value) rows for the bulk upsert
+    # Flatten into (asset_id, period, date, sma_value) rows for the bulk upsert.
+    # One row per asset_id - multiple assets can share the same yf_symbol.
     rows_to_upsert = []
     for (symbol, period), series in sma_series_by_pair.items():
-        asset_id = asset_id_by_symbol[symbol]
-        for date, sma_val in series:
-            rows_to_upsert.append((asset_id, period, date, sma_val))
+        for asset_id in asset_ids_by_symbol[symbol]:
+            for date, sma_val in series:
+                rows_to_upsert.append((asset_id, period, date, sma_val))
 
     upsert_daily_sma_bulk(rows_to_upsert)
     print(f"Upserted {len(rows_to_upsert)} daily SMA rows.")

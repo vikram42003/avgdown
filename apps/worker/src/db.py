@@ -226,19 +226,31 @@ def upsert_daily_sma_bulk(rows: list[tuple[str, int, date, float]]) -> None:
     conn.commit()
 
 
-def get_daily_sma(asset_id: str, period: int) -> Decimal | None:
+def get_daily_sma_bulk(
+    pairs: list[tuple[str, int]],
+) -> dict[tuple[str, int], Decimal]:
     """
-    Returns today's daily SMA value for an asset+period, or None if not yet computed.
-    Called by the 15-min worker before deciding whether to fire an alert.
+    Batch-fetches today's daily SMA for all (asset_id, period) pairs in one query.
+    Returns a dict keyed by (asset_id, period) -> sma_value.
+    Called by the 15-min worker before deciding which entries to alert on.
     """
+    if not pairs:
+        return {}
+
+    asset_ids = [p[0] for p in pairs]
+    periods = [p[1] for p in pairs]
+
     conn = get_db()
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT sma_value FROM daily_sma_snapshots
-            WHERE asset_id = %s AND period = %s AND date = CURRENT_DATE
+            SELECT asset_id, period, sma_value
+            FROM daily_sma_snapshots
+            WHERE date = CURRENT_DATE
+              AND (asset_id::text, period) IN (
+                SELECT * FROM unnest(%s::text[], %s::int[])
+              )
             """,
-            (asset_id, period),
+            (asset_ids, periods),
         )
-        row = cur.fetchone()
-        return Decimal(str(row[0])) if row else None
+        return {(str(row[0]), row[1]): Decimal(str(row[2])) for row in cur.fetchall()}

@@ -128,6 +128,8 @@ model DailySmaSnapshot {
   asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@unique([assetId, period, date])
+  // Kept intentionally alongside the unique constraint above: the unique index is ASC by default,
+  // but getChartData queries ORDER BY date DESC LIMIT N - a DESC index avoids a sort step
   @@index([assetId, period, date(sort: Desc)])
   @@map("daily_sma_snapshots")
 }
