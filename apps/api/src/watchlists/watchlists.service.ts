@@ -108,9 +108,7 @@ export class WatchlistsService {
     });
 
     // Build a date -> sma_value lookup (dates are stored as YYYY-MM-DD midnight UTC)
-    const smaByDate = new Map(
-      dailySmaRows.map((r) => [r.date.toISOString().slice(0, 10), r.smaValue.toNumber()]),
-    );
+    const smaByDate = new Map(dailySmaRows.map((r) => [r.date.toISOString().slice(0, 10), r.smaValue.toNumber()]));
 
     // Align the SMA to price points by day. Each 15-min snapshot maps to the SMA for that day.
     const sma = prices.map((p) => {

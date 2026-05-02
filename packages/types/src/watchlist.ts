@@ -13,7 +13,7 @@ export const WatchlistEntrySchema = z.object({
     .min(1)
     .max(250)
     .default(20)
-    .describe("Number of price snapshots used to calculate the SMA"),
+    .describe("Number of daily trading candles used to calculate the SMA (e.g. 20 = 20-day SMA)"),
   isActive: z.boolean().default(true).describe("Whether this watchlist entry is actively being monitored"),
   createdAt: z.date().describe("Timestamp when the entry was created"),
   updatedAt: z.date().describe("Timestamp when the entry was last updated"),
