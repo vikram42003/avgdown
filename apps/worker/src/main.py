@@ -5,7 +5,6 @@ from collections import defaultdict
 from providers.ses import send_alerts_via_email
 
 from db import (
-    get_price_snapshots_bulk,
     add_price_snapshots_bulk,
     add_missed_fetch_bulk,
     get_watchlist_entries,
@@ -55,17 +54,16 @@ def process_alpha_vantage_backfill():
 
 def process_sma(
     entries_by_symbol: dict[str, list[WatchlistEntryProjection]],
-    price_snapshots_by_asset_id: dict[str, list[Decimal]],
+    prices_by_asset_id: dict[str, Decimal],
 ) -> dict[str, dict[str, TriggeredAlert]]:
-    """process the sma based on the strategy chosen by the user"""
-    # Controls how much "below" the price must be below the average for an alert to be triggered
+    """Checks current prices against today's daily SMA and builds alerts"""
     SMA_VAL_BELOW_AVERAGE_DEVIATION_THRESHOLD = 0.02
 
     alerts_by_user: dict[str, dict[str, TriggeredAlert]] = defaultdict(dict)
 
     sma_val_below_average(
         entries_by_symbol,
-        price_snapshots_by_asset_id,
+        prices_by_asset_id,
         alerts_by_user,
         SMA_VAL_BELOW_AVERAGE_DEVIATION_THRESHOLD,
     )
@@ -74,17 +72,16 @@ def process_sma(
 
 
 def lambda_handler(event, context):
-    # Fetch all watchlist entries (With joins on Assets and Users, since they'll be used next)
+    # Fetch all watchlist entries (with joins on Assets and Users)
     watchlist_entries = get_watchlist_entries()
 
     # Group entries by symbol and filter out symbols whose markets are inactive
-    # symbols get mapped to exchange at this point.Eg. Symbol - RELIANCE and Exchange - NSE -> RELIANCE.NS
     entries_by_symbol, active_symbols = process_watchlist_entries(watchlist_entries)
 
     # Fetch the newest prices for all the active assets in bulk
     prices_by_symbol, failed_symbols = fetch_prices_bulk(active_symbols)
 
-    # Bulk update prices in the db
+    # Bulk insert new price snapshots into the DB
     price_snapshots_to_insert = []
     for s, p in prices_by_symbol.items():
         asset_id = entries_by_symbol[s][0].asset_id
@@ -92,7 +89,7 @@ def lambda_handler(event, context):
 
     add_price_snapshots_bulk(price_snapshots_to_insert)
 
-    # Bulk update missedFetch for the failed_symbols
+    # Record any failed fetches for the Alpha Vantage backfill
     missed_fetches_to_insert = []
     for s, error_msg in failed_symbols.items():
         asset_id = entries_by_symbol[s][0].asset_id
@@ -101,34 +98,28 @@ def lambda_handler(event, context):
     if missed_fetches_to_insert:
         add_missed_fetch_bulk(missed_fetches_to_insert)
 
-    # Process the failed fetches with alpha vantage, only if the lambda was called close to an hour time value
     process_alpha_vantage_backfill()
 
-    # For each asset, get the max sma period asked by a user, with that we can calculate sma for that asset for any user whose sma <= max
-    highest_sma_by_asset_id = {}
-    for entries in entries_by_symbol.values():
-        asset_id = entries[0].asset_id
-        highest_sma_by_asset_id[asset_id] = max(entry.sma_period for entry in entries)
+    # Build a flat dict of asset_id -> current Decimal price for the SMA comparison
+    prices_by_asset_id: dict[str, Decimal] = {
+        entries_by_symbol[s][0].asset_id: Decimal(str(p))
+        for s, p in prices_by_symbol.items()
+    }
 
-    # Get price snapshots for the assets in bulk
-    price_snapshots_by_asset_id = get_price_snapshots_bulk(highest_sma_by_asset_id)
-
-    # Calculate smas to see what wants to fire
-    alerts_by_user = process_sma(entries_by_symbol, price_snapshots_by_asset_id)
+    # Compare prices against today's precomputed daily SMA
+    alerts_by_user = process_sma(entries_by_symbol, prices_by_asset_id)
 
     # Filter out alerts that were successfully sent out in the last 24 hours
     alerts_by_user = filter_alerts(alerts_by_user)
 
-    # bulk add alerts to db as Delivered = False for now
+    # Bulk add alerts to DB with delivered=False
     flat_alerts_to_insert = []
     for user_alerts in alerts_by_user.values():
         flat_alerts_to_insert.extend(user_alerts.values())
     add_alerts_bulk(flat_alerts_to_insert)
 
-    # Send alerts for smas that cross the threshold
+    # Send alerts and mark successful ones as delivered
     watchlist_ids_for_alerts_successfully_sent = send_alerts_via_email(alerts_by_user)
-
-    # Update Delivered = True for alerts successfully sent
     mark_alerts_as_delivered(watchlist_ids_for_alerts_successfully_sent)
 
 

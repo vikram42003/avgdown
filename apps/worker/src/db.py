@@ -1,5 +1,6 @@
 from models import PriceSnapshot, WatchlistEntryProjection, TriggeredAlert
 from decimal import Decimal
+from datetime import date
 from psycopg.rows import class_row
 import psycopg
 import os
@@ -200,3 +201,56 @@ def mark_alerts_as_delivered(watchlist_entry_ids: list[str]) -> None:
             (watchlist_entry_ids,),
         )
     conn.commit()
+
+
+def upsert_daily_sma_bulk(rows: list[tuple[str, int, date, float]]) -> None:
+    """
+    Upserts daily SMA values into daily_sma_snapshots.
+    Rows are (asset_id, period, date, sma_value).
+    ON CONFLICT updates sma_value so the worker is safe to re-run on the same day.
+    """
+    if not rows:
+        return
+
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.executemany(
+            """
+            INSERT INTO daily_sma_snapshots (asset_id, period, date, sma_value)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (asset_id, period, date) DO UPDATE
+                SET sma_value = EXCLUDED.sma_value
+            """,
+            rows,
+        )
+    conn.commit()
+
+
+def get_daily_sma_bulk(
+    pairs: list[tuple[str, int]],
+) -> dict[tuple[str, int], Decimal]:
+    """
+    Batch-fetches today's daily SMA for all (asset_id, period) pairs in one query.
+    Returns a dict keyed by (asset_id, period) -> sma_value.
+    Called by the 15-min worker before deciding which entries to alert on.
+    """
+    if not pairs:
+        return {}
+
+    asset_ids = [p[0] for p in pairs]
+    periods = [p[1] for p in pairs]
+
+    conn = get_db()
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT asset_id, period, sma_value
+            FROM daily_sma_snapshots
+            WHERE date = CURRENT_DATE
+              AND (asset_id::text, period) IN (
+                SELECT * FROM unnest(%s::text[], %s::int[])
+              )
+            """,
+            (asset_ids, periods),
+        )
+        return {(str(row[0]), row[1]): Decimal(str(row[2])) for row in cur.fetchall()}

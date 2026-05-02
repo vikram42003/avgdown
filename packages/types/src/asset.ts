@@ -48,8 +48,21 @@ export type PriceSnapshotResponse = z.infer<typeof PriceSnapshotResponseSchema>;
 
 export const PriceSnapshotChartDataSchema = z.object({
   prices: z.array(PriceSnapshotResponseSchema),
-  currentSma: z.number(),
+  /** One SMA value per price point. null for early points before the window is full. */
+  sma: z.array(z.number().nullable()),
   smaPeriod: z.number(),
 });
 
 export type PriceSnapshotChartDataResponse = z.infer<typeof PriceSnapshotChartDataSchema>;
+
+// Daily SMA Snapshot (stored by the sma_worker Lambda, served by the chart endpoint)
+
+export const DailySmaSnapshotSchema = z.object({
+  id: z.uuid(),
+  assetId: z.uuid(),
+  period: z.number().int(),
+  smaValue: z.coerce.number(),
+  date: z.union([z.date(), z.iso.datetime()]),
+});
+
+export type DailySmaSnapshot = z.infer<typeof DailySmaSnapshotSchema>;
