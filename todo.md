@@ -36,6 +36,21 @@
 
 ---
 
+## PR PLAN
+
+feat/backend-auth-foundation      → 1, 2, 3
+feat/frontend-auth-flow           → 4, 7
+feat/data-layer-dashboard         → 5, 6
+feat/watchlist-crud               → 8
+feat/app-pages                    → 9
+feat/ui-states-feedback           → 10, 11, 12, 13
+feat/infra-deployment             → 14, 15, 16
+
+feat/logging-observability        → 17, 20
+feat/theme-toggle                 → 18
+feat/landing-page                 → 19
+chore/docs-review                 → 21, 22
+
 ## Productivity Logs -
 
 ### 27 April 2026 - Morning
@@ -57,4 +72,10 @@
 - [x] Fully style watchlists component
 
 ### 1 May 2026 - Afternoon
-- [ ] DO the CORS configurations
+- [x] Implement WatchlistChart component and fix chart types
+- [x] Add DailySmaSnapshot model to schema and data layer
+- [x] Migrate alert logic to daily SMA and implement sma_worker lambda
+
+### 2 May 2026 - Afternoon
+- [x] Update chart data API contract to use daily SMA series
+- [x] Run database migrations and apply minor type fixes
