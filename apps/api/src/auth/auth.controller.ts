@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { AuthResponse } from "@avgdown/types";
-import type { GoogleOAuthRequest } from "./auth.dto";
+import type { GoogleOAuthRequest, UserRegisterDto } from "./auth.dto";
 
 import { AuthService } from "./auth.service";
 import { UserLoginDto } from "./auth.dto";
@@ -40,6 +40,23 @@ export class AuthController {
   @Post("login")
   async login(@Body() loginDetails: UserLoginDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
     const accessToken = await this.authService.login(loginDetails);
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: this.configService.get("NODE_ENV") === "production",
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return { success: true };
+  }
+
+  @Post("register")
+  async register(
+    @Body() registerDetails: UserRegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponse> {
+    const accessToken = await this.authService.register(registerDetails);
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,

@@ -2,7 +2,7 @@
 
 ### Pre MVP -
 
-1. CORS Configuration: Setup CORS in the NestJS API so the frontend can communicate with it.
+1. ✅ CORS Configuration: Setup CORS in the NestJS API so the frontend can communicate with it.
 2. Auth Guards: Properly add the correct auth guards across all necessary Nest server endpoints.
 3. Complete Auth-Dependent Logic: Fill out the rest of the incomplete functions that rely on user authentication info.
 
@@ -38,7 +38,7 @@
 
 ## PR PLAN
 
-feat/backend-auth-foundation      → 1, 2, 3
+feat/backend-auth                 → 1, 2, 3
 feat/frontend-auth-flow           → 4, 7
 feat/data-layer-dashboard         → 5, 6
 feat/watchlist-crud               → 8
@@ -79,3 +79,4 @@ chore/docs-review                 → 21, 22
 ### 2 May 2026 - Afternoon
 - [x] Update chart data API contract to use daily SMA series
 - [x] Run database migrations and apply minor type fixes
+- [x] Enable CORS locally (task #1)
