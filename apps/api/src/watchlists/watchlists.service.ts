@@ -8,9 +8,6 @@ import {
   RecentAlertDto,
 } from "./watchlist.dto";
 
-import { assertFound } from "src/common/utils/assert-found";
-import { Prisma } from "@avgdown/db";
-
 @Injectable()
 export class WatchlistsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -28,10 +25,15 @@ export class WatchlistsService {
 
   async findOne(userId: string, entryId: string): Promise<WatchlistEntryResponseDto> {
     const watchlistEntry = await this.prisma.watchlistEntry.findUnique({
-      where: { userId, id: entryId },
+      where: { id: entryId },
       include: { asset: true },
     });
-    return assertFound(watchlistEntry, `Watchlist entry with ID ${entryId} not found`);
+
+    if (watchlistEntry?.userId !== userId) {
+      throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
+    }
+
+    return watchlistEntry;
   }
 
   async update(
@@ -39,34 +41,28 @@ export class WatchlistsService {
     entryId: string,
     watchlistUpdateData: WatchlistEntryUpdateDto,
   ): Promise<WatchlistEntryResponseDto> {
-    try {
-      const result = await this.prisma.watchlistEntry.update({
-        where: { id: entryId, userId: userId },
-        data: watchlistUpdateData,
-        include: { asset: true },
-      });
-      return result;
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
-        throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
-      }
-      throw e;
+    const existingEntry = await this.prisma.watchlistEntry.findUnique({ where: { id: entryId } });
+    if (existingEntry?.userId !== userId) {
+      throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
     }
+
+    return await this.prisma.watchlistEntry.update({
+      where: { id: entryId },
+      data: watchlistUpdateData,
+      include: { asset: true },
+    });
   }
 
   async remove(userId: string, entryId: string): Promise<WatchlistEntryResponseDto> {
-    try {
-      const result = await this.prisma.watchlistEntry.delete({
-        where: { id: entryId, userId: userId },
-        include: { asset: true },
-      });
-      return result;
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
-        throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
-      }
-      throw e;
+    const existingEntry = await this.prisma.watchlistEntry.findUnique({ where: { id: entryId } });
+    if (existingEntry?.userId !== userId) {
+      throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
     }
+
+    return await this.prisma.watchlistEntry.delete({
+      where: { id: entryId },
+      include: { asset: true },
+    });
   }
 
   async getRecentAlerts(userId: string): Promise<RecentAlertDto[]> {
@@ -110,11 +106,13 @@ export class WatchlistsService {
   async getChartData(userId: string, entryId: string): Promise<ChartDataDto> {
     // First resolve the assetId from the watchlist entry and verify ownership
     const entry = await this.prisma.watchlistEntry.findUnique({
-      where: { id: entryId, userId },
-      select: { assetId: true, smaPeriod: true },
+      where: { id: entryId },
+      select: { assetId: true, smaPeriod: true, userId: true },
     });
 
-    if (!entry) throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
+    if (entry?.userId !== userId) {
+      throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
+    }
 
     const HISTORY_WINDOW = 40;
 
