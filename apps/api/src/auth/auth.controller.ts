@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
-import { AuthResponse } from "@avgdown/types";
+import type { AuthResponse } from "@avgdown/types";
 import type { GoogleOAuthRequest, UserRegisterDto } from "./auth.dto";
 
 import { AuthService } from "./auth.service";
@@ -65,6 +65,16 @@ export class AuthController {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
+    return { success: true };
+  }
+
+  @Post("logout")
+  logout(@Res({ passthrough: true }) res: Response): AuthResponse {
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: this.configService.get("NODE_ENV") === "production",
+      sameSite: "lax",
+    });
     return { success: true };
   }
 }
