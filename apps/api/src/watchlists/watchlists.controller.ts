@@ -24,8 +24,8 @@ export class WatchlistsController {
   }
 
   @Get()
-  findAll(): Promise<WatchlistEntryResponseDto[]> {
-    return this.watchlistsService.findAll();
+  findAll(@Req() request: AuthenticatedRequest): Promise<WatchlistEntryResponseDto[]> {
+    return this.watchlistsService.findAll(request.user.id);
   }
 
   @Get("recent-alerts")
@@ -39,8 +39,8 @@ export class WatchlistsController {
   }
 
   @Get(":entryId")
-  findOne(@Param("entryId") entryId: string): Promise<WatchlistEntryResponseDto> {
-    return this.watchlistsService.findOne(entryId);
+  findOne(@Req() request: AuthenticatedRequest, @Param("entryId") entryId: string): Promise<WatchlistEntryResponseDto> {
+    return this.watchlistsService.findOne(request.user.id, entryId);
   }
 
   @Patch(":entryId")

@@ -22,13 +22,13 @@ export class WatchlistsService {
     return createdWatchlistEntry;
   }
 
-  async findAll(): Promise<WatchlistEntryResponseDto[]> {
-    return await this.prisma.watchlistEntry.findMany({ include: { asset: true } });
+  async findAll(userId: string): Promise<WatchlistEntryResponseDto[]> {
+    return await this.prisma.watchlistEntry.findMany({ where: { userId }, include: { asset: true } });
   }
 
-  async findOne(entryId: string): Promise<WatchlistEntryResponseDto> {
+  async findOne(userId: string, entryId: string): Promise<WatchlistEntryResponseDto> {
     const watchlistEntry = await this.prisma.watchlistEntry.findUnique({
-      where: { id: entryId },
+      where: { userId, id: entryId },
       include: { asset: true },
     });
     return assertFound(watchlistEntry, `Watchlist entry with ID ${entryId} not found`);
