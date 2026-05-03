@@ -3,6 +3,7 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
 import { AppModule } from "./app.module";
+import cookieParser from "cookie-parser";
 
 import { WinstonModule, utilities as nestWinstonModuleUtilities } from "nest-winston";
 import * as winston from "winston";
@@ -29,6 +30,9 @@ async function bootstrap() {
     }),
   });
 
+  // cookie parser
+  app.use(cookieParser());
+
   // Decided to expose the Swagger docs endpoint since this is a portfolio project
   const openApiDoc = SwaggerModule.createDocument(
     app,
@@ -43,11 +47,17 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  // Enable CORS only for lcoal frontend, for now
+  // Enable CORS only for local frontend, for now
+  const allowedOrigins = ["http://localhost:3000"];
+  const frontendUrl = configService.get<string>("FRONTEND_URL");
+  if (frontendUrl) {
+    allowedOrigins.push(frontendUrl.replace(/\/$/, ""));
+  }
   app.enableCors({
-    origin: "http://localhost:3000",
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   });
 
   await app.listen(configService.get<string>("PORT") || "3001");
