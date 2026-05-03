@@ -19,7 +19,7 @@ export class AuthService {
   }
 
   async register(userDetails: UserRegisterDto): Promise<string> {
-    const user = await this.userService.upsertUser({ email: userDetails.email, password: userDetails.password });
+    const user = await this.userService.createUser({ email: userDetails.email, password: userDetails.password });
     const userResponse = UserResponseSchema.parse(user);
     return this.generateToken(userResponse);
   }

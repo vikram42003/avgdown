@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from "@nestjs/common";
+import { Injectable, NotFoundException, Logger, ConflictException } from "@nestjs/common";
 import { User } from "@avgdown/db";
 import { UserResponseSchema } from "@avgdown/types";
 import * as bcrypt from "bcrypt";
@@ -23,6 +23,30 @@ export class UsersService {
       throw new NotFoundException("User not found");
     }
     return UserResponseSchema.parse(foundUser);
+  }
+
+  async createUser(data: { email: string; password?: string }): Promise<User> {
+    const { email, password } = data;
+
+    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      this.logger.warn(`Registration failed: User with email ${redactEmail(email)} already exists`);
+      throw new ConflictException("User already exists");
+    }
+
+    let passwordHash: string | undefined;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      passwordHash = await bcrypt.hash(password, salt);
+    }
+
+    this.logger.log(`New user registered: ${redactEmail(email)} (via Credentials)`);
+    return this.prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+      },
+    });
   }
 
   async upsertUser(data: { email: string; password?: string; googleId?: string }) {
