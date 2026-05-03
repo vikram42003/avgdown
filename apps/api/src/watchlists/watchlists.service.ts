@@ -9,35 +9,64 @@ import {
 } from "./watchlist.dto";
 
 import { assertFound } from "src/common/utils/assert-found";
+import { Prisma } from "@avgdown/db";
 
 @Injectable()
 export class WatchlistsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createDto: WatchlistEntryCreateDto): Promise<WatchlistEntryResponseDto> {
-    // Extract user id from auth guard or something and then embed that to the recieved object and then create
-    // WIP - Do it after auth
+  async create(userId: string, watchlistEntryData: WatchlistEntryCreateDto): Promise<WatchlistEntryResponseDto> {
+    const data = { userId, ...watchlistEntryData };
+    const createdWatchlistEntry = await this.prisma.watchlistEntry.create({ data, include: { asset: true } });
 
-    // const watchlistEntry = await this.prisma.watchlistEntry.create({ data: createDto });
-    // return watchlistEntry;
-    return `This action adds a new watchlist` as any;
+    return createdWatchlistEntry;
   }
 
   async findAll(): Promise<WatchlistEntryResponseDto[]> {
     return await this.prisma.watchlistEntry.findMany({ include: { asset: true } });
   }
 
-  async findOne(id: string): Promise<WatchlistEntryResponseDto> {
-    const watchlistEntry = await this.prisma.watchlistEntry.findUnique({ where: { id }, include: { asset: true } });
-    return assertFound(watchlistEntry, `Watchlist entry with ID ${id} not found`);
+  async findOne(entryId: string): Promise<WatchlistEntryResponseDto> {
+    const watchlistEntry = await this.prisma.watchlistEntry.findUnique({
+      where: { id: entryId },
+      include: { asset: true },
+    });
+    return assertFound(watchlistEntry, `Watchlist entry with ID ${entryId} not found`);
   }
 
-  async update(id: string, updateDto: WatchlistEntryUpdateDto): Promise<WatchlistEntryResponseDto> {
-    return `This action updates a #${id} watchlist` as any;
+  async update(
+    userId: string,
+    entryId: string,
+    watchlistUpdateData: WatchlistEntryUpdateDto,
+  ): Promise<WatchlistEntryResponseDto> {
+    try {
+      const result = await this.prisma.watchlistEntry.update({
+        where: { id: entryId, userId: userId },
+        data: watchlistUpdateData,
+        include: { asset: true },
+      });
+      return result;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+        throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
+      }
+      throw e;
+    }
   }
 
-  async remove(id: string): Promise<WatchlistEntryResponseDto> {
-    return `This action removes a #${id} watchlist` as any;
+  async remove(userId: string, entryId: string): Promise<WatchlistEntryResponseDto> {
+    try {
+      const result = await this.prisma.watchlistEntry.delete({
+        where: { id: entryId, userId: userId },
+        include: { asset: true },
+      });
+      return result;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+        throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
+      }
+      throw e;
+    }
   }
 
   async getRecentAlerts(userId: string): Promise<RecentAlertDto[]> {

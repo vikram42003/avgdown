@@ -16,8 +16,11 @@ export class WatchlistsController {
   constructor(private readonly watchlistsService: WatchlistsService) {}
 
   @Post()
-  create(@Body() createDto: WatchlistEntryCreateDto): Promise<WatchlistEntryResponseDto> {
-    return this.watchlistsService.create(createDto);
+  create(
+    @Req() request: AuthenticatedRequest,
+    @Body() watchlistEntryData: WatchlistEntryCreateDto,
+  ): Promise<WatchlistEntryResponseDto> {
+    return this.watchlistsService.create(request.user.id, watchlistEntryData);
   }
 
   @Get()
@@ -35,18 +38,22 @@ export class WatchlistsController {
     return this.watchlistsService.getChartData(request.user.id, entryId);
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string): Promise<WatchlistEntryResponseDto> {
-    return this.watchlistsService.findOne(id);
+  @Get(":entryId")
+  findOne(@Param("entryId") entryId: string): Promise<WatchlistEntryResponseDto> {
+    return this.watchlistsService.findOne(entryId);
   }
 
-  @Patch(":id")
-  update(@Param("id") id: string, @Body() updateDto: WatchlistEntryUpdateDto): Promise<WatchlistEntryResponseDto> {
-    return this.watchlistsService.update(id, updateDto);
+  @Patch(":entryId")
+  update(
+    @Req() request: AuthenticatedRequest,
+    @Param("entryId") entryId: string,
+    @Body() watchlistUpdateData: WatchlistEntryUpdateDto,
+  ): Promise<WatchlistEntryResponseDto> {
+    return this.watchlistsService.update(request.user.id, entryId, watchlistUpdateData);
   }
 
-  @Delete(":id")
-  remove(@Param("id") id: string): Promise<WatchlistEntryResponseDto> {
-    return this.watchlistsService.remove(id);
+  @Delete(":entryId")
+  remove(@Req() request: AuthenticatedRequest, @Param("entryId") entryId: string): Promise<WatchlistEntryResponseDto> {
+    return this.watchlistsService.remove(request.user.id, entryId);
   }
 }

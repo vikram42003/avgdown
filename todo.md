@@ -3,7 +3,7 @@
 ### Pre MVP -
 
 1. ✅ CORS Configuration: Setup CORS in the NestJS API so the frontend can communicate with it.
-2. Auth Guards: Properly add the correct auth guards across all necessary Nest server endpoints.
+2. ✅ Auth Guards: Properly add the correct auth guards across all necessary Nest server endpoints.
 3. Complete Auth-Dependent Logic: Fill out the rest of the incomplete functions that rely on user authentication info.
 
 4. Auth Pages: Build Login and Signup pages.
@@ -80,3 +80,8 @@ chore/docs-review                 → 21, 22
 - [x] Update chart data API contract to use daily SMA series
 - [x] Run database migrations and apply minor type fixes
 - [x] Enable CORS locally (task #1)
+
+### 3 May 2026 - Night
+- [x] Configure backend to use HTTP-only cookies for JWT auth (`cookie-parser`)
+- [x] Implement complete Auth flow (Login, Register, Logout endpoints)
+- [x] Apply `AuthGuard` to protect necessary backend controllers (Task #2)
