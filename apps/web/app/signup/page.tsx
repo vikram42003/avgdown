@@ -49,8 +49,8 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="glass w-full max-w-sm rounded-2xl p-8 space-y-6">
+    <div className="flex flex-1 min-h-screen items-center justify-center bg-background px-4">
+      <div className="glass w-full max-w-md rounded-2xl p-8 space-y-6">
         {/* Brand mark */}
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary/20 text-chart-1">
