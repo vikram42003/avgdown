@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ChartLineUpIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GoogleIcon } from "@/components/icons/GoogleIcom";
+import { GoogleIcon } from "@/components/icons/GoogleIcon";
 
 export default function LoginPage() {
   const router = useRouter();
