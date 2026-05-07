@@ -38,7 +38,7 @@
 
 ## PR PLAN
 
-feat/backend-auth                 → 1, 2, 3
+✅ feat/backend-auth                 → 1, 2, 3
 feat/frontend-auth-flow           → 4, 7
 feat/data-layer-dashboard         → 5, 6
 feat/watchlist-crud               → 8
