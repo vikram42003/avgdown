@@ -36,7 +36,7 @@
 
 ### OTHER STUFF (handle it one day...)
 23. Add a way for auth'd users to like setup password if they used oauth and vice versa
-24. See if we can make the db interactions in the backend use transa
+24. Implement the calculation of the delivery rate in dashboard summary cards
 
 ---
 
