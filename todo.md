@@ -37,12 +37,14 @@
 ### OTHER STUFF (handle it one day...)
 23. Add a way for auth'd users to like setup password if they used oauth and vice versa
 24. Implement the calculation of the delivery rate in dashboard summary cards
+25. Limit the watchlist charts we initially load and add pagination/infinite scrolling
+26. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
 
 ---
 
 ## PR PLAN
 
-✅ feat/backend-auth                 → 1, 2, 3
+✅ feat/backend-auth              → 1, 2, 3
 feat/frontend-auth-flow           → 4, 7
 feat/data-layer-dashboard         → 5, 6
 feat/watchlist-crud               → 8

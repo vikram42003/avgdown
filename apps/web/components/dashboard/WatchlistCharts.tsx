@@ -25,6 +25,7 @@ interface ChartDataPoint {
 function WatchlistChartCard({ entry }: Readonly<{ entry: WatchlistEntryResponse }>) {
   const { chartData, isLoading } = useChartData(entry.id);
 
+  // Format prices so that they look good on the chart
   const formatPrice = (v: number) => formatCurrency(v, entry.asset.exchange);
   const formatPriceTick = (v: number) => {
     const sym = getCurrencySymbol(entry.asset.exchange);
@@ -77,11 +78,10 @@ function WatchlistChartCard({ entry }: Readonly<{ entry: WatchlistEntryResponse 
                   labelFormatter={(_, payload) => {
                     const raw = payload?.[0]?.payload?.fetchedAt;
                     if (!raw) return "";
-                    return new Date(raw).toLocaleString(undefined, {
+                    return new Date(raw).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
+                      year: "numeric",
                     });
                   }}
                   formatter={(value, name) => [
@@ -156,7 +156,7 @@ const ChartCardSkeleton = () => (
   </div>
 );
 
-// ─── Container ────────────────────────────────────────────────────────────────
+// Container for the Charts
 
 const WatchlistCharts = () => {
   const { watchlists, isLoading } = useWatchlists();
