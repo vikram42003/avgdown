@@ -13,13 +13,18 @@ const AccountProfile = () => {
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch(`${API_URL}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-    // Revalidate the /users/me cache so all consumers update instantly
-    await mutate(undefined, { revalidate: false });
-    router.push("/login");
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      // Revalidate the /users/me cache so all consumers update instantly
+      await mutate(undefined, { revalidate: false });
+      router.push("/login");
+    }
   }
 
   // Derive initials from email (e.g. "vikram@example.com" → "VI")
