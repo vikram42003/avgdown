@@ -1,4 +1,10 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (process.env.NODE_ENV === "production"
+    ? (() => {
+        throw new Error("NEXT_PUBLIC_API_URL is not set");
+      })()
+    : "http://localhost:3001");
 
 // Base fetcher for SWR. Prepends the API base URL and sends cookies
 // Throws on non-2xx responses so SWR surfaces them as `error`.

@@ -123,7 +123,7 @@ export default function SignupPage() {
             />
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
 
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
             {loading ? "Creating account…" : "Create account"}
