@@ -39,6 +39,7 @@
 24. Implement the calculation of the delivery rate in dashboard summary cards
 25. Limit the watchlist charts we initially load and add pagination/infinite scrolling
 26. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
+27. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
 
 ---
 
@@ -47,8 +48,7 @@
 ✅ feat/backend-auth              → 1, 2, 3
 ✅ feat/frontend-auth-flow        → 4, 7
 ✅ feat/data-layer-dashboard      → 5, 6
-feat/watchlist-crud               → 8
-feat/app-pages                    → 9
+feat/watchlist-crud-app-pages     → 8, 9
 feat/ui-states-feedback           → 10, 11, 12, 13
 feat/infra-deployment             → 14, 15, 16
 
