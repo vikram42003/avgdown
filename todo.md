@@ -34,11 +34,15 @@
 21. Update Documentation and make charts/graphs and shit for it
 22. GO THROUGH THE GUIDE.md AND SEE IF THERES ANYTHING ELSE LEFT
 
+### OTHER STUFF (handle it one day...)
+23. Add a way for auth'd users to like setup password if they used oauth and vice versa
+24. See if we can make the db interactions in the backend use transa
+
 ---
 
 ## PR PLAN
 
-feat/backend-auth                 → 1, 2, 3
+✅ feat/backend-auth                 → 1, 2, 3
 feat/frontend-auth-flow           → 4, 7
 feat/data-layer-dashboard         → 5, 6
 feat/watchlist-crud               → 8

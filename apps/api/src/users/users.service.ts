@@ -99,6 +99,9 @@ export class UsersService {
           passwordHash,
         },
       });
+    }, {
+      maxWait: 10000, // 10 seconds to connect
+      timeout: 20000, // 20 seconds for the transaction to complete
     });
   }
 

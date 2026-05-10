@@ -1,33 +1,18 @@
-import { PlusIcon } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import DashboardSummaryCards from "@/components/dashboard/DashboardSummaryCards";
-import RecentAlerts from "@/components/dashboard/RecentAlerts";
-import WatchlistCharts from "@/components/dashboard/WatchlistCharts";
 
-export default function Dashboard() {
+export default function LandingPage() {
   return (
-    <section className="flex flex-1 flex-col">
-      {/* Putting down all the stuff i might need on this page in a div */}
-      <div className="flex shrink-0 items-center justify-between mb-6">
-        <h2 className="font-bold text-4xl">Overview</h2>
-
-        <Button size="lg" className="rounded-md">
-          <PlusIcon />
-          Create New Watchlist
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
+      <h1 className="text-6xl font-bold mb-4 tracking-tighter">AvgDown</h1>
+      <p className="text-xl text-muted-foreground mb-8 text-center max-w-[600px]">
+        Smarter Dollar Cost Averaging. Get alerted when your favorite assets hit key technical levels.
+      </p>
+      <Link href="/dashboard">
+        <Button size="lg" className="rounded-full px-8 text-lg">
+          Go to Dashboard
         </Button>
-      </div>
-
-      <DashboardSummaryCards />
-
-      <div className="flex min-h-0 flex-1 gap-8 mt-6">
-        <div className="flex-7/10 glass-primary rounded-xl p-4">
-          <WatchlistCharts />
-        </div>
-        <div className="flex-3/10 glass-primary rounded-xl p-4">
-          <RecentAlerts />
-        </div>
-      </div>
-      {/* Do not forget some sort of empty state, like no alerts no watchlists */}
-    </section>
+      </Link>
+    </div>
   );
 }

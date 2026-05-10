@@ -9,14 +9,6 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: twoFoldersUp,
   },
-  async rewrites() {
-    return [
-      {
-        source: "/dashboard",
-        destination: "/",
-      },
-    ];
-  },
 };
 
 export default nextConfig;
