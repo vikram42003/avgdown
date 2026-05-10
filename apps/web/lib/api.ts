@@ -21,3 +21,27 @@ export async function fetcher<T>(path: string): Promise<T> {
 
   return res.json() as Promise<T>;
 }
+
+// Mutation helper for POST / PATCH / DELETE.
+// Throws with the same { status } shape as fetcher so callers handle errors consistently.
+export async function apiMutate<T>(
+  path: string,
+  method: "POST" | "PATCH" | "DELETE",
+  body?: unknown,
+): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method,
+    credentials: "include",
+    headers: body === undefined ? {} : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const error = new Error("API request failed");
+    (error as Error & { status: number }).status = res.status;
+    throw error;
+  }
+
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
