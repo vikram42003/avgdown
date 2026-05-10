@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,10 +8,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function ClientAuthGuard({ children }: Readonly<{ children: React.ReactNode }>) {
   const { user, isLoading, error } = useUser();
   const router = useRouter();
+  const redirectingRef = useRef(false);
 
   useEffect(() => {
     // If the token is invalid (401), clear the dead httpOnly cookie and redirect
     if (!isLoading && error?.status === 401) {
+      if (redirectingRef.current) return;
+      redirectingRef.current = true;
       const clearCookieAndRedirect = async () => {
         try {
           await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/logout`, {
