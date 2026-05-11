@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -16,15 +17,16 @@ import Link from "next/link";
 import AccountProfile from "./AccountProfile";
 
 const navItems = [
-  { label: "Overview", icon: GaugeIcon, href: "/" },
-  { label: "Watchlists", icon: ListIcon, href: "/watchlists" },
-  { label: "Alerts", icon: BellIcon, href: "/alerts" },
-  { label: "Browse Assets", icon: MagnifyingGlassIcon, href: "/browse-assets" },
+  { label: "Overview", icon: GaugeIcon, href: "/dashboard" },
+  { label: "Watchlists", icon: ListIcon, href: "/dashboard/watchlists" },
+  { label: "Alerts", icon: BellIcon, href: "/dashboard/alerts" },
+  { label: "Browse Assets", icon: MagnifyingGlassIcon, href: "/dashboard/browse-assets" },
 ];
 
-const bottomNavItems = [{ label: "Settings", icon: GearIcon, href: "/settings" }];
+const bottomNavItems = [{ label: "Settings", icon: GearIcon, href: "/dashboard/settings" }];
 
 export function AppSidebar() {
+  const pathname = usePathname();
   return (
     <Sidebar collapsible="icon">
       {/* Logo / Brand — collapses to just the icon */}
@@ -32,7 +34,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
+              <Link href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary/20 text-chart-1 shrink-0">
                   <ChartLineUpIcon weight="bold" />
                 </div>
@@ -53,7 +55,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton asChild tooltip={item.label}>
+                  <SidebarMenuButton asChild tooltip={item.label} isActive={pathname === item.href}>
                     <Link href={item.href}>
                       <item.icon />
                       <span>{item.label}</span>

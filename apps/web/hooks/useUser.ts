@@ -4,14 +4,10 @@ import { fetcher } from "@/lib/api";
 
 // Fetches the currently authenticated user from GET /users/me.
 export function useUser() {
-  const { data, error, isLoading, mutate } = useSWR<UserResponse>(
-    "/users/me",
-    fetcher,
-    {
-      // Don't retry on 401 - the user is simply not logged in
-      shouldRetryOnError: false,
-    },
-  );
+  const { data, error, isLoading, mutate } = useSWR<UserResponse>("/users/me", fetcher, {
+    // Don't retry on 401 - the user is simply not logged in
+    shouldRetryOnError: false,
+  });
 
   return {
     user: data,

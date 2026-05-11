@@ -1,11 +1,7 @@
 import useSWR from "swr";
-import type {
-  WatchlistEntryResponse,
-  RecentAlertResponse,
-  PriceSnapshotChartDataResponse,
-} from "@avgdown/types";
+import type { WatchlistEntryResponse, RecentAlertResponse, PriceSnapshotChartDataResponse } from "@avgdown/types";
 
-// --- Watchlists ---
+// Watchlists
 
 export function useWatchlists() {
   const { data, error, isLoading, mutate } = useSWR<WatchlistEntryResponse[]>("/watchlists");
@@ -17,7 +13,7 @@ export function useWatchlists() {
   };
 }
 
-// --- Recent Alerts ---
+// Recent Alerts
 
 export function useRecentAlerts() {
   const { data, error, isLoading } = useSWR<RecentAlertResponse[]>("/watchlists/recent-alerts");
@@ -28,7 +24,7 @@ export function useRecentAlerts() {
   };
 }
 
-// --- Chart data for a single watchlist entry ---
+// Chart data for a single watchlist entry
 // Pass null to skip the fetch (e.g. when no entry is selected yet)
 
 export function useChartData(entryId: string | null) {
