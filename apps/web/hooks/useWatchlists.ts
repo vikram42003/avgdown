@@ -1,9 +1,5 @@
 import useSWR from "swr";
-import type {
-  WatchlistEntryResponse,
-  RecentAlertResponse,
-  PriceSnapshotChartDataResponse,
-} from "@avgdown/types";
+import type { WatchlistEntryResponse, RecentAlertResponse, PriceSnapshotChartDataResponse } from "@avgdown/types";
 
 // --- Watchlists ---
 
@@ -33,7 +29,7 @@ export function useRecentAlerts() {
 
 export function useChartData(entryId: string | null) {
   const { data, error, isLoading } = useSWR<PriceSnapshotChartDataResponse>(
-    entryId ? `/watchlists/${entryId}/chart-data` : null,
+    entryId ? `/watchlists/${encodeURIComponent(entryId)}/chart-data` : null,
   );
   return {
     chartData: data ?? null,
