@@ -14,6 +14,10 @@ import { WatchlistFormSheet } from "@/components/dashboard/WatchlistFormSheet";
 import { apiMutate } from "@/lib/api";
 import type { WatchlistEntryResponse, PriceSnapshotResponse } from "@avgdown/types";
 
+interface WatchlistChartsProps {
+  initialWatchlists?: WatchlistEntryResponse[];
+}
+
 // Chart config - keys must match the dataKey props on <Line>
 const chartConfig = {
   price: { label: "Price", color: "var(--color-primary)" },
@@ -241,8 +245,8 @@ const ChartCardSkeleton = () => (
 
 // Container for the Charts
 
-const WatchlistCharts = () => {
-  const { watchlists, isLoading } = useWatchlists();
+const WatchlistCharts = ({ initialWatchlists }: Readonly<WatchlistChartsProps>) => {
+  const { watchlists, isLoading } = useWatchlists(initialWatchlists);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<WatchlistEntryResponse | undefined>(undefined);
 

@@ -2,6 +2,12 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWatchlists, useRecentAlerts } from "@/hooks/useWatchlists";
+import type { WatchlistEntryResponse, RecentAlertResponse } from "@avgdown/types";
+
+interface DashboardSummaryCardsProps {
+  initialWatchlists?: WatchlistEntryResponse[];
+  initialAlerts?: RecentAlertResponse[];
+}
 
 interface SummaryCardProps {
   title: string;
@@ -18,13 +24,12 @@ const SummaryCard = ({ title, value, isLoading }: SummaryCardProps) => {
   );
 };
 
-const DashboardSummaryCards = () => {
-  const { watchlists, isLoading: watchlistsLoading } = useWatchlists();
-  const { alerts, isLoading: alertsLoading } = useRecentAlerts();
+const DashboardSummaryCards = ({ initialWatchlists, initialAlerts }: Readonly<DashboardSummaryCardsProps>) => {
+  const { watchlists, isLoading: watchlistsLoading } = useWatchlists(initialWatchlists);
+  const { alerts, isLoading: alertsLoading } = useRecentAlerts(initialAlerts);
 
+  // Only show loading state when there's no fallback data to display
   const isLoading = watchlistsLoading || alertsLoading;
-
-  // Unique asset count from the watchlist entries
   const assetCount = new Set(watchlists.map((w) => w.asset.id)).size;
 
   return (
