@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export function ClientAuthGuard({ children }: Readonly<{ children: React.ReactNode }>) {
   const { user, isLoading, error } = useUser();
@@ -31,22 +30,10 @@ export function ClientAuthGuard({ children }: Readonly<{ children: React.ReactNo
     }
   }, [isLoading, error, router]);
 
-  // While checking auth state, show a generic dashboard skeleton
-  // so we don't flash unauthenticated content or crash child components
   if (isLoading || (!user && !error)) {
     return (
-      <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-10 w-24" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
-        </div>
-        <Skeleton className="h-[400px] w-full rounded-xl" />
+      <div className="flex flex-1 items-center justify-center">
+        <div className="size-6 rounded-full border-2 border-muted border-t-primary animate-spin" />
       </div>
     );
   }

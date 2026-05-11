@@ -2,44 +2,18 @@
 
 import { useState } from "react";
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAssets } from "@/hooks/useAssets";
-import type { AssetType, Exchange } from "@avgdown/types";
+import { AssetCard, AssetCardSkeleton } from "@/components/dashboard/AssetCard";
+import type { AssetType } from "@avgdown/types";
 
-const ASSET_TYPE_COLORS: Record<AssetType, string> = {
-  STOCK: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  ETF: "bg-violet-500/10 text-violet-400 border-violet-500/20",
-  CRYPTO: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-};
-
-const EXCHANGE_LABEL: Record<Exchange, string> = {
-  NASDAQ: "NASDAQ",
-  NYSE: "NYSE",
-  NSE: "NSE",
-  BSE: "BSE",
-  BINANCE: "Binance",
-  COINBASE: "Coinbase",
-};
-
-const AssetCardSkeleton = () => (
-  <div className="glass rounded-xl p-4 flex flex-col gap-3">
-    <div className="flex items-start justify-between">
-      <Skeleton className="h-5 w-16" />
-      <Skeleton className="h-5 w-14 rounded-full" />
-    </div>
-    <Skeleton className="h-4 w-32" />
-    <Skeleton className="h-3 w-20" />
-  </div>
-);
+const ASSET_TYPES: (AssetType | "ALL")[] = ["ALL", "STOCK", "ETF", "CRYPTO"];
 
 export default function BrowseAssetsPage() {
   const { assets, isLoading } = useAssets();
   const [query, setQuery] = useState("");
   const [activeType, setActiveType] = useState<AssetType | "ALL">("ALL");
-
-  const assetTypes: (AssetType | "ALL")[] = ["ALL", "STOCK", "ETF", "CRYPTO"];
 
   const filtered = assets.filter((a) => {
     const matchesType = activeType === "ALL" || a.assetType === activeType;
@@ -73,17 +47,23 @@ export default function BrowseAssetsPage() {
           />
         </div>
 
-        <div className="flex gap-1.5 p-1 glass rounded-lg w-fit">
-          {assetTypes.map((type) => (
+        {/* Sliding pill type filter */}
+        <div className="relative flex p-1 glass rounded-lg w-fit overflow-hidden">
+          <div
+            className="absolute left-1 top-1 bottom-1 rounded-md bg-primary transition-transform duration-200 ease-in-out pointer-events-none"
+            style={{
+              width: `calc((100% - 8px) / ${ASSET_TYPES.length})`,
+              transform: `translateX(${ASSET_TYPES.indexOf(activeType) * 100}%)`,
+            }}
+          />
+          {ASSET_TYPES.map((type) => (
             <button
               key={type}
               type="button"
               onClick={() => setActiveType(type)}
               className={cn(
-                "px-3 py-1 rounded-md text-sm font-medium transition-colors",
-                activeType === type
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+                "relative z-10 flex-1 px-3 py-1 rounded-md text-sm font-medium transition-colors duration-150",
+                activeType === type ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
               {type === "ALL" ? "All" : type}
@@ -104,21 +84,7 @@ export default function BrowseAssetsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {filtered.map((asset) => (
-            <div key={asset.id} className="glass rounded-xl p-4 flex flex-col gap-2 hover:bg-primary/5 transition-colors">
-              <div className="flex items-start justify-between gap-2">
-                <span className="font-bold text-base">{asset.symbol}</span>
-                <span className={cn(
-                  "text-xs font-medium px-2 py-0.5 rounded-full border shrink-0",
-                  ASSET_TYPE_COLORS[asset.assetType],
-                )}>
-                  {asset.assetType}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-snug line-clamp-2">{asset.name}</p>
-              <span className="text-xs text-muted-foreground mt-auto">{EXCHANGE_LABEL[asset.exchange as Exchange]}</span>
-            </div>
-          ))}
+          {filtered.map((asset) => <AssetCard key={asset.id} asset={asset} />)}
         </div>
       )}
     </section>

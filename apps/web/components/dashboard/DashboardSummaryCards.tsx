@@ -13,7 +13,7 @@ const SummaryCard = ({ title, value, isLoading }: SummaryCardProps) => {
   return (
     <div className="w-full sm:w-[calc(50%-1rem)] lg:flex-1 max-w-64 glass-primary px-2 py-4 rounded-md flex flex-col gap-1">
       <div className="text-sm text-muted-foreground">{title}</div>
-      {isLoading ? <Skeleton className="h-7 w-16 mt-0.5" /> : <div className="font-semibold text-xl">{value}</div>}
+      {isLoading ? <Skeleton className="h-7 w-16 mt-0.5 mx-auto" /> : <div className="font-semibold text-xl">{value}</div>}
     </div>
   );
 };
