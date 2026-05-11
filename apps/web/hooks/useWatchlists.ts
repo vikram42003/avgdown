@@ -29,7 +29,7 @@ export function useRecentAlerts() {
 
 export function useChartData(entryId: string | null) {
   const { data, error, isLoading } = useSWR<PriceSnapshotChartDataResponse>(
-    entryId ? `/watchlists/${entryId}/chart-data` : null,
+    entryId ? `/watchlists/${encodeURIComponent(entryId)}/chart-data` : null,
   );
   return {
     chartData: data ?? null,

@@ -7,7 +7,8 @@ import type { RecentAlertResponse } from "@avgdown/types";
 
 const AlertCard = ({ alert }: { alert: RecentAlertResponse }) => {
   const exchange = alert.watchlistEntry.asset.exchange;
-  const deltaPct = (((alert.triggeredPrice - alert.smaValue) / alert.smaValue) * 100).toFixed(2);
+  const rawDelta = alert.smaValue === 0 ? Number.NaN : ((alert.triggeredPrice - alert.smaValue) / alert.smaValue) * 100;
+  const deltaPctStr = Number.isFinite(rawDelta) ? `${rawDelta.toFixed(2)}%` : "N/A";
 
   return (
     <div className="glass px-3 py-2 rounded space-y-1">
@@ -19,7 +20,7 @@ const AlertCard = ({ alert }: { alert: RecentAlertResponse }) => {
         {formatCurrency(alert.triggeredPrice, exchange)} crossed below SMA-{alert.watchlistEntry.smaPeriod} (
         {formatCurrency(alert.smaValue, exchange)})
         <br />
-        <span className="text-destructive font-medium">{deltaPct}%</span>
+        <span className="text-destructive font-medium">{deltaPctStr}</span>
       </p>
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>{formatRelativeTime(alert.createdAt)}</span>
