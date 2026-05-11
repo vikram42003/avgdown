@@ -6,10 +6,10 @@
 2. ✅ Auth Guards: Properly add the correct auth guards across all necessary Nest server endpoints.
 3. ✅ Complete Auth-Dependent Logic: Fill out the rest of the incomplete functions that rely on user authentication info.
 
-4. Auth Pages: Build Login and Signup pages.
-5. Data Fetching Layer: Wire up SWR for data fetching (prioritizing fresh data over global state).
-6. Dashboard Data Wiring: Connect the dashboard components to the real backend endpoints.
-7. Auth State Handling: Implement "Not logged in" states and protected route redirects.
+4. ✅ Auth Pages: Build Login and Signup pages.
+5. ✅ Data Fetching Layer: Wire up SWR for data fetching (prioritizing fresh data over global state).
+6. ✅ Dashboard Data Wiring: Connect the dashboard components to the real backend endpoints.
+7. ✅ Auth State Handling: Implement "Not logged in" states and protected route redirects.
 
 8. Watchlist CRUD Flow: Build the Create/Edit Watchlist form (Modal/Sheet with asset search and SMA period input - this is the most critical user action!).
 9. Sidebar Pages: Implement the remaining pages in the sidebar tabs (`/watchlists`, `/alerts`, `/browse-assets`).
@@ -36,15 +36,17 @@
 
 ### OTHER STUFF (handle it one day...)
 23. Add a way for auth'd users to like setup password if they used oauth and vice versa
-24. See if we can make the db interactions in the backend use transa
+24. Implement the calculation of the delivery rate in dashboard summary cards
+25. Limit the watchlist charts we initially load and add pagination/infinite scrolling
+26. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
 
 ---
 
 ## PR PLAN
 
-✅ feat/backend-auth                 → 1, 2, 3
-feat/frontend-auth-flow           → 4, 7
-feat/data-layer-dashboard         → 5, 6
+✅ feat/backend-auth              → 1, 2, 3
+✅ feat/frontend-auth-flow        → 4, 7
+✅ feat/data-layer-dashboard      → 5, 6
 feat/watchlist-crud               → 8
 feat/app-pages                    → 9
 feat/ui-states-feedback           → 10, 11, 12, 13
@@ -90,3 +92,17 @@ chore/docs-review                 → 21, 22
 - [x] Implement complete Auth flow (Login, Register, Logout endpoints)
 - [x] Apply `AuthGuard` to protect necessary backend controllers (Task #2)
 - [x] Enforce user ownership in watchlist endpoints by validating `userId` (Task #3)
+
+### 7 May 2026 - Night
+- [x] Move dashboard to `/dashboard`, create initial login and signup pages (Task #4)
+- [x] Extract `GoogleIcon` to `components/icons`, fix login page alignment
+- [x] Add `proxy.ts` middleware for edge-level cookie existence checks on protected routes
+
+### 8 May 2026 - Night
+- [x] Fix P2028 transaction timeout — raised `maxWait`/`timeout` for Neon cold starts
+- [x] Implement `ClientAuthGuard` with stale cookie handling and dashboard skeleton (Task #7)
+
+### 9 May 2026 - Night
+- [x] Implement SWR hooks: `useUser`, `useWatchlists`, `useRecentAlerts`, `useChartData` (Task #5)
+- [x] Wire all dashboard components to real API data, replace all mock data (Task #6)
+- [x] Fix chart tooltip date format to match daily candle granularity

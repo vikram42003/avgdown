@@ -1,25 +1,42 @@
-interface SummaryCardPropTypes {
+"use client";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import { useWatchlists, useRecentAlerts } from "@/hooks/useWatchlists";
+
+interface SummaryCardProps {
   title: string;
-  value: string;
+  value: string | number;
+  isLoading?: boolean;
 }
 
-const SummaryCard = ({ title, value }: SummaryCardPropTypes) => {
+const SummaryCard = ({ title, value, isLoading }: SummaryCardProps) => {
   return (
     <div className="w-full sm:w-[calc(50%-1rem)] lg:flex-1 max-w-64 glass-primary px-2 py-4 rounded-md flex flex-col gap-1">
       <div className="text-sm text-muted-foreground">{title}</div>
-      <div className="font-semibold text-xl">{value}</div>
+      {isLoading ? <Skeleton className="h-7 w-16 mt-0.5" /> : <div className="font-semibold text-xl">{value}</div>}
     </div>
   );
 };
 
 const DashboardSummaryCards = () => {
-  // we fetch data about the last 7 days of triggered alerts and the total watchlists we're tracking and all that from the backend
+  const { watchlists, isLoading: watchlistsLoading } = useWatchlists();
+  const { alerts, isLoading: alertsLoading } = useRecentAlerts();
+
+  const isLoading = watchlistsLoading || alertsLoading;
+
+  // Unique asset count from the watchlist entries
+  const assetCount = new Set(watchlists.map((w) => w.asset.id)).size;
+
   return (
     <div className="mt-12 mb-8 flex flex-wrap justify-between lg:justify-around gap-8 text-center">
-      <SummaryCard title={"Recent Alerts"} value={"6"} />
-      <SummaryCard title={"Active Watchlists"} value={"7"} />
-      <SummaryCard title={"Total Assets Tracked"} value={"9"} />
-      <SummaryCard title={"Delivery Rate"} value={"99%"} />
+      <SummaryCard title="Recent Alerts" value={alerts.length} isLoading={isLoading} />
+      <SummaryCard
+        title="Active Watchlists"
+        value={watchlists.filter((w) => w.isActive).length}
+        isLoading={isLoading}
+      />
+      <SummaryCard title="Total Assets Tracked" value={assetCount} isLoading={isLoading} />
+      <SummaryCard title="Delivery Rate" value="99%" />
     </div>
   );
 };
