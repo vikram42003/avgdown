@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSWRConfig } from "swr";
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,9 +111,11 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
       if (isEditMode) {
         const payload: WatchlistEntryUpdateDto = { assetId: selectedAsset.id, smaPeriod, isActive };
         await apiMutate<WatchlistEntryResponse>(`/watchlists/${entry.id}`, "PATCH", payload);
+        toast.success(`Updated ${selectedAsset.symbol} watchlist entry`);
       } else {
         const payload: WatchlistEntryCreateDto = { assetId: selectedAsset.id, smaPeriod, isActive: true };
         await apiMutate<WatchlistEntryResponse>("/watchlists", "POST", payload);
+        toast.success(`Added ${selectedAsset.symbol} to watchlist`);
       }
       await mutate("/watchlists");
       onOpenChange(false);

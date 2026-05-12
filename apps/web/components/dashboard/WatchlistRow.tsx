@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PencilSimpleIcon, TrashIcon, CalendarIcon, CircleIcon } from "@phosphor-icons/react";
 import { useSWRConfig } from "swr";
+import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -29,7 +30,9 @@ export function WatchlistRow({ entry, onEditRequest }: Readonly<WatchlistRowProp
     try {
       await apiMutate(`/watchlists/${entry.id}`, "DELETE");
       await mutate("/watchlists");
+      toast.success(`Removed ${entry.asset.symbol} from watchlist`);
     } catch {
+      toast.error("Failed to remove watchlist entry");
       setDeleteOpen(false);
     } finally {
       setDeleting(false);

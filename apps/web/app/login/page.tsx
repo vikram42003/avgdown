@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChartLineUpIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
@@ -34,6 +35,7 @@ export default function LoginPage() {
         return;
       }
 
+      toast.success("Welcome back!");
       router.push("/dashboard");
     } catch {
       setError("Could not connect to the server. Try again.");

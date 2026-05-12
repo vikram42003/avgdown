@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { SignOutIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/useUser";
@@ -18,6 +19,7 @@ const AccountProfile = () => {
         method: "POST",
         credentials: "include",
       });
+      toast.success("Signed out successfully");
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { CartesianGrid, Line, LineChart, ReferenceDot, XAxis, YAxis } from "recharts";
+import { toast } from "sonner";
 import { PencilSimpleIcon, TrashIcon, PlusIcon } from "@phosphor-icons/react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,8 +67,9 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
     try {
       await apiMutate(`/watchlists/${entry.id}`, "DELETE");
       await mutate("/watchlists");
+      toast.success(`Removed ${entry.asset.symbol} from watchlist`);
     } catch {
-      // If delete fails, close the popover and do nothing - the list will still show the entry
+      toast.error("Failed to remove watchlist entry");
       setDeleteOpen(false);
     } finally {
       setDeleting(false);
