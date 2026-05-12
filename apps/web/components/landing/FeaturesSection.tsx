@@ -5,7 +5,7 @@ const FEATURES = [
     icon: BellRingingIcon,
     title: "Real-time Price Alerts",
     description:
-      "Get notified the moment an asset you track drops below its Simple Moving Average — the classic DCA entry signal.",
+      "Get notified the moment an asset you track drops below its Simple Moving Average - the classic DCA entry signal.",
   },
   {
     icon: ChartLineUpIcon,
