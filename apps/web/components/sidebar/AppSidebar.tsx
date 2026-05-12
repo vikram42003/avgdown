@@ -29,12 +29,12 @@ export function AppSidebar() {
   const pathname = usePathname();
   return (
     <Sidebar collapsible="icon">
-      {/* Logo / Brand — collapses to just the icon */}
+      {/* Logo / Brand - collapses to just the icon */}
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
+              <Link href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary/20 text-chart-1 shrink-0">
                   <ChartLineUpIcon weight="bold" />
                 </div>

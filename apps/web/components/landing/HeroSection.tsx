@@ -12,7 +12,7 @@ export function HeroSection() {
       {/* Badge */}
       <div className="relative inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-sm text-muted-foreground mb-8">
         <ChartLineUpIcon weight="fill" className="size-4 text-primary" />
-        Smart DCA Alerting — Free while in beta
+        Smart DCA Alerting - Free while in beta
       </div>
 
       {/* Headline */}
@@ -22,7 +22,7 @@ export function HeroSection() {
       </h1>
 
       <p className="relative mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-        AvgDown tracks your watchlist and alerts you the moment an asset drops below its moving average — the signal
+        AvgDown tracks your watchlist and alerts you the moment an asset drops below its moving average - the signal
         that dollar-cost averaging investors wait for.
       </p>
 

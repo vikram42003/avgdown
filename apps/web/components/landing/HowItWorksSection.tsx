@@ -3,13 +3,13 @@ const STEPS = [
     step: "01",
     title: "Add assets to your watchlist",
     description:
-      "Search from our catalogue of stocks, ETFs, and crypto. Pick any asset and set your preferred SMA window — 20, 50, or 200 days.",
+      "Search from our catalogue of stocks, ETFs, and crypto. Pick any asset and set your preferred SMA window - 20, 50, or 200 days.",
   },
   {
     step: "02",
     title: "We monitor prices daily",
     description:
-      "Every day we snapshot closing prices and compute your SMA. You don't need to do anything — the system handles it automatically.",
+      "Every day we snapshot closing prices and compute your SMA. You don't need to do anything - the system handles it automatically.",
   },
   {
     step: "03",
