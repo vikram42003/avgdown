@@ -16,8 +16,8 @@
 
 10. Loading States: Add skeleton loaders for dashboard components (Charts, Alerts) so the UI doesn't flash empty.
 11. Empty States: Design empty states for when the user has no watchlists or alerts.
-12. Toast Notifications: Add toast feedback (via Sonner) for CRUD actions (e.g., "Watchlist created").
-13. Error Handling: Add robust error boundaries and handling to critical areas.
+12. ✅ Toast Notifications: Add toast feedback (via Sonner) for CRUD actions (e.g., "Watchlist created").
+13. ✅ Error Handling: Add robust error boundaries and handling to critical areas.
 
 14. Terraform Cron: Configure Event Bridge with Terraform to run the Lambda worker every 15 min.
 15. Production Database: Setup Prisma migrations for production (`prisma migrate deploy` in the CI/CD or deployment step).
@@ -48,8 +48,7 @@
 ✅ feat/backend-auth              → 1, 2, 3
 ✅ feat/frontend-auth-flow        → 4, 7
 ✅ feat/data-layer-dashboard      → 5, 6
-feat/watchlist-crud-app-pages     → 8, 9
-feat/ui-states-feedback           → 10, 11, 12, 13
+feat/watchlist-crud-app-pages     → 8, 9, 10, 11, 12, 13
 feat/infra-deployment             → 14, 15, 16
 
 feat/logging-observability        → 17, 20
