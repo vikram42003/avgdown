@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSWRConfig } from "swr";
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -128,6 +128,9 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
       <SheetContent className="sm:max-w-md flex flex-col">
         <SheetHeader>
           <SheetTitle>{isEditMode ? "Edit Watchlist Entry" : "Add to Watchlist"}</SheetTitle>
+          <SheetDescription className="sr-only">
+            {isEditMode ? "Edit the settings for this watchlist entry." : "Select an asset and configure its moving average period."}
+          </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 mt-6 flex-1 px-6">
@@ -218,6 +221,7 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
               max={250}
               value={smaPeriod}
               onChange={(e) => setSmaPeriod(Number(e.target.value))}
+              className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <p className="text-xs text-muted-foreground">
               Number of daily candles for the moving average. Common values: 20, 50, 200.
