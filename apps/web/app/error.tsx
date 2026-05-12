@@ -24,7 +24,7 @@ export default function GlobalError({
         An unexpected error occurred. If this problem persists, please contact support.
       </p>
       <div className="flex gap-4">
-        <Button onClick={() => window.location.reload()} variant="outline">
+        <Button onClick={() => globalThis.location.reload()} variant="outline">
           Reload Page
         </Button>
         <Button onClick={() => reset()}>Try Again</Button>

@@ -11,11 +11,11 @@
 6. ✅ Dashboard Data Wiring: Connect the dashboard components to the real backend endpoints.
 7. ✅ Auth State Handling: Implement "Not logged in" states and protected route redirects.
 
-8. Watchlist CRUD Flow: Build the Create/Edit Watchlist form (Modal/Sheet with asset search and SMA period input - this is the most critical user action!).
-9. Sidebar Pages: Implement the remaining pages in the sidebar tabs (`/watchlists`, `/alerts`, `/browse-assets`).
+8. ✅ Watchlist CRUD Flow: Build the Create/Edit Watchlist form (Modal/Sheet with asset search and SMA period input - this is the most critical user action!).
+9. ✅ Sidebar Pages: Implement the remaining pages in the sidebar tabs (`/watchlists`, `/alerts`, `/browse-assets`).
 
-10. Loading States: Add skeleton loaders for dashboard components (Charts, Alerts) so the UI doesn't flash empty.
-11. Empty States: Design empty states for when the user has no watchlists or alerts.
+10. ✅ Loading States: Add skeleton loaders for dashboard components (Charts, Alerts) so the UI doesn't flash empty.
+11. ✅ Empty States: Design empty states for when the user has no watchlists or alerts.
 12. ✅ Toast Notifications: Add toast feedback (via Sonner) for CRUD actions (e.g., "Watchlist created").
 13. ✅ Error Handling: Add robust error boundaries and handling to critical areas.
 
@@ -48,7 +48,7 @@
 ✅ feat/backend-auth              → 1, 2, 3
 ✅ feat/frontend-auth-flow        → 4, 7
 ✅ feat/data-layer-dashboard      → 5, 6
-feat/watchlist-crud-app-pages     → 8, 9, 10, 11, 12, 13
+✅ feat/watchlist-crud-app-pages  → 8, 9, 10, 11, 12, 13
 feat/infra-deployment             → 14, 15, 16
 
 feat/logging-observability        → 17, 20
