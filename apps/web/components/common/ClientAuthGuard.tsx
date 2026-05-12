@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
+import { API_URL } from "@/lib/api";
 
 export function ClientAuthGuard({ children }: Readonly<{ children: React.ReactNode }>) {
   const { user, isLoading, error } = useUser();
@@ -16,7 +17,7 @@ export function ClientAuthGuard({ children }: Readonly<{ children: React.ReactNo
       redirectingRef.current = true;
       const clearCookieAndRedirect = async () => {
         try {
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/auth/logout`, {
+          await fetch(`${API_URL}/auth/logout`, {
             method: "POST",
             credentials: "include",
           });

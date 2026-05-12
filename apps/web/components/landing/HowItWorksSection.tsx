@@ -24,12 +24,12 @@ function Step({
   title,
   description,
   isLast,
-}: {
+}: Readonly<{
   step: string;
   title: string;
   description: string;
   isLast: boolean;
-}) {
+}>) {
   return (
     <div className="relative flex gap-6">
       {/* Step number + connector */}
@@ -53,23 +53,21 @@ export function HowItWorksSection() {
   return (
     <section className="py-24 px-6">
       <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-        {/* Left — heading */}
+        {/* Left - heading */}
         <div>
-          <p className="text-sm font-medium text-primary mb-3 uppercase tracking-widest">
-            How it works
-          </p>
+          <p className="text-sm font-medium text-primary mb-3 uppercase tracking-widest">How it works</p>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-6">
             Set it once.
             <br />
             Never miss a signal.
           </h2>
           <p className="text-muted-foreground leading-relaxed">
-            AvgDown is designed to be completely hands-off after setup. Add your assets, set your
-            SMA preference, and let the system do the heavy lifting.
+            AvgDown is designed to be completely hands-off after setup. Add your assets, set your SMA preference, and
+            let the system do the heavy lifting.
           </p>
         </div>
 
-        {/* Right — steps */}
+        {/* Right - steps */}
         <div>
           {STEPS.map((s, i) => (
             <Step key={s.step} {...s} isLast={i === STEPS.length - 1} />

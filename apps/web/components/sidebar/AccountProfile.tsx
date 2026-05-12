@@ -6,8 +6,7 @@ import { setPendingToast } from "@/components/common/PendingToast";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/useUser";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { API_URL } from "@/lib/api";
 
 const AccountProfile = () => {
   const { user, isLoading, mutate } = useUser();

@@ -1,9 +1,4 @@
-import {
-  BellRingingIcon,
-  ChartLineUpIcon,
-  ClockIcon,
-  ShieldCheckIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { BellRingingIcon, ChartLineUpIcon, ClockIcon, ShieldCheckIcon } from "@phosphor-icons/react/dist/ssr";
 
 const FEATURES = [
   {
@@ -36,11 +31,11 @@ function FeatureCard({
   icon: Icon,
   title,
   description,
-}: {
+}: Readonly<{
   icon: typeof BellRingingIcon;
   title: string;
   description: string;
-}) {
+}>) {
   return (
     <div className="glass-primary rounded-2xl p-6 flex flex-col gap-4">
       <div className="flex size-11 items-center justify-center rounded-xl bg-primary/15">
@@ -59,9 +54,7 @@ export function FeaturesSection() {
     <section className="py-24 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Everything you need to DCA smarter
-          </h2>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">Everything you need to DCA smarter</h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
             No noise. No clutter. Just the signals that matter for long-term investors.
           </p>

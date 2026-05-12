@@ -8,6 +8,7 @@ import { setPendingToast, PendingToast } from "@/components/common/PendingToast"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
+import { API_URL } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -59,7 +60,7 @@ export default function LoginPage() {
 
         {/* Google OAuth */}
         <Button asChild variant="outline" className="w-full" size="lg">
-          <a href={`${process.env.NEXT_PUBLIC_API_URL}/auth/oauth/google`}>
+          <a href={`${API_URL}/auth/oauth/google`}>
             <GoogleIcon />
             Continue with Google
           </a>

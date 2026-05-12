@@ -18,14 +18,12 @@ export function HeroSection() {
       {/* Headline */}
       <h1 className="relative text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight max-w-4xl leading-tight">
         Know exactly when to{" "}
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">
-          average down
-        </span>
+        <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-blue-400">average down</span>
       </h1>
 
       <p className="relative mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-        AvgDown tracks your watchlist and alerts you the moment an asset drops below its moving
-        average — the signal that dollar-cost averaging investors wait for.
+        AvgDown tracks your watchlist and alerts you the moment an asset drops below its moving average — the signal
+        that dollar-cost averaging investors wait for.
       </p>
 
       {/* CTAs */}
@@ -42,9 +40,7 @@ export function HeroSection() {
       </div>
 
       {/* Subtle scroll hint */}
-      <p className="relative mt-16 text-xs text-muted-foreground/50 tracking-widest uppercase">
-        Scroll to learn more
-      </p>
+      <p className="relative mt-16 text-xs text-muted-foreground/50 tracking-widest uppercase">Scroll to learn more</p>
     </section>
   );
 }
