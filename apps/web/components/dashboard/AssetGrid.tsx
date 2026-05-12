@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAssets } from "@/hooks/useAssets";
 import { AssetCard, AssetCardSkeleton } from "@/components/dashboard/AssetCard";
+import { WatchlistFormSheet } from "@/components/dashboard/WatchlistFormSheet";
 import type { AssetResponse, AssetType } from "@avgdown/types";
 
 const ASSET_TYPES: (AssetType | "ALL")[] = ["ALL", "STOCK", "ETF", "CRYPTO"];
@@ -18,6 +19,14 @@ export function AssetGrid({ initialAssets }: Readonly<AssetGridProps>) {
   const { assets, isLoading } = useAssets(initialAssets);
   const [query, setQuery] = useState("");
   const [activeType, setActiveType] = useState<AssetType | "ALL">("ALL");
+
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [prefilledAsset, setPrefilledAsset] = useState<AssetResponse | null>(null);
+
+  const handleCreateWatchlist = (asset: AssetResponse) => {
+    setPrefilledAsset(asset);
+    setSheetOpen(true);
+  };
 
   const filtered = assets.filter((a) => {
     const matchesType = activeType === "ALL" || a.assetType === activeType;
@@ -90,10 +99,16 @@ export function AssetGrid({ initialAssets }: Readonly<AssetGridProps>) {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {filtered.map((asset) => (
-            <AssetCard key={asset.id} asset={asset} />
+            <AssetCard key={asset.id} asset={asset} onCreateWatchlist={handleCreateWatchlist} />
           ))}
         </div>
       )}
+
+      <WatchlistFormSheet 
+        open={sheetOpen} 
+        onOpenChange={setSheetOpen} 
+        prefilledAsset={prefilledAsset} 
+      />
     </>
   );
 }

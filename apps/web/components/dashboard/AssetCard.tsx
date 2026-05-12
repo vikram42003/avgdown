@@ -1,3 +1,4 @@
+import { PlusIcon } from "@phosphor-icons/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { AssetResponse, AssetType, Exchange } from "@avgdown/types";
@@ -17,9 +18,9 @@ export const EXCHANGE_LABEL: Record<Exchange, string> = {
   COINBASE: "Coinbase",
 };
 
-export function AssetCard({ asset }: Readonly<{ asset: AssetResponse }>) {
+export function AssetCard({ asset, onCreateWatchlist }: Readonly<{ asset: AssetResponse; onCreateWatchlist?: (asset: AssetResponse) => void }>) {
   return (
-    <div className="glass rounded-xl p-4 flex flex-col gap-2 hover:bg-primary/5 transition-colors">
+    <div className="group relative glass rounded-xl p-4 flex flex-col gap-2 hover:bg-primary/5 transition-colors">
       <div className="flex items-start justify-between gap-2">
         <span className="font-bold text-base">{asset.symbol}</span>
         <span className={cn(
@@ -29,8 +30,20 @@ export function AssetCard({ asset }: Readonly<{ asset: AssetResponse }>) {
           {asset.assetType}
         </span>
       </div>
-      <p className="text-sm text-muted-foreground leading-snug line-clamp-2">{asset.name}</p>
+      <p className="text-sm text-muted-foreground leading-snug line-clamp-2 pr-10">{asset.name}</p>
       <span className="text-xs text-muted-foreground mt-auto">{EXCHANGE_LABEL[asset.exchange]}</span>
+      
+      {onCreateWatchlist && (
+        <button
+          type="button"
+          onClick={() => onCreateWatchlist(asset)}
+          className="absolute bottom-3 right-3 bg-primary text-primary-foreground rounded-full p-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 shadow-sm hover:scale-110 active:scale-95"
+          aria-label={`Create watchlist for ${asset.symbol}`}
+          title={`Create watchlist for ${asset.symbol}`}
+        >
+          <PlusIcon className="size-4" weight="bold" />
+        </button>
+      )}
     </div>
   );
 }

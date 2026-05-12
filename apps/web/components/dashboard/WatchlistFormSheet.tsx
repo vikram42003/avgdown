@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSWRConfig } from "swr";
-import { MagnifyingGlassIcon, XIcon, CheckIcon } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +18,10 @@ interface WatchlistFormSheetProps {
   onOpenChange: (open: boolean) => void;
   // undefined = create mode, defined = edit mode
   entry?: WatchlistEntryResponse;
+  prefilledAsset?: AssetResponse | null;
 }
 
-export function WatchlistFormSheet({ open, onOpenChange, entry }: Readonly<WatchlistFormSheetProps>) {
+export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }: Readonly<WatchlistFormSheetProps>) {
   const { mutate } = useSWRConfig();
   const { assets, isLoading: assetsLoading } = useAssets();
   const isEditMode = !!entry;
@@ -47,12 +48,12 @@ export function WatchlistFormSheet({ open, onOpenChange, entry }: Readonly<Watch
       setSmaPeriod(entry.smaPeriod);
       setIsActive(entry.isActive);
     } else {
-      setSelectedAsset(null);
-      setAssetQuery("");
+      setSelectedAsset(prefilledAsset ?? null);
+      setAssetQuery(prefilledAsset?.symbol ?? "");
       setSmaPeriod(20);
       setIsActive(true);
     }
-  }, [open, entry]);
+  }, [open, entry, prefilledAsset]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -65,7 +66,7 @@ export function WatchlistFormSheet({ open, onOpenChange, entry }: Readonly<Watch
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Client-side asset filtering — max 8 results shown at once
+  // Client-side asset filtering - max 8 results shown at once
   const filteredAssets = assets
     .filter(({ symbol, name }) => {
       const q = assetQuery.toLowerCase();
@@ -129,71 +130,80 @@ export function WatchlistFormSheet({ open, onOpenChange, entry }: Readonly<Watch
           <SheetTitle>{isEditMode ? "Edit Watchlist Entry" : "Add to Watchlist"}</SheetTitle>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6 mt-6 flex-1">
-          {/* Asset search */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6 mt-6 flex-1 px-6">
+          {/* Asset search or selected state */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="asset-search">Asset</Label>
-            <div className="relative" ref={dropdownRef}>
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
-                <Input
-                  id="asset-search"
-                  className="pl-9 pr-9"
-                  placeholder="Search by symbol or name…"
-                  value={assetQuery}
-                  onChange={(e) => handleAssetQueryChange(e.target.value)}
-                  onFocus={() => { if (assetQuery && !selectedAsset) setDropdownOpen(true); }}
-                  autoComplete="off"
-                  disabled={assetsLoading}
-                />
-                {selectedAsset && (
-                  <button
-                    type="button"
+            
+            {selectedAsset ? (
+              <div className="glass p-3 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-center justify-center size-10 rounded-md bg-primary/10 shrink-0">
+                    <span className="text-xs font-bold text-primary leading-none">{selectedAsset.symbol.slice(0, 3)}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-sm">{selectedAsset.symbol}</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[180px] sm:max-w-[200px]">
+                      {selectedAsset.name} · {selectedAsset.exchange}
+                    </span>
+                  </div>
+                </div>
+                {!isEditMode && (
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
                     onClick={handleClearAsset}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="Clear asset selection"
+                    className="text-muted-foreground hover:text-foreground h-8"
                   >
-                    <XIcon className="size-4" />
-                  </button>
+                    Change
+                  </Button>
                 )}
               </div>
-
-              {/* Results dropdown */}
-              {dropdownOpen && (
-                <div className="absolute top-full mt-1 left-0 right-0 z-50 glass border border-border rounded-lg shadow-lg overflow-hidden">
-                  {assetsLoading ? (
-                    <div className="flex flex-col gap-2 p-2">
-                      {[1, 2, 3].map((i) => <Skeleton key={i} className="h-9 w-full" />)}
-                    </div>
-                  ) : filteredAssets.length === 0 ? (
-                    <p className="text-sm text-muted-foreground p-3">No assets found.</p>
-                  ) : (
-                    <ul className="max-h-52 overflow-y-auto custom-scrollbar-primary">
-                      {filteredAssets.map((asset) => (
-                        <li key={asset.id}>
-                          <button
-                            type="button"
-                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 transition-colors text-left"
-                            onClick={() => handleAssetSelect(asset)}
-                          >
-                            <span className="font-semibold text-sm min-w-16">{asset.symbol}</span>
-                            <span className="text-sm text-muted-foreground truncate flex-1">{asset.name}</span>
-                            <span className="text-xs text-muted-foreground shrink-0">{asset.exchange}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+            ) : (
+              <div className="relative" ref={dropdownRef}>
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
+                  <Input
+                    id="asset-search"
+                    className="pl-9"
+                    placeholder="Search by symbol or name…"
+                    value={assetQuery}
+                    onChange={(e) => handleAssetQueryChange(e.target.value)}
+                    onFocus={() => { if (assetQuery) setDropdownOpen(true); }}
+                    autoComplete="off"
+                    disabled={assetsLoading}
+                  />
                 </div>
-              )}
-            </div>
 
-            {/* Confirmed selection */}
-            {selectedAsset && (
-              <div className="flex items-center gap-2 text-sm text-primary">
-                <CheckIcon className="size-4 shrink-0" />
-                <span className="font-medium">{selectedAsset.symbol}</span>
-                <span className="text-muted-foreground">· {selectedAsset.name} · {selectedAsset.exchange}</span>
+                {/* Results dropdown */}
+                {dropdownOpen && (
+                  <div className="absolute top-full mt-1 left-0 right-0 z-50 glass border border-border rounded-lg shadow-lg overflow-hidden">
+                    {assetsLoading ? (
+                      <div className="flex flex-col gap-2 p-2">
+                        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-9 w-full" />)}
+                      </div>
+                    ) : filteredAssets.length === 0 ? (
+                      <p className="text-sm text-muted-foreground p-3">No assets found.</p>
+                    ) : (
+                      <ul className="max-h-52 overflow-y-auto custom-scrollbar-primary">
+                        {filteredAssets.map((asset) => (
+                          <li key={asset.id}>
+                            <button
+                              type="button"
+                              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 transition-colors text-left"
+                              onClick={() => handleAssetSelect(asset)}
+                            >
+                              <span className="font-semibold text-sm min-w-16">{asset.symbol}</span>
+                              <span className="text-sm text-muted-foreground truncate flex-1">{asset.name}</span>
+                              <span className="text-xs text-muted-foreground shrink-0">{asset.exchange}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -245,7 +255,7 @@ export function WatchlistFormSheet({ open, onOpenChange, entry }: Readonly<Watch
 
           {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
 
-          <SheetFooter className="flex gap-2 mt-auto pt-2">
+          <SheetFooter className="flex gap-2 mt-auto pt-2 px-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
               Cancel
             </Button>
