@@ -52,9 +52,8 @@ model Asset {
   createdAt DateTime @default(now()) @map("created_at")
 
   watchlistEntries WatchlistEntry[]
-  priceSnapshots   PriceSnapshot[]
   missedFetches    MissedFetch[]
-  dailySmaSnapshots DailySmaSnapshot[]
+  dailyPriceSnapshots DailyPriceSnapshot[]
 
   @@unique([symbol, exchange])
   @@map("assets")
@@ -75,18 +74,6 @@ model WatchlistEntry {
 
   @@unique([userId, assetId])
   @@map("watchlist_entries")
-}
-
-model PriceSnapshot {
-  id        String   @id @default(dbgenerated("gen_random_uuid()"))
-  assetId   String   @map("asset_id")
-  price     Decimal  @db.Decimal(18, 8)
-  fetchedAt DateTime @default(now()) @map("fetched_at")
-
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-
-  @@index([assetId, fetchedAt(sort: Desc)])
-  @@map("price_snapshots")
 }
 
 model Alert {
@@ -118,18 +105,33 @@ model MissedFetch {
   @@map("missed_fetches")
 }
 
-model DailySmaSnapshot {
-  id       String   @id @default(dbgenerated("gen_random_uuid()"))
-  assetId  String   @map("asset_id")
-  period   Int
-  smaValue Decimal  @map("sma_value") @db.Decimal(18, 8)
-  date     DateTime @map("date") @db.Date
+model DailyPriceSnapshot {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  assetId   String   @map("asset_id")
+  close     Decimal  @db.Decimal(18, 8)
+  date      DateTime @db.Date
+  source    String   @default("yfinance")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
-  @@unique([assetId, period, date])
-  // Kept intentionally alongside the unique constraint above: the unique index is ASC by default,
-  // but getChartData queries ORDER BY date DESC LIMIT N - a DESC index avoids a sort step
-  @@index([assetId, period, date(sort: Desc)])
-  @@map("daily_sma_snapshots")
+  @@unique([assetId, date])
+  @@index([assetId, date(sort: Desc)])
+  @@map("daily_price_snapshots")
 }
+
+// Replaced by DailyPriceSnapshot so indicators can be computed from raw daily closes.
+// model DailySmaSnapshot {
+//   id       String   @id @default(dbgenerated("gen_random_uuid()"))
+//   assetId  String   @map("asset_id")
+//   period   Int
+//   smaValue Decimal  @map("sma_value") @db.Decimal(18, 8)
+//   date     DateTime @map("date") @db.Date
+//
+//   asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+//
+//   @@unique([assetId, period, date])
+//   @@index([assetId, period, date(sort: Desc)])
+//   @@map("daily_sma_snapshots")
+// }
