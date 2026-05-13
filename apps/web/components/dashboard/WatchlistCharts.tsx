@@ -13,7 +13,7 @@ import { formatCurrency, getCurrencySymbol } from "@/lib/formatters";
 import { useWatchlists, useChartData } from "@/hooks/useWatchlists";
 import { WatchlistFormSheet } from "@/components/dashboard/WatchlistFormSheet";
 import { apiMutateVoid } from "@/lib/api";
-import type { WatchlistEntryResponse, PriceSnapshotResponse } from "@avgdown/types";
+import type { WatchlistEntryResponse } from "@avgdown/types";
 
 interface WatchlistChartsProps {
   initialWatchlists?: WatchlistEntryResponse[];
@@ -21,14 +21,13 @@ interface WatchlistChartsProps {
 
 // Chart config - keys must match the dataKey props on <Line>
 const chartConfig = {
-  price: { label: "Price", color: "var(--color-primary)" },
+  close: { label: "Close", color: "var(--color-primary)" },
   sma: { label: "SMA", color: "var(--color-muted-foreground)" },
 } satisfies ChartConfig;
 
-// Normalise the API response ({ prices[], sma[] }) into the flat shape recharts needs
 interface ChartDataPoint {
-  fetchedAt: string;
-  price: number;
+  date: string;
+  close: number;
   sma: number | null;
 }
 
@@ -54,13 +53,13 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
     return `${sym}${v.toFixed(2)}`;
   };
 
-  // Normalise into flat points
   const data: ChartDataPoint[] =
-    chartData?.prices.map((p: PriceSnapshotResponse, i: number) => ({
-      fetchedAt: typeof p.fetchedAt === "string" ? p.fetchedAt : p.fetchedAt.toISOString(),
-      price: p.price,
-      sma: chartData.sma[i] ?? null,
+    chartData?.points.map((p) => ({
+      date: typeof p.date === "string" ? p.date : p.date.toISOString(),
+      close: p.close,
+      sma: p.sma,
     })) ?? [];
+  const isWarmingUp = chartData?.status === "WARMING_UP";
 
   async function handleDelete() {
     setDeleting(true);
@@ -137,12 +136,16 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
 
       {isLoading ? (
         <Skeleton className="h-40 w-full rounded-lg" />
+      ) : isWarmingUp && data.length === 0 ? (
+        <div className="h-40 w-full rounded-lg border border-border/60 bg-muted/20 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
+          Preparing daily chart data
+        </div>
       ) : (
         <ChartContainer config={chartConfig} className="h-40 w-full">
           <LineChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
 
-            <XAxis dataKey="fetchedAt" tickLine={false} axisLine={false} tick={false} />
+            <XAxis dataKey="date" tickLine={false} axisLine={false} tick={false} />
 
             <YAxis
               domain={["auto", "auto"]}
@@ -157,7 +160,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
               content={
                 <ChartTooltipContent
                   labelFormatter={(_, payload) => {
-                    const raw = payload?.[0]?.payload?.fetchedAt;
+                    const raw = payload?.[0]?.payload?.date;
                     if (!raw) return "";
                     return new Date(raw).toLocaleDateString(undefined, {
                       month: "short",
@@ -167,7 +170,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
                   }}
                   formatter={(value, name) => [
                     formatPrice(Number(value)),
-                    name === "price" ? "Price" : `SMA-${entry.smaPeriod}`,
+                    name === "close" ? "Close" : `SMA-${entry.smaPeriod}`,
                   ]}
                 />
               }
@@ -175,7 +178,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
 
             <Line
               type="monotone"
-              dataKey="price"
+              dataKey="close"
               stroke="var(--color-primary)"
               strokeWidth={1.5}
               dot={false}
@@ -195,11 +198,11 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
             {data.length > 0 &&
               (() => {
                 const last = data.at(-1)!;
-                if (last.sma !== null && last.price < last.sma) {
+                if (last.sma !== null && last.close < last.sma) {
                   return (
                     <ReferenceDot
-                      x={last.fetchedAt}
-                      y={last.price}
+                      x={last.date}
+                      y={last.close}
                       r={5}
                       fill="var(--color-destructive)"
                       stroke="var(--background)"
@@ -215,7 +218,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
 
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-0.5 w-4 rounded bg-primary" /> Price
+          <span className="inline-block h-0.5 w-4 rounded bg-primary" /> Close
         </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-0.5 w-4 rounded bg-muted-foreground" />

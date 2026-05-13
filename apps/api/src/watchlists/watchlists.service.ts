@@ -116,33 +116,32 @@ export class WatchlistsService {
 
     const HISTORY_WINDOW = 40;
 
-    // Fetch the last HISTORY_WINDOW 15-min price snapshots (the chart's price line)
-    const priceSnapshots = await this.prisma.priceSnapshot.findMany({
+    const dailyRows = await this.prisma.dailyPriceSnapshot.findMany({
       where: { assetId: entry.assetId },
-      orderBy: { fetchedAt: "desc" },
-      take: HISTORY_WINDOW,
-    });
-    priceSnapshots.reverse();
-
-    const prices = priceSnapshots.map((p) => ({ ...p, price: p.price.toNumber() }));
-
-    // Fetch the last HISTORY_WINDOW daily SMA values for this asset+period
-    const dailySmaRows = await this.prisma.dailySmaSnapshot.findMany({
-      where: { assetId: entry.assetId, period: entry.smaPeriod },
       orderBy: { date: "desc" },
-      take: HISTORY_WINDOW,
-      select: { date: true, smaValue: true },
+      take: HISTORY_WINDOW + entry.smaPeriod - 1,
+      select: { date: true, close: true },
+    });
+    dailyRows.reverse();
+
+    const closes = dailyRows.map((row) => row.close.toNumber());
+    const allPoints = dailyRows.map((row, index) => {
+      const hasFullWindow = index + 1 >= entry.smaPeriod;
+      const sma = hasFullWindow
+        ? closes.slice(index + 1 - entry.smaPeriod, index + 1).reduce((sum, close) => sum + close, 0) / entry.smaPeriod
+        : null;
+
+      return {
+        date: row.date,
+        close: row.close.toNumber(),
+        sma,
+      };
     });
 
-    // Build a date -> sma_value lookup (dates are stored as YYYY-MM-DD midnight UTC)
-    const smaByDate = new Map(dailySmaRows.map((r) => [r.date.toISOString().slice(0, 10), r.smaValue.toNumber()]));
-
-    // Align the SMA to price points by day. Each 15-min snapshot maps to the SMA for that day.
-    const sma = prices.map((p) => {
-      const day = p.fetchedAt.toISOString().slice(0, 10);
-      return smaByDate.get(day) ?? null;
-    });
-
-    return { prices, sma, smaPeriod: entry.smaPeriod };
+    return {
+      points: allPoints.slice(-HISTORY_WINDOW),
+      smaPeriod: entry.smaPeriod,
+      status: dailyRows.length >= entry.smaPeriod ? "READY" : "WARMING_UP",
+    };
   }
 }

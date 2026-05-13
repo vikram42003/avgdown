@@ -23,19 +23,24 @@ export const AssetResponseSchema = AssetSchema.extend({
   createdAt: z.union([z.date(), z.iso.datetime()]).describe("ISO string representation of createdAt"),
 });
 
-// Base - Price Snapshot
+// Base - Daily Price Snapshot
 
-export const PriceSnapshotSchema = z.object({
-  id: z.uuid().describe("The UUID id of the price snapshot"),
-  assetId: z.uuid().describe("The assetId that this price belongs to"),
-  price: z.coerce.number().nonnegative().describe("The numerical price of the asset at the specific time"),
-  fetchedAt: z.date().describe("The date and time when the price was fetched"),
+export const DailyPriceSnapshotSchema = z.object({
+  id: z.uuid().describe("The UUID id of the daily price snapshot"),
+  assetId: z.uuid().describe("The assetId that this close belongs to"),
+  close: z.coerce.number().nonnegative().describe("The completed daily close price"),
+  date: z.date().describe("The trading date for this close"),
+  source: z.string().describe("The market data provider used for this close"),
+  createdAt: z.date().describe("The date and time when the snapshot was created"),
+  updatedAt: z.date().describe("The date and time when the snapshot was last updated"),
 });
 
 // Response: Backend -> Frontend
 
-export const PriceSnapshotResponseSchema = PriceSnapshotSchema.extend({
-  fetchedAt: z.union([z.date(), z.iso.datetime()]).describe("ISO string representation of fetchedAt"),
+export const DailyPriceSnapshotResponseSchema = DailyPriceSnapshotSchema.extend({
+  date: z.union([z.date(), z.iso.datetime()]).describe("ISO string representation of date"),
+  createdAt: z.union([z.date(), z.iso.datetime()]).describe("ISO string representation of createdAt"),
+  updatedAt: z.union([z.date(), z.iso.datetime()]).describe("ISO string representation of updatedAt"),
 });
 
 // Inferred Types
@@ -43,26 +48,20 @@ export const PriceSnapshotResponseSchema = PriceSnapshotSchema.extend({
 export type Asset = z.infer<typeof AssetSchema>;
 export type AssetResponse = z.infer<typeof AssetResponseSchema>;
 
-export type PriceSnapshot = z.infer<typeof PriceSnapshotSchema>;
-export type PriceSnapshotResponse = z.infer<typeof PriceSnapshotResponseSchema>;
+export type DailyPriceSnapshot = z.infer<typeof DailyPriceSnapshotSchema>;
+export type DailyPriceSnapshotResponse = z.infer<typeof DailyPriceSnapshotResponseSchema>;
 
-export const PriceSnapshotChartDataSchema = z.object({
-  prices: z.array(PriceSnapshotResponseSchema),
-  /** One SMA value per price point. null for early points before the window is full. */
-  sma: z.array(z.number().nullable()),
-  smaPeriod: z.number(),
-});
-
-export type PriceSnapshotChartDataResponse = z.infer<typeof PriceSnapshotChartDataSchema>;
-
-// Daily SMA Snapshot (stored by the sma_worker Lambda, served by the chart endpoint)
-
-export const DailySmaSnapshotSchema = z.object({
-  id: z.uuid(),
-  assetId: z.uuid(),
-  period: z.number().int(),
-  smaValue: z.coerce.number(),
+export const DailyChartPointSchema = z.object({
   date: z.union([z.date(), z.iso.datetime()]),
+  close: z.coerce.number().nonnegative(),
+  sma: z.number().nullable(),
 });
 
-export type DailySmaSnapshot = z.infer<typeof DailySmaSnapshotSchema>;
+export const DailyPriceChartDataSchema = z.object({
+  points: z.array(DailyChartPointSchema),
+  smaPeriod: z.number(),
+  status: z.enum(["READY", "WARMING_UP"]),
+});
+
+export type DailyChartPoint = z.infer<typeof DailyChartPointSchema>;
+export type DailyPriceChartDataResponse = z.infer<typeof DailyPriceChartDataSchema>;
