@@ -101,8 +101,8 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
       setError("Please select an asset.");
       return;
     }
-    if (smaPeriod < 1 || smaPeriod > 250) {
-      setError("SMA period must be between 1 and 250.");
+    if (!Number.isFinite(smaPeriod) || smaPeriod < 1 || smaPeriod > 250) {
+      setError("SMA period must be a valid number between 1 and 250.");
       return;
     }
 

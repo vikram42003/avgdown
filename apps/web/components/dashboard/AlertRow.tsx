@@ -13,7 +13,8 @@ export function AlertRow({ alert }: Readonly<{ alert: RecentAlertResponse }>) {
   const { asset, smaPeriod } = alert.watchlistEntry;
   const triggeredAt = new Date(alert.createdAt);
   const priceDiff = alert.triggeredPrice - alert.smaValue;
-  const priceDiffPct = ((priceDiff / alert.smaValue) * 100).toFixed(2);
+  const priceDiffPctRaw = alert.smaValue ? (priceDiff / alert.smaValue) * 100 : Number.NaN;
+  const priceDiffPct = Number.isFinite(priceDiffPctRaw) ? `${priceDiffPctRaw.toFixed(2)}%` : "N/A";
   const formattedPrice = formatCurrency(alert.triggeredPrice, asset.exchange);
   const formattedSma = formatCurrency(alert.smaValue, asset.exchange);
 
@@ -44,7 +45,7 @@ export function AlertRow({ alert }: Readonly<{ alert: RecentAlertResponse }>) {
 
         <div className="hidden sm:flex flex-col items-end shrink-0">
           <span className="font-mono font-semibold text-sm">{formattedPrice}</span>
-          <span className="text-xs text-destructive font-medium">{priceDiffPct}% below SMA</span>
+          <span className="text-xs text-destructive font-medium">{priceDiffPct} below SMA</span>
         </div>
 
         <CaretDownIcon
@@ -66,7 +67,7 @@ export function AlertRow({ alert }: Readonly<{ alert: RecentAlertResponse }>) {
           <div className="flex flex-col gap-0.5">
             <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Difference</span>
             <span className="font-mono font-semibold text-destructive">
-              {formatCurrency(Math.abs(priceDiff), asset.exchange)} ({priceDiffPct}%)
+              {formatCurrency(Math.abs(priceDiff), asset.exchange)} ({priceDiffPct})
             </span>
           </div>
           <div className="flex flex-col gap-0.5">

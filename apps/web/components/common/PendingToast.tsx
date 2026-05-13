@@ -12,7 +12,13 @@ interface PendingToast {
 
 // Write a toast to sessionStorage to be shown on the next page load
 export function setPendingToast(type: ToastType, message: string) {
-  sessionStorage.setItem("pendingToast", JSON.stringify({ type, message }));
+  try {
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem("pendingToast", JSON.stringify({ type, message }));
+    }
+  } catch (error) {
+    console.warn("Failed to set pending toast:", error);
+  }
 }
 
 /**
@@ -22,14 +28,19 @@ export function setPendingToast(type: ToastType, message: string) {
  */
 export function PendingToast() {
   useEffect(() => {
-    const raw = sessionStorage.getItem("pendingToast");
-    if (!raw) return;
-    sessionStorage.removeItem("pendingToast");
     try {
-      const { type, message } = JSON.parse(raw) as PendingToast;
-      toast[type]?.(message);
-    } catch {
-      // ignore malformed item
+      const raw = sessionStorage.getItem("pendingToast");
+      if (!raw) return;
+      
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.message === "string" && typeof parsed.type === "string" && typeof toast[parsed.type as ToastType] === "function") {
+        toast[parsed.type as ToastType](parsed.message);
+      }
+      
+      sessionStorage.removeItem("pendingToast");
+    } catch (error) {
+      console.warn("Failed to process pending toast:", error);
+      sessionStorage.removeItem("pendingToast");
     }
   }, []);
 

@@ -15,7 +15,9 @@ export function AlertList({ initialAlerts }: Readonly<AlertListProps>) {
   if (isLoading) {
     return (
       <>
-        {new Array(6).fill(0).map((_, i) => <AlertRowSkeleton key={i} />)} {/* NOSONAR */}
+        {Array.from({ length: 6 }, (_, i) => (
+          <AlertRowSkeleton key={i} />
+        ))}
       </>
     );
   }
@@ -25,14 +27,18 @@ export function AlertList({ initialAlerts }: Readonly<AlertListProps>) {
       <div className="glass rounded-xl px-6 py-16 text-center">
         <BellIcon className="size-8 text-muted-foreground mx-auto mb-3" />
         <p className="text-muted-foreground text-sm">No alerts have fired yet.</p>
-        <p className="text-xs text-muted-foreground mt-1">Alerts appear here when an asset price crosses below its SMA.</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Alerts appear here when an asset price crosses below its SMA.
+        </p>
       </div>
     );
   }
 
   return (
     <>
-      {alerts.map((alert) => <AlertRow key={alert.id} alert={alert} />)}
+      {alerts.map((alert) => (
+        <AlertRow key={alert.id} alert={alert} />
+      ))}
     </>
   );
 }

@@ -14,17 +14,25 @@ const AccountProfile = () => {
 
   async function handleLogout() {
     try {
-      await fetch(`${API_URL}/auth/logout`, {
+      const res = await fetch(`${API_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
-    } catch (error) {
-      console.error("Logout failed:", error);
-    } finally {
+
+      if (!res.ok) {
+        throw new Error("Logout request failed");
+      }
+
       // Revalidate the /users/me cache so all consumers update instantly
       await mutate(undefined, { revalidate: false });
       setPendingToast("success", "Signed out successfully");
       router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Fallback in case of server failure - we don't redirect so session remains intact
+      import("sonner").then(({ toast }) => {
+        toast.error("Logout failed - please try again");
+      });
     }
   }
 

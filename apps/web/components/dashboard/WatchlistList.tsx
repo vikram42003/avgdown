@@ -37,7 +37,7 @@ export function WatchlistList({ initialWatchlists }: Readonly<WatchlistListProps
       </div>
       <div className="flex flex-col gap-3">
         {isLoading ? (
-          new Array(5).fill(0).map((_, i) => <WatchlistRowSkeleton key={i} />) // NOSONAR
+          Array.from({ length: 5 }, (_, i) => <WatchlistRowSkeleton key={i} />)
         ) : watchlists.length === 0 ? (
           <div className="glass rounded-xl px-6 py-16 text-center">
             <p className="text-muted-foreground text-sm mb-4">You haven&apos;t added any watchlist entries yet.</p>

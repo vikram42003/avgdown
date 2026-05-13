@@ -37,7 +37,7 @@ export function AssetCard({ asset, onCreateWatchlist }: Readonly<{ asset: AssetR
         <button
           type="button"
           onClick={() => onCreateWatchlist(asset)}
-          className="absolute bottom-3 right-3 bg-primary text-primary-foreground rounded-full p-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 shadow-sm hover:scale-110 active:scale-95"
+          className="absolute bottom-3 right-3 bg-primary text-primary-foreground rounded-full p-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus:ring-2 focus:ring-ring focus:outline-none lg:focus:opacity-100 lg:focus-visible:opacity-100 transition-all duration-200 shadow-sm hover:scale-110 active:scale-95"
           aria-label={`Create watchlist for ${asset.symbol}`}
           title={`Create watchlist for ${asset.symbol}`}
         >

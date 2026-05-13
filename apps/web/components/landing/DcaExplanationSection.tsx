@@ -50,6 +50,10 @@ export function DcaExplanationSection() {
     avgDown: AVG_GROWTH[i],
   }));
 
+  const finalSip = SIP_GROWTH.at(-1) ?? 0;
+  const finalAvg = AVG_GROWTH.at(-1) ?? 0;
+  const higherPct = finalSip > 0 ? Math.round(((finalAvg - finalSip) / finalSip) * 100) : 0;
+
   return (
     <section className="py-16 px-6">
       <div className="max-w-5xl mx-auto">
@@ -76,7 +80,7 @@ export function DcaExplanationSection() {
                   Regular DCA
                 </span>
               </div>
-              <div className="text-3xl font-bold text-muted-foreground">$1,650</div>
+              <div className="text-3xl font-bold text-muted-foreground">${finalSip.toLocaleString()}</div>
               <div className="text-xs text-muted-foreground mt-1">Final portfolio value</div>
             </div>
             <div className="p-5">
@@ -84,9 +88,9 @@ export function DcaExplanationSection() {
                 <div className="w-2 h-2 rounded-full bg-primary" />
                 <span className="text-[11px] font-semibold text-primary uppercase tracking-widest">AvgDown DCA</span>
               </div>
-              <div className="text-3xl font-bold text-primary">$2,430</div>
+              <div className="text-3xl font-bold text-primary">${finalAvg.toLocaleString()}</div>
               <span className="inline-flex items-center rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary mt-2">
-                +47% higher value
+                +{higherPct}% higher value
               </span>
             </div>
           </div>
