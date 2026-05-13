@@ -5,7 +5,6 @@ from collections import defaultdict
 from providers.ses import send_alerts_via_email
 
 from db import (
-    add_price_snapshots_bulk,
     add_missed_fetch_bulk,
     get_watchlist_entries,
     add_alerts_bulk,
@@ -24,10 +23,14 @@ def process_watchlist_entries(
     # Group entries by asset, building (ticker, exchange) pairs for the market filter
     entries_by_asset = defaultdict(list)
     symbol_exchange_pairs = []
+    seen_pairs = set()
     for entry in watchlist_entries:
         symbol_string = map_symbol_exchange(entry.asset_symbol, entry.asset_exchange)
         entries_by_asset[symbol_string].append(entry)
-        symbol_exchange_pairs.append((symbol_string, entry.asset_exchange))
+        pair = (symbol_string, entry.asset_exchange)
+        if pair not in seen_pairs:
+            seen_pairs.add(pair)
+            symbol_exchange_pairs.append(pair)
 
     # Filter out assets whose markets are closed right now
     active_symbols = filter_inactive_markets(symbol_exchange_pairs)
@@ -81,19 +84,11 @@ def lambda_handler(event, context):
     # Fetch the newest prices for all the active assets in bulk
     prices_by_symbol, failed_symbols = fetch_prices_bulk(active_symbols)
 
-    # Bulk insert new price snapshots into the DB
-    price_snapshots_to_insert = []
-    for s, p in prices_by_symbol.items():
-        asset_id = entries_by_symbol[s][0].asset_id
-        price_snapshots_to_insert.append((asset_id, Decimal(str(p))))
-
-    add_price_snapshots_bulk(price_snapshots_to_insert)
-
     # Record any failed fetches for the Alpha Vantage backfill
     missed_fetches_to_insert = []
     for s, error_msg in failed_symbols.items():
-        asset_id = entries_by_symbol[s][0].asset_id
-        missed_fetches_to_insert.append((asset_id, "yfinance", error_msg))
+        for entry in entries_by_symbol[s]:
+            missed_fetches_to_insert.append((entry.asset_id, "yfinance", error_msg))
 
     if missed_fetches_to_insert:
         add_missed_fetch_bulk(missed_fetches_to_insert)
@@ -101,12 +96,12 @@ def lambda_handler(event, context):
     process_alpha_vantage_backfill()
 
     # Build a flat dict of asset_id -> current Decimal price for the SMA comparison
-    prices_by_asset_id: dict[str, Decimal] = {
-        entries_by_symbol[s][0].asset_id: Decimal(str(p))
-        for s, p in prices_by_symbol.items()
-    }
+    prices_by_asset_id: dict[str, Decimal] = {}
+    for s, p in prices_by_symbol.items():
+        for entry in entries_by_symbol[s]:
+            prices_by_asset_id[entry.asset_id] = Decimal(str(p))
 
-    # Compare prices against today's precomputed daily SMA
+    # Compare prices against an in-memory provisional daily SMA
     alerts_by_user = process_sma(entries_by_symbol, prices_by_asset_id)
 
     # Filter out alerts that were successfully sent out in the last 24 hours

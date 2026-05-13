@@ -1,7 +1,7 @@
 from typing import Optional
 from dataclasses import dataclass
 from decimal import Decimal
-from datetime import datetime
+from datetime import date, datetime
 
 
 @dataclass
@@ -48,11 +48,14 @@ class WatchlistEntryProjection:
 
 
 @dataclass
-class PriceSnapshot:
+class DailyPriceSnapshot:
     id: str
     asset_id: str
-    price: Decimal
-    fetched_at: datetime
+    close: Decimal
+    date: date
+    source: str
+    created_at: datetime
+    updated_at: datetime
 
 
 @dataclass

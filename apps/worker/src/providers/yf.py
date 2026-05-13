@@ -3,8 +3,7 @@ import yfinance as yf
 from datetime import date
 
 
-# Number of daily SMA data points to store per asset/period.
-# This matches the chart history window on the frontend.
+# Number of daily chart points served by the frontend/API.
 HISTORY_WINDOW = 40
 
 
@@ -27,10 +26,11 @@ def fetch_prices_bulk(
 
         prices_by_symbol = {}
         failed_symbols = {}
-        # The returned data is a pandas dataframe !!!!
+        single_symbol = len(symbols) == 1
         for symbol in symbols:
             try:
-                price = data[symbol]["Close"].iloc[-1]
+                closes = data["Close"] if single_symbol and "Close" in data else data[symbol]["Close"]
+                price = closes.dropna().iloc[-1]
                 if math.isnan(price):
                     failed_symbols[symbol] = "yfinance returned NaN for this timeframe"
                 else:
@@ -49,26 +49,24 @@ def fetch_prices_bulk(
         return ({}, {s: str(e) for s in symbols})
 
 
-def fetch_daily_sma_bulk(
-    symbol_period_pairs: list[tuple[str, int]],
-) -> tuple[dict[tuple[str, int], list[tuple[date, float]]], list[tuple[str, int]]]:
+def fetch_daily_closes_bulk(
+    symbols: list[str],
+    min_completed_closes: int,
+) -> tuple[dict[str, list[tuple[date, float]]], dict[str, str]]:
     """
-    For each (symbol, period) pair, fetches enough daily history from yfinance
-    to compute a rolling SMA for the last HISTORY_WINDOW trading days.
+    Fetches completed daily close history for each symbol.
 
     Returns:
-        - dict mapping (symbol, period) -> list of (date, sma_value) chronologically
-        - list of (symbol, period) pairs that failed
+        - dict mapping symbol -> list of (date, close) chronologically
+        - dict mapping failed symbol -> error message
     """
-    if not symbol_period_pairs:
-        return {}, []
+    if not symbols:
+        return {}, {}
 
-    unique_symbols = list({s for s, _ in symbol_period_pairs})
-    max_period = max(p for _, p in symbol_period_pairs)
+    unique_symbols = list(dict.fromkeys(symbols))
 
-    # Need HISTORY_WINDOW + max_period - 1 daily closes to compute a full rolling SMA
-    # series for the last HISTORY_WINDOW points. Add a buffer for weekends/holidays.
-    days_needed = HISTORY_WINDOW + max_period + 15
+    # yfinance period is calendar-ish, so add a buffer for weekends/holidays.
+    days_needed = min_completed_closes + 30
 
     try:
         data = yf.download(
@@ -81,24 +79,22 @@ def fetch_daily_sma_bulk(
         )
     except Exception as e:
         print(f"Failed to fetch daily data from yfinance: {e}")
-        return {}, symbol_period_pairs
+        return {}, {s: str(e) for s in unique_symbols}
 
-    results: dict[tuple[str, int], list[tuple[date, float]]] = {}
-    failed: list[tuple[str, int]] = []
+    results: dict[str, list[tuple[date, float]]] = {}
+    failed: dict[str, str] = {}
+    single_symbol = len(unique_symbols) == 1
 
-    for symbol, period in symbol_period_pairs:
+    for symbol in unique_symbols:
         try:
-            closes = data[symbol]["Close"].dropna()
-            if len(closes) < period:
-                print(f"Not enough daily data for {symbol} (period={period}): got {len(closes)} rows")
-                failed.append((symbol, period))
+            closes = data["Close"] if single_symbol and "Close" in data else data[symbol]["Close"]
+            closes = closes.dropna().tail(min_completed_closes)
+            if len(closes) < min_completed_closes:
+                failed[symbol] = f"Not enough daily closes: got {len(closes)}, need {min_completed_closes}"
                 continue
 
-            rolling_sma = closes.rolling(window=period).mean().dropna()
-            series = rolling_sma.tail(HISTORY_WINDOW)
-            results[(symbol, period)] = [(idx.date(), float(val)) for idx, val in series.items()]
+            results[symbol] = [(idx.date(), float(val)) for idx, val in closes.items()]
         except (KeyError, IndexError) as e:
-            print(f"Failed to compute SMA for {symbol} (period={period}): {e}")
-            failed.append((symbol, period))
+            failed[symbol] = f"Missing or empty daily close series: {e}"
 
     return results, failed
