@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { formatCurrency, getCurrencySymbol } from "@/lib/formatters";
 import { useWatchlists, useChartData } from "@/hooks/useWatchlists";
 import { WatchlistFormSheet } from "@/components/dashboard/WatchlistFormSheet";
-import { apiMutate } from "@/lib/api";
+import { apiMutateVoid } from "@/lib/api";
 import type { WatchlistEntryResponse, PriceSnapshotResponse } from "@avgdown/types";
 
 interface WatchlistChartsProps {
@@ -65,7 +65,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
   async function handleDelete() {
     setDeleting(true);
     try {
-      await apiMutate(`/watchlists/${entry.id}`, "DELETE");
+      await apiMutateVoid(`/watchlists/${entry.id}`, "DELETE");
       await mutate("/watchlists");
       toast.success(`Removed ${entry.asset.symbol} from watchlist`);
     } catch {
@@ -199,7 +199,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
               connectNulls={false}
             />
 
-            {/* Alert marker — shown if the last SMA value is above the last price */}
+            {/* Alert marker - shown if the last SMA value is above the last price */}
             {data.length > 0 &&
               (() => {
                 const last = data.at(-1)!;

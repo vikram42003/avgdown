@@ -42,6 +42,25 @@ export async function apiMutate<T>(
     throw error;
   }
 
-  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+// Void mutation helper for endpoints that return 204 No Content
+export async function apiMutateVoid(
+  path: string,
+  method: "POST" | "PATCH" | "DELETE",
+  body?: unknown,
+): Promise<void> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method,
+    credentials: "include",
+    headers: body === undefined ? {} : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const error = new Error("API request failed");
+    (error as Error & { status: number }).status = res.status;
+    throw error;
+  }
 }

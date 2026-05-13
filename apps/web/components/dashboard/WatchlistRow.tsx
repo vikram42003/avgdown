@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { apiMutate } from "@/lib/api";
+import { apiMutateVoid } from "@/lib/api";
 import type { WatchlistEntryResponse } from "@avgdown/types";
 
 interface WatchlistRowProps {
@@ -28,7 +28,7 @@ export function WatchlistRow({ entry, onEditRequest }: Readonly<WatchlistRowProp
   async function handleDelete() {
     setDeleting(true);
     try {
-      await apiMutate(`/watchlists/${entry.id}`, "DELETE");
+      await apiMutateVoid(`/watchlists/${entry.id}`, "DELETE");
       await mutate("/watchlists");
       toast.success(`Removed ${entry.asset.symbol} from watchlist`);
     } catch {
