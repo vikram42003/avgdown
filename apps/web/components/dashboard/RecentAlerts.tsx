@@ -5,6 +5,10 @@ import { formatCurrency, formatRelativeTime } from "@/lib/formatters";
 import { useRecentAlerts } from "@/hooks/useWatchlists";
 import type { RecentAlertResponse } from "@avgdown/types";
 
+interface RecentAlertsProps {
+  initialAlerts?: RecentAlertResponse[];
+}
+
 const AlertCard = ({ alert }: { alert: RecentAlertResponse }) => {
   const exchange = alert.watchlistEntry.asset.exchange;
   const rawDelta = alert.smaValue === 0 ? Number.NaN : ((alert.triggeredPrice - alert.smaValue) / alert.smaValue) * 100;
@@ -38,8 +42,8 @@ const AlertCardSkeleton = () => (
   </div>
 );
 
-const RecentAlerts = () => {
-  const { alerts, isLoading } = useRecentAlerts();
+const RecentAlerts = ({ initialAlerts }: Readonly<RecentAlertsProps>) => {
+  const { alerts, isLoading } = useRecentAlerts(initialAlerts);
 
   return (
     <div>

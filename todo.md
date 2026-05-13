@@ -11,13 +11,13 @@
 6. ✅ Dashboard Data Wiring: Connect the dashboard components to the real backend endpoints.
 7. ✅ Auth State Handling: Implement "Not logged in" states and protected route redirects.
 
-8. Watchlist CRUD Flow: Build the Create/Edit Watchlist form (Modal/Sheet with asset search and SMA period input - this is the most critical user action!).
-9. Sidebar Pages: Implement the remaining pages in the sidebar tabs (`/watchlists`, `/alerts`, `/browse-assets`).
+8. ✅ Watchlist CRUD Flow: Build the Create/Edit Watchlist form (Modal/Sheet with asset search and SMA period input - this is the most critical user action!).
+9. ✅ Sidebar Pages: Implement the remaining pages in the sidebar tabs (`/watchlists`, `/alerts`, `/browse-assets`).
 
-10. Loading States: Add skeleton loaders for dashboard components (Charts, Alerts) so the UI doesn't flash empty.
-11. Empty States: Design empty states for when the user has no watchlists or alerts.
-12. Toast Notifications: Add toast feedback (via Sonner) for CRUD actions (e.g., "Watchlist created").
-13. Error Handling: Add robust error boundaries and handling to critical areas.
+10. ✅ Loading States: Add skeleton loaders for dashboard components (Charts, Alerts) so the UI doesn't flash empty.
+11. ✅ Empty States: Design empty states for when the user has no watchlists or alerts.
+12. ✅ Toast Notifications: Add toast feedback (via Sonner) for CRUD actions (e.g., "Watchlist created").
+13. ✅ Error Handling: Add robust error boundaries and handling to critical areas.
 
 14. Terraform Cron: Configure Event Bridge with Terraform to run the Lambda worker every 15 min.
 15. Production Database: Setup Prisma migrations for production (`prisma migrate deploy` in the CI/CD or deployment step).
@@ -39,6 +39,7 @@
 24. Implement the calculation of the delivery rate in dashboard summary cards
 25. Limit the watchlist charts we initially load and add pagination/infinite scrolling
 26. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
+27. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
 
 ---
 
@@ -47,9 +48,7 @@
 ✅ feat/backend-auth              → 1, 2, 3
 ✅ feat/frontend-auth-flow        → 4, 7
 ✅ feat/data-layer-dashboard      → 5, 6
-feat/watchlist-crud               → 8
-feat/app-pages                    → 9
-feat/ui-states-feedback           → 10, 11, 12, 13
+✅ feat/watchlist-crud-app-pages  → 8, 9, 10, 11, 12, 13
 feat/infra-deployment             → 14, 15, 16
 
 feat/logging-observability        → 17, 20

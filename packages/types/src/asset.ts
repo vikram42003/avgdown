@@ -1,4 +1,4 @@
-import z from "zod";
+import z from "zod/v4";
 
 export const SupportedExchangesEnum = z.enum(["NASDAQ", "NYSE", "NSE", "BSE", "BINANCE", "COINBASE"]);
 export const AssetTypeEnum = z.enum(["STOCK", "CRYPTO", "ETF"]);

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { WatchlistEntryResponseSchema } from "./watchlist.js";
 import { SupportedExchangesEnum } from "./asset.js";
 

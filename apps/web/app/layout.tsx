@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Raleway } from "next/font/google";
 import "./globals.css";
 
+import { Toaster } from "sonner";
 import { Providers } from "@/components/common/Providers";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <Toaster theme="dark" position="bottom-right" richColors />
       </body>
     </html>
   );

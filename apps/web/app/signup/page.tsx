@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChartLineUpIcon } from "@phosphor-icons/react";
+import { setPendingToast } from "@/components/common/PendingToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
+import { API_URL } from "@/lib/api";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -28,7 +30,7 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+      const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -41,6 +43,7 @@ export default function SignupPage() {
         return;
       }
 
+      setPendingToast("success", "Account created - welcome to AvgDown!");
       router.push("/dashboard");
     } catch {
       setError("Could not connect to the server. Try again.");
@@ -63,7 +66,7 @@ export default function SignupPage() {
 
         {/* Google OAuth */}
         <Button asChild variant="outline" className="w-full" size="lg">
-          <a href={`${process.env.NEXT_PUBLIC_API_URL}/auth/oauth/google`}>
+          <a href={`${API_URL}/auth/oauth/google`}>
             <GoogleIcon />
             Continue with Google
           </a>

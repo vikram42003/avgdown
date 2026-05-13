@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChartLineUpIcon } from "@phosphor-icons/react";
+import { setPendingToast, PendingToast } from "@/components/common/PendingToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
+import { API_URL } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,7 +23,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -34,6 +36,7 @@ export default function LoginPage() {
         return;
       }
 
+      setPendingToast("success", "Welcome back!");
       router.push("/dashboard");
     } catch {
       setError("Could not connect to the server. Try again.");
@@ -44,6 +47,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-1 min-h-screen items-center justify-center bg-background px-4">
+      <PendingToast />
       <div className="glass w-full max-w-md rounded-2xl p-8 space-y-6">
         {/* Brand mark */}
         <div className="flex flex-col items-center gap-2 text-center">
@@ -56,7 +60,7 @@ export default function LoginPage() {
 
         {/* Google OAuth */}
         <Button asChild variant="outline" className="w-full" size="lg">
-          <a href={`${process.env.NEXT_PUBLIC_API_URL}/auth/oauth/google`}>
+          <a href={`${API_URL}/auth/oauth/google`}>
             <GoogleIcon />
             Continue with Google
           </a>

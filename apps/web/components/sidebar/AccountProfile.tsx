@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { SignOutIcon } from "@phosphor-icons/react";
+import { setPendingToast } from "@/components/common/PendingToast";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/useUser";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { API_URL } from "@/lib/api";
 
 const AccountProfile = () => {
   const { user, isLoading, mutate } = useUser();
@@ -14,16 +14,25 @@ const AccountProfile = () => {
 
   async function handleLogout() {
     try {
-      await fetch(`${API_URL}/auth/logout`, {
+      const res = await fetch(`${API_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
-    } catch (error) {
-      console.error("Logout failed:", error);
-    } finally {
+
+      if (!res.ok) {
+        throw new Error("Logout request failed");
+      }
+
       // Revalidate the /users/me cache so all consumers update instantly
       await mutate(undefined, { revalidate: false });
+      setPendingToast("success", "Signed out successfully");
       router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Fallback in case of server failure - we don't redirect so session remains intact
+      import("sonner").then(({ toast }) => {
+        toast.error("Logout failed - please try again");
+      });
     }
   }
 

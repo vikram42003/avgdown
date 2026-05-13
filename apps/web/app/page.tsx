@@ -1,18 +1,23 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { LandingNav } from "@/components/landing/LandingNav";
+import { HeroSection } from "@/components/landing/HeroSection";
+import { DcaExplanationSection } from "@/components/landing/DcaExplanationSection";
+import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { CtaSection } from "@/components/landing/CtaSection";
+import { LandingFooter } from "@/components/landing/LandingFooter";
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-      <h1 className="text-6xl font-bold mb-4 tracking-tighter">AvgDown</h1>
-      <p className="text-xl text-muted-foreground mb-8 text-center max-w-[600px]">
-        Smarter Dollar Cost Averaging. Get alerted when your favorite assets hit key technical levels.
-      </p>
-      <Link href="/dashboard">
-        <Button size="lg" className="rounded-full px-8 text-lg">
-          Go to Dashboard
-        </Button>
-      </Link>
+    <div className="flex flex-col flex-1 w-full min-h-screen">
+      <LandingNav />
+      <main className="flex-1">
+        <HeroSection />
+        <DcaExplanationSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <CtaSection />
+      </main>
+      <LandingFooter />
     </div>
   );
 }

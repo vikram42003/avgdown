@@ -1,10 +1,11 @@
 import useSWR from "swr";
 import type { WatchlistEntryResponse, RecentAlertResponse, PriceSnapshotChartDataResponse } from "@avgdown/types";
 
-// --- Watchlists ---
+// Watchlists
+// fallbackData is the server-fetched snapshot, SWR revalidates in the background.
 
-export function useWatchlists() {
-  const { data, error, isLoading, mutate } = useSWR<WatchlistEntryResponse[]>("/watchlists");
+export function useWatchlists(fallbackData?: WatchlistEntryResponse[]) {
+  const { data, error, isLoading, mutate } = useSWR<WatchlistEntryResponse[]>("/watchlists", { fallbackData });
   return {
     watchlists: data ?? [],
     isLoading,
@@ -13,10 +14,10 @@ export function useWatchlists() {
   };
 }
 
-// --- Recent Alerts ---
+// Recent Alerts
 
-export function useRecentAlerts() {
-  const { data, error, isLoading } = useSWR<RecentAlertResponse[]>("/watchlists/recent-alerts");
+export function useRecentAlerts(fallbackData?: RecentAlertResponse[]) {
+  const { data, error, isLoading } = useSWR<RecentAlertResponse[]>("/watchlists/recent-alerts", { fallbackData });
   return {
     alerts: data ?? [],
     isLoading,
@@ -24,7 +25,7 @@ export function useRecentAlerts() {
   };
 }
 
-// --- Chart data for a single watchlist entry ---
+// Chart data for a single watchlist entry
 // Pass null to skip the fetch (e.g. when no entry is selected yet)
 
 export function useChartData(entryId: string | null) {

@@ -2,6 +2,12 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWatchlists, useRecentAlerts } from "@/hooks/useWatchlists";
+import type { WatchlistEntryResponse, RecentAlertResponse } from "@avgdown/types";
+
+interface DashboardSummaryCardsProps {
+  initialWatchlists?: WatchlistEntryResponse[];
+  initialAlerts?: RecentAlertResponse[];
+}
 
 interface SummaryCardProps {
   title: string;
@@ -13,18 +19,17 @@ const SummaryCard = ({ title, value, isLoading }: SummaryCardProps) => {
   return (
     <div className="w-full sm:w-[calc(50%-1rem)] lg:flex-1 max-w-64 glass-primary px-2 py-4 rounded-md flex flex-col gap-1">
       <div className="text-sm text-muted-foreground">{title}</div>
-      {isLoading ? <Skeleton className="h-7 w-16 mt-0.5" /> : <div className="font-semibold text-xl">{value}</div>}
+      {isLoading ? <Skeleton className="h-7 w-16 mt-0.5 mx-auto" /> : <div className="font-semibold text-xl">{value}</div>}
     </div>
   );
 };
 
-const DashboardSummaryCards = () => {
-  const { watchlists, isLoading: watchlistsLoading } = useWatchlists();
-  const { alerts, isLoading: alertsLoading } = useRecentAlerts();
+const DashboardSummaryCards = ({ initialWatchlists, initialAlerts }: Readonly<DashboardSummaryCardsProps>) => {
+  const { watchlists, isLoading: watchlistsLoading } = useWatchlists(initialWatchlists);
+  const { alerts, isLoading: alertsLoading } = useRecentAlerts(initialAlerts);
 
+  // Only show loading state when there's no fallback data to display
   const isLoading = watchlistsLoading || alertsLoading;
-
-  // Unique asset count from the watchlist entries
   const assetCount = new Set(watchlists.map((w) => w.asset.id)).size;
 
   return (

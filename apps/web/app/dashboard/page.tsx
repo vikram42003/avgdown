@@ -1,33 +1,39 @@
-import { PlusIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PageTitle } from "@/components/common/PageTitle";
+import { serverFetch } from "@/lib/serverFetch";
 import DashboardSummaryCards from "@/components/dashboard/DashboardSummaryCards";
 import RecentAlerts from "@/components/dashboard/RecentAlerts";
 import WatchlistCharts from "@/components/dashboard/WatchlistCharts";
+import type { WatchlistEntryResponse, RecentAlertResponse } from "@avgdown/types";
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  // Fetch both in parallel since neither depends on the other, safely handling failures
+  const results = await Promise.allSettled([
+    serverFetch<WatchlistEntryResponse[]>("/watchlists"),
+    serverFetch<RecentAlertResponse[]>("/watchlists/recent-alerts"),
+  ]);
+
+  const initialWatchlists = results[0].status === "fulfilled" ? results[0].value : [];
+  const initialAlerts = results[1].status === "fulfilled" ? results[1].value : [];
+
+  if (results[0].status === "rejected") console.error("Failed to fetch initial watchlists:", results[0].reason);
+  if (results[1].status === "rejected") console.error("Failed to fetch initial alerts:", results[1].reason);
+
   return (
     <section className="flex flex-1 flex-col">
-      {/* Putting down all the stuff i might need on this page in a div */}
       <div className="flex shrink-0 items-center justify-between mb-6">
-        <h2 className="font-bold text-4xl">Overview</h2>
-
-        <Button size="lg" className="rounded-md">
-          <PlusIcon />
-          Create New Watchlist
-        </Button>
+        <PageTitle title="Overview" />
       </div>
 
-      <DashboardSummaryCards />
+      <DashboardSummaryCards initialWatchlists={initialWatchlists} initialAlerts={initialAlerts} />
 
       <div className="flex min-h-0 flex-1 gap-8 mt-6">
         <div className="flex-7/10 glass-primary rounded-xl p-4">
-          <WatchlistCharts />
+          <WatchlistCharts initialWatchlists={initialWatchlists} />
         </div>
         <div className="flex-3/10 glass-primary rounded-xl p-4">
-          <RecentAlerts />
+          <RecentAlerts initialAlerts={initialAlerts} />
         </div>
       </div>
-      {/* Do not forget some sort of empty state, like no alerts no watchlists */}
     </section>
   );
 }

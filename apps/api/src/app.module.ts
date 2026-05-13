@@ -1,6 +1,6 @@
 import { ZodValidationPipe, ZodSerializerInterceptor, ZodSerializationException } from "nestjs-zod";
 import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER, BaseExceptionFilter } from "@nestjs/core";
-import { ZodError } from "zod";
+import { ZodError } from "zod/v4";
 import { Logger, Module, HttpException, ArgumentsHost, Catch } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 
