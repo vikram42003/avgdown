@@ -70,8 +70,8 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
       toast.success(`Removed ${entry.asset.symbol} from watchlist`);
     } catch {
       toast.error("Failed to remove watchlist entry");
-      setDeleteOpen(false);
     } finally {
+      setDeleteOpen(false);
       setDeleting(false);
     }
   }
@@ -115,9 +115,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
             </PopoverTrigger>
             <PopoverContent className="w-56 glass p-3" align="end">
               <p className="text-sm font-medium mb-1">Remove {entry.asset.symbol}?</p>
-              <p className="text-xs text-muted-foreground mb-3">
-                This will permanently delete this watchlist entry.
-              </p>
+              <p className="text-xs text-muted-foreground mb-3">This will permanently delete this watchlist entry.</p>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -128,13 +126,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
                 >
                   Cancel
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                >
+                <Button variant="destructive" size="sm" className="flex-1" onClick={handleDelete} disabled={deleting}>
                   {deleting ? "Removing…" : "Remove"}
                 </Button>
               </div>
@@ -278,11 +270,7 @@ const WatchlistCharts = ({ initialWatchlists }: Readonly<WatchlistChartsProps>) 
         ) : watchlists.length === 0 ? (
           <p className="col-span-2 text-sm text-muted-foreground ml-1">
             No watchlists yet.{" "}
-            <button
-              type="button"
-              className="text-primary hover:underline"
-              onClick={handleAddNew}
-            >
+            <button type="button" className="text-primary hover:underline" onClick={handleAddNew}>
               Add one to get started!
             </button>
           </p>
@@ -294,11 +282,7 @@ const WatchlistCharts = ({ initialWatchlists }: Readonly<WatchlistChartsProps>) 
       </div>
 
       {/* Single form sheet instance — create or edit depending on editingEntry */}
-      <WatchlistFormSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        entry={editingEntry}
-      />
+      <WatchlistFormSheet open={sheetOpen} onOpenChange={setSheetOpen} entry={editingEntry} />
     </div>
   );
 };

@@ -22,13 +22,11 @@ export async function fetcher<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-// Mutation helper for POST / PATCH / DELETE.
-// Throws with the same { status } shape as fetcher so callers handle errors consistently.
-export async function apiMutate<T>(
-  path: string,
-  method: "POST" | "PATCH" | "DELETE",
-  body?: unknown,
-): Promise<T> {
+/**
+ * Mutation helper for POST/PATCH/DELETE requests that return a JSON response body.
+ * Throws on non-2xx responses. Use `apiMutateVoid` for 204 No Content responses.
+ */
+export async function apiMutate<T>(path: string, method: "POST" | "PATCH" | "DELETE", body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method,
     credentials: "include",
@@ -45,12 +43,11 @@ export async function apiMutate<T>(
   return res.json() as Promise<T>;
 }
 
-// Void mutation helper for endpoints that return 204 No Content
-export async function apiMutateVoid(
-  path: string,
-  method: "POST" | "PATCH" | "DELETE",
-  body?: unknown,
-): Promise<void> {
+/**
+ * Mutation helper for POST/PATCH/DELETE requests that return 204 No Content.
+ * Throws on non-2xx responses.
+ */
+export async function apiMutateVoid(path: string, method: "POST" | "PATCH" | "DELETE", body?: unknown): Promise<void> {
   const res = await fetch(`${API_URL}${path}`, {
     method,
     credentials: "include",
