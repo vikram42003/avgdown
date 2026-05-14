@@ -7,6 +7,32 @@ from datetime import date
 HISTORY_WINDOW = 40
 
 
+def _extract_close_series(data, symbol: str):
+    """
+    yfinance can return single-level columns or MultiIndex columns depending on
+    ticker count, group_by, multi_level_index, and library version.
+    """
+    columns = data.columns
+
+    if "Close" in columns:
+        closes = data["Close"]
+        if hasattr(closes, "columns") and symbol in closes.columns:
+            return closes[symbol]
+        return closes
+
+    if symbol in columns:
+        ticker_data = data[symbol]
+        if "Close" in ticker_data:
+            return ticker_data["Close"]
+
+    if hasattr(columns, "nlevels") and columns.nlevels > 1:
+        for key in ((symbol, "Close"), ("Close", symbol)):
+            if key in columns:
+                return data[key]
+
+    raise KeyError(f"Close series not found for {symbol}")
+
+
 def fetch_prices_bulk(
     symbols: list[str], period="1d", interval="15m"
 ) -> tuple[dict[str, float], dict[str, str]]:
@@ -26,10 +52,9 @@ def fetch_prices_bulk(
 
         prices_by_symbol = {}
         failed_symbols = {}
-        single_symbol = len(symbols) == 1
         for symbol in symbols:
             try:
-                closes = data["Close"] if single_symbol and "Close" in data else data[symbol]["Close"]
+                closes = _extract_close_series(data, symbol)
                 price = closes.dropna().iloc[-1]
                 if math.isnan(price):
                     failed_symbols[symbol] = "yfinance returned NaN for this timeframe"
@@ -83,11 +108,9 @@ def fetch_daily_closes_bulk(
 
     results: dict[str, list[tuple[date, float]]] = {}
     failed: dict[str, str] = {}
-    single_symbol = len(unique_symbols) == 1
-
     for symbol in unique_symbols:
         try:
-            closes = data["Close"] if single_symbol and "Close" in data else data[symbol]["Close"]
+            closes = _extract_close_series(data, symbol)
             closes = closes.dropna().tail(min_completed_closes)
             if len(closes) < min_completed_closes:
                 failed[symbol] = f"Not enough daily closes: got {len(closes)}, need {min_completed_closes}"
