@@ -22,8 +22,10 @@ def lambda_handler(event, context):
     watchlist_entries = get_watchlist_entries()
 
     if not watchlist_entries:
-        print("No active watchlist entries — nothing to compute.")
+        print("No active watchlist entries - nothing to compute.")
         return
+
+    print(f"Found {len(watchlist_entries)} active watchlist entries")
 
     # Build unique yfinance symbols and track the DB asset IDs/max SMA period
     # behind each symbol. Multiple DB assets can map to the same yfinance symbol.
@@ -41,7 +43,9 @@ def lambda_handler(event, context):
             entry.sma_period,
         )
 
-    asset_ids = sorted({asset_id for ids in asset_ids_by_symbol.values() for asset_id in ids})
+    asset_ids = sorted(
+        {asset_id for ids in asset_ids_by_symbol.values() for asset_id in ids}
+    )
     coverage_by_asset_id = get_daily_price_snapshot_coverage(asset_ids)
 
     today = date.today()
@@ -57,7 +61,11 @@ def lambda_handler(event, context):
         has_all_asset_rows = True
         for asset_id in asset_ids_for_symbol:
             row_count, latest_date = coverage_by_asset_id.get(asset_id, (0, None))
-            if row_count < required_closes or latest_date is None or latest_date < stale_before:
+            if (
+                row_count < required_closes
+                or latest_date is None
+                or latest_date < stale_before
+            ):
                 has_all_asset_rows = False
                 break
 
@@ -67,9 +75,13 @@ def lambda_handler(event, context):
             symbols_to_fetch.append(symbol)
 
     if not symbols_to_fetch:
-        print(f"Daily close hydration skipped: {skipped} symbols already have enough recent data.")
+        print(
+            f"Daily close hydration skipped: {skipped} symbols already have enough recent data."
+        )
         return
 
+    print(f"Symbols to fetch: {symbols_to_fetch}")
+    print("Required closes by symbol:", required_closes_by_symbol)
     max_required_closes = max(required_closes_by_symbol[s] for s in symbols_to_fetch)
     print(
         f"Hydrating daily closes for {len(symbols_to_fetch)} symbols "
@@ -84,15 +96,21 @@ def lambda_handler(event, context):
     if failed_symbols:
         print(f"Failed to fetch daily closes for: {failed_symbols}")
 
+    print(f"Fetched daily close series for {len(daily_closes_by_symbol)} symbols")
+
     # Flatten into (asset_id, date, close, source) rows for bulk upsert.
     rows_to_upsert = []
     for symbol, series in daily_closes_by_symbol.items():
         for asset_id in asset_ids_by_symbol[symbol]:
-            for snapshot_date, close in series[-required_closes_by_symbol[symbol]:]:
+            for snapshot_date, close in series[-required_closes_by_symbol[symbol] :]:
                 rows_to_upsert.append(
                     (asset_id, snapshot_date, Decimal(str(close)), "yfinance")
                 )
 
+    print(f"Preparing to upsert {len(rows_to_upsert)} daily close rows")
+    if rows_to_upsert:
+        sample_rows = rows_to_upsert[:5]
+        print(f"Sample rows: {sample_rows}")
     upsert_daily_price_snapshots_bulk(rows_to_upsert)
     print(f"Upserted {len(rows_to_upsert)} daily close rows.")
 

@@ -1,0 +1,9 @@
+Found 1 active watchlist entries
+Symbols to fetch: ['BTC-USD']
+Required closes by symbol: {'BTC-USD': 59}
+Hydrating daily closes for 1 symbols (0 skipped, need up to 59 closes)...
+Fetched daily close series for 1 symbols
+Preparing to upsert 59 daily close rows
+Sample rows: [('771d734f-f3f5-43cc-92e7-cb58aff8575d', datetime.date(2026, 3, 16), Decimal('74861.0859375'), 'yfinance'), ('771d734f-f3f5-43cc-92e7-cb58aff8575d', datetime.date(2026, 3, 17), Decimal('73922.4765625'), 'yfinance'), ('771d734f-f3f5-43cc-92e7-cb58aff8575d', datetime.date(2026, 3, 18), Decimal('71245.578125'), 'yfinance'), ('771d734f-f3f5-43cc-92e7-cb58aff8575d', datetime.date(2026, 3, 19), Decimal('69912.7890625'), 'yfinance'), ('771d734f-f3f5-43cc-92e7-cb58aff8575d', datetime.date(2026, 3, 20), Decimal('70522.5859375'), 'yfinance')]
+Upserting 59 daily_price_snapshots rows...
+Upserted 59 daily close rows.

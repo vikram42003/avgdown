@@ -26,8 +26,7 @@ def get_watchlist_entries() -> list[WatchlistEntryProjection]:
 
     conn = get_db()
     with conn.cursor(row_factory=class_row(WatchlistEntryProjection)) as cur:
-        cur.execute(
-            """
+        cur.execute("""
             SELECT
                 w.id,
                 w.sma_period,
@@ -41,8 +40,7 @@ def get_watchlist_entries() -> list[WatchlistEntryProjection]:
             JOIN users as u ON w.user_id = u.id
             JOIN assets as a ON w.asset_id = a.id
             WHERE w.is_active = true
-        """
-        )
+        """)
         return cur.fetchall()
 
 
@@ -190,6 +188,7 @@ def upsert_daily_price_snapshots_bulk(
 
     conn = get_db()
     with conn.cursor() as cur:
+        print(f"Upserting {len(rows)} daily_price_snapshots rows...")
         cur.executemany(
             """
             INSERT INTO daily_price_snapshots (asset_id, date, close, source)
