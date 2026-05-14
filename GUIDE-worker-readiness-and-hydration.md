@@ -72,7 +72,7 @@ log summary:
   failed count
 ```
 
-This can start as an improved version of `apps/worker/src/sma_worker.py`.
+This lives in `apps/worker/src/daily_close_worker.py`.
 
 Do not optimize too early with queues or complex provider abstractions. First make the manual worker boring and rerunnable.
 
@@ -94,7 +94,7 @@ The chart endpoint should be able to represent:
 }
 ```
 
-For fastest MVP, returning an empty SMA series with a clear frontend warming state is enough. The backend should not call yfinance just because a user opened a chart.
+For fastest MVP, returning an empty chart series with a clear frontend warming state is enough. The backend should not call yfinance just because a user opened a chart.
 
 Later upgrade path:
 
@@ -137,7 +137,7 @@ Use a real dev database or Neon branch with the real Prisma schema.
    - `daily_price_snapshots`
    - `missed_fetches`
    - `alerts`
-10. Rerun the 15-minute worker and confirm no duplicate alert is created for the same watchlist entry today.
+10. Rerun the live alert worker and confirm no duplicate alert is created for the same watchlist entry today.
 
 Useful manual commands:
 
@@ -145,8 +145,8 @@ Useful manual commands:
 python3 scripts/seed_assets.py
 
 cd apps/worker
-python3 src/sma_worker.py
-python3 src/main.py
+python3 src/daily_close_worker.py
+python3 src/live_alert_worker.py
 ```
 
 Useful inspection queries:
@@ -209,13 +209,13 @@ Before Terraform:
 
 Suggested schedules:
 
-- 15-minute worker: every 15 minutes, but internally skip closed markets
+- live alert worker: every 15 minutes, but internally skip closed markets
 - daily close hydration worker: once per day after relevant markets have closed
 - cleanup worker or `pg_cron`: once per day
 
 ## Today Or Tomorrow Execution Order
 
-1. Harden `sma_worker.py` into a true daily close hydration worker.
+1. Harden `daily_close_worker.py` into a true daily close hydration worker.
 2. Fix provider shape issues in `providers/yf.py`.
 3. Compute live alert SMA from stored closes plus current live price.
 4. Add or update API/frontend warming behavior if charts can be empty.

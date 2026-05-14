@@ -40,6 +40,7 @@
 25. Limit the watchlist charts we initially load and add pagination/infinite scrolling
 26. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
 27. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
+28. Add focused tests/fixtures for yfinance response shapes (`download` single ticker, multiple tickers, `group_by`, `multi_level_index`) so provider parsing breaks loudly when yfinance changes its DataFrame structure
 
 ---
 
@@ -79,7 +80,7 @@ chore/docs-review                 → 21, 22
 ### 1 May 2026 - Afternoon
 - [x] Implement WatchlistChart component and fix chart types
 - [x] Add DailySmaSnapshot model to schema and data layer
-- [x] Migrate alert logic to daily SMA and implement sma_worker lambda
+- [x] Migrate alert logic to daily SMA and implement daily close worker lambda
 
 ### 2 May 2026 - Afternoon
 - [x] Update chart data API contract to use daily SMA series

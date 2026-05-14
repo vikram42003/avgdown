@@ -59,7 +59,7 @@ def process_sma(
     entries_by_symbol: dict[str, list[WatchlistEntryProjection]],
     prices_by_asset_id: dict[str, Decimal],
 ) -> dict[str, dict[str, TriggeredAlert]]:
-    """Checks current prices against today's daily SMA and builds alerts"""
+    """Checks current prices against the provisional daily SMA and builds alerts"""
     SMA_VAL_BELOW_AVERAGE_DEVIATION_THRESHOLD = 0.02
 
     alerts_by_user: dict[str, dict[str, TriggeredAlert]] = defaultdict(dict)
@@ -104,7 +104,7 @@ def lambda_handler(event, context):
     # Compare prices against an in-memory provisional daily SMA
     alerts_by_user = process_sma(entries_by_symbol, prices_by_asset_id)
 
-    # Filter out alerts that were successfully sent out in the last 24 hours
+    # Filter out entries that already have any alert row today
     alerts_by_user = filter_alerts(alerts_by_user)
 
     # Bulk add alerts to DB with delivered=False
