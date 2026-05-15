@@ -10,7 +10,7 @@ from providers.yf import HISTORY_WINDOW, fetch_daily_closes_bulk
 from utils import map_symbol_exchange
 
 
-def lambda_handler(event, context):
+def lambda_handler(event: dict, context: object) -> None:
     """
     Daily Lambda: hydrates completed daily close prices from yfinance for every
     active asset. SMA values are computed from these closes by the API and live

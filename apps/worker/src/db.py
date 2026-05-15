@@ -48,6 +48,7 @@ def add_missed_fetch_bulk(missed_fetches: list[tuple[str, str, str]]) -> None:
     if not missed_fetches:
         return
 
+    print(f"Saving {len(missed_fetches)} missed fetch records")
     conn = get_db()
 
     with conn.cursor() as cur:
@@ -135,8 +136,10 @@ def get_alerted_today_entries(entry_ids: list[str]) -> set[str]:
 
 def add_alerts_bulk(alerts_to_add: list[TriggeredAlert]) -> None:
     if not alerts_to_add:
+        print("No alerts to insert")
         return
 
+    print(f"Inserting {len(alerts_to_add)} alerts into the alerts table")
     conn = get_db()
 
     with conn.cursor() as cur:
@@ -159,7 +162,10 @@ def add_alerts_bulk(alerts_to_add: list[TriggeredAlert]) -> None:
 def mark_alerts_as_delivered(watchlist_entry_ids: list[str]) -> None:
     """Updates alerts to delivered=true for the given entry IDs in the last 24 hours"""
     if not watchlist_entry_ids:
+        print("No alerts to mark as delivered")
         return
+
+    print(f"Marking {len(watchlist_entry_ids)} watchlist entries as delivered")
     conn = get_db()
     with conn.cursor() as cur:
         cur.execute(

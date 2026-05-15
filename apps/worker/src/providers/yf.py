@@ -2,12 +2,11 @@ import math
 import yfinance as yf
 from datetime import date
 
-
 # Number of daily chart points served by the frontend/API.
 HISTORY_WINDOW = 40
 
 
-def _extract_close_series(data, symbol: str):
+def _extract_close_series(data, symbol: str) -> object:
     """
     yfinance can return single-level columns or MultiIndex columns depending on
     ticker count, group_by, multi_level_index, and library version.
@@ -113,7 +112,9 @@ def fetch_daily_closes_bulk(
             closes = _extract_close_series(data, symbol)
             closes = closes.dropna().tail(min_completed_closes)
             if len(closes) < min_completed_closes:
-                failed[symbol] = f"Not enough daily closes: got {len(closes)}, need {min_completed_closes}"
+                failed[symbol] = (
+                    f"Not enough daily closes: got {len(closes)}, need {min_completed_closes}"
+                )
                 continue
 
             results[symbol] = [(idx.date(), float(val)) for idx, val in closes.items()]

@@ -1,5 +1,7 @@
 from decimal import Decimal
 from datetime import datetime, timezone
+from typing import Dict, List, Optional
+
 from models import WatchlistEntryProjection, TriggeredAlert
 from collections import defaultdict
 from providers.ses import send_alerts_via_email
@@ -20,6 +22,8 @@ def process_watchlist_entries(
 ) -> tuple[dict[str, list[WatchlistEntryProjection]], list[str]]:
     """Groups watchlist entries by asset and filters for active markets"""
 
+    print(f"Processing {len(watchlist_entries)} watchlist entries")
+
     # Group entries by asset, building (ticker, exchange) pairs for the market filter
     entries_by_asset = defaultdict(list)
     symbol_exchange_pairs = []
@@ -32,14 +36,18 @@ def process_watchlist_entries(
             seen_pairs.add(pair)
             symbol_exchange_pairs.append(pair)
 
+    print(f"Found {len(entries_by_asset)} unique symbol groups")
+    print(f"Symbol / exchange pairs: {symbol_exchange_pairs}")
+
     # Filter out assets whose markets are closed right now
     active_symbols = filter_inactive_markets(symbol_exchange_pairs)
+    print(f"Active symbols ({len(active_symbols)}): {active_symbols}")
 
     # change entries_by_asset from defaultdict to dict
     return dict(entries_by_asset), active_symbols
 
 
-def process_alpha_vantage_backfill():
+def process_alpha_vantage_backfill() -> None:
     now = datetime.now(timezone.utc)
     if now.minute <= 3 or now.minute >= 57:
         print(
@@ -53,6 +61,11 @@ def process_alpha_vantage_backfill():
         # 3. Hit Alpha Vantage in a bulk fetch just for those symbols
 
         # 4. Save successful prices AND mark them as resolved in missed_fetches
+    else:
+        print(
+            f"Skipping Alpha Vantage backfill because current minute is {now.minute}."
+            " It only runs around the top/bottom of the hour."
+        )
 
 
 def process_sma(
@@ -74,15 +87,35 @@ def process_sma(
     return dict(alerts_by_user)
 
 
-def lambda_handler(event, context):
+def lambda_handler(event: dict, context: object) -> None:
+    print("Starting live alert worker")
+
     # Fetch all watchlist entries (with joins on Assets and Users)
     watchlist_entries = get_watchlist_entries()
+    print(f"Fetched {len(watchlist_entries)} active watchlist entries from DB")
+    if watchlist_entries:
+        print(
+            "Sample watchlist entries:",
+            [
+                (
+                    entry.id,
+                    entry.asset_symbol,
+                    entry.asset_exchange,
+                    entry.user_id,
+                )
+                for entry in watchlist_entries[:5]
+            ],
+        )
 
     # Group entries by symbol and filter out symbols whose markets are inactive
     entries_by_symbol, active_symbols = process_watchlist_entries(watchlist_entries)
+    print(f"After market filtering, {len(active_symbols)} active symbols remain")
 
     # Fetch the newest prices for all the active assets in bulk
     prices_by_symbol, failed_symbols = fetch_prices_bulk(active_symbols)
+    print(f"Fetched prices for {len(prices_by_symbol)} symbols")
+    if failed_symbols:
+        print(f"Price fetch failures: {failed_symbols}")
 
     # Record any failed fetches for the Alpha Vantage backfill
     missed_fetches_to_insert = []
@@ -90,7 +123,9 @@ def lambda_handler(event, context):
         for entry in entries_by_symbol[s]:
             missed_fetches_to_insert.append((entry.asset_id, "yfinance", error_msg))
 
+    print(f"Prepared {len(missed_fetches_to_insert)} missed_fetch records")
     if missed_fetches_to_insert:
+        print("Missed fetch samples:", missed_fetches_to_insert[:5])
         add_missed_fetch_bulk(missed_fetches_to_insert)
 
     process_alpha_vantage_backfill()
@@ -101,21 +136,66 @@ def lambda_handler(event, context):
         for entry in entries_by_symbol[s]:
             prices_by_asset_id[entry.asset_id] = Decimal(str(p))
 
+    print(f"Built price map for {len(prices_by_asset_id)} asset IDs")
+    if prices_by_asset_id:
+        print("Price sample:", list(prices_by_asset_id.items())[:5])
+
     # Compare prices against an in-memory provisional daily SMA
     alerts_by_user = process_sma(entries_by_symbol, prices_by_asset_id)
+    total_alert_count = sum(len(user_alerts) for user_alerts in alerts_by_user.values())
+    print(f"Raw alert candidates before dedup/filter: {total_alert_count}")
+
+    # Force a local SES email send if no alerts were generated.
+    # This is temporary test logic for local debugging.
+    if not alerts_by_user and watchlist_entries:
+        sample = watchlist_entries[0]
+        sample_price = prices_by_asset_id.get(sample.asset_id, Decimal("1.0"))
+        alerts_by_user = {
+            sample.user_id: {
+                sample.id: TriggeredAlert(
+                    message="TEST ALERT: forcing local SES send",
+                    watchlist_entry_id=sample.id,
+                    triggered_price=sample_price,
+                    delivered=False,
+                    symbol=sample.asset_symbol,
+                    sma_value=Decimal("1.0"),
+                    user_email=sample.user_email,
+                    webhook_url=sample.user_webhook_url,
+                )
+            }
+        }
+        print("Forced a local SES test alert for watchlist entry", sample.id)
 
     # Filter out entries that already have any alert row today
     alerts_by_user = filter_alerts(alerts_by_user)
+    filtered_alert_count = sum(len(user_alerts) for user_alerts in alerts_by_user.values())
+    print(f"Alerts remaining after filtering already-alerted entries: {filtered_alert_count}")
 
     # Bulk add alerts to DB with delivered=False
-    flat_alerts_to_insert = []
+    flat_alerts_to_insert: List[TriggeredAlert] = []
     for user_alerts in alerts_by_user.values():
         flat_alerts_to_insert.extend(user_alerts.values())
+
+    print(f"Inserting {len(flat_alerts_to_insert)} alerts into DB")
+    if len(flat_alerts_to_insert) > 0:
+        print("Alert sample:", [
+            {
+                "entry_id": alert.watchlist_entry_id,
+                "symbol": alert.symbol,
+                "price": str(alert.triggered_price),
+                "sma": str(alert.sma_value),
+            }
+            for alert in flat_alerts_to_insert[:5]
+        ])
     add_alerts_bulk(flat_alerts_to_insert)
 
     # Send alerts and mark successful ones as delivered
     watchlist_ids_for_alerts_successfully_sent = send_alerts_via_email(alerts_by_user)
+    print(f"Alerts sent successfully for {len(watchlist_ids_for_alerts_successfully_sent)} watchlist entries")
+    if watchlist_ids_for_alerts_successfully_sent:
+        print("Delivered watchlist entry IDs:", watchlist_ids_for_alerts_successfully_sent[:10])
     mark_alerts_as_delivered(watchlist_ids_for_alerts_successfully_sent)
+    print("Finished live alert worker")
 
 
 if __name__ == "__main__":
