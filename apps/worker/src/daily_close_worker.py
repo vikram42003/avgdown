@@ -80,8 +80,6 @@ def lambda_handler(event: dict, context: object) -> None:
         )
         return
 
-    print(f"Symbols to fetch: {symbols_to_fetch}")
-    print("Required closes by symbol:", required_closes_by_symbol)
     max_required_closes = max(required_closes_by_symbol[s] for s in symbols_to_fetch)
     print(
         f"Hydrating daily closes for {len(symbols_to_fetch)} symbols "
@@ -96,8 +94,6 @@ def lambda_handler(event: dict, context: object) -> None:
     if failed_symbols:
         print(f"Failed to fetch daily closes for: {failed_symbols}")
 
-    print(f"Fetched daily close series for {len(daily_closes_by_symbol)} symbols")
-
     # Flatten into (asset_id, date, close, source) rows for bulk upsert.
     rows_to_upsert = []
     for symbol, series in daily_closes_by_symbol.items():
@@ -108,9 +104,6 @@ def lambda_handler(event: dict, context: object) -> None:
                 )
 
     print(f"Preparing to upsert {len(rows_to_upsert)} daily close rows")
-    if rows_to_upsert:
-        sample_rows = rows_to_upsert[:5]
-        print(f"Sample rows: {sample_rows}")
     upsert_daily_price_snapshots_bulk(rows_to_upsert)
     print(f"Upserted {len(rows_to_upsert)} daily close rows.")
 

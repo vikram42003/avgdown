@@ -1,2 +1,0 @@
-Found 1 active watchlist entries
-Daily close hydration skipped: 1 symbols already have enough recent data.
