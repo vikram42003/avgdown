@@ -8,7 +8,11 @@ from datetime import date, datetime
 class User:
     id: str
     email: str
+    password_hash: Optional[str]
+    google_id: Optional[str]
     webhook_url: Optional[str]
+    created_at: datetime
+    updated_at: datetime
 
 
 @dataclass
@@ -19,7 +23,6 @@ class Asset:
     name: str
     asset_type: str
     created_at: datetime
-    updated_at: datetime
 
 
 @dataclass
