@@ -80,6 +80,8 @@ model Alert {
   createdAt        DateTime       @default(now()) @map("created_at")
   watchlistEntry   WatchlistEntry @relation(fields: [watchlistEntryId], references: [id], onDelete: Cascade)
 
+  @@index([watchlistEntryId, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
   @@map("alerts")
 }
 
