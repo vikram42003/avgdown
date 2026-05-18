@@ -1,3 +1,4 @@
+from db import mark_alerts_as_delivered_by_id
 import json
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -36,27 +37,30 @@ def _fire_webhook(webhook_url: str, payload: dict) -> None:
 def handle_alerts(
     alerts_by_user: dict[str, dict[str, TriggeredAlert]],
     entry_to_alert_id: dict[str, str],
-) -> list[str]:
+) -> None:
     """
-    Orchestrates alert dispatch for the current worker run.
+    Sends out emails, hits the webhook for the successfully sent out email, and then
+    marks alerts as delivered for successfully sent out emails
 
-    1. Sends all alerts via email (grouped per user in one email).
-    2. Fires webhooks (fire-and-forget) for users who have a webhook_url configured.
-    3. Returns the list of alert IDs that were successfully emailed, so the
-       caller can mark exactly those rows as delivered in the DB.
+    Args:
+        alerts_by_user: A dictionary mapping user IDs to their triggered alerts.
+        entry_to_alert_id: A dictionary mapping watchlist entry IDs to alert IDs in the DB.
+
+    Returns:
+        None
     """
-    # --- Step 1: Email ---
+    # send out emails
     sent_entry_ids: list[str] = send_alerts_via_email(alerts_by_user)
     print(f"Email sent for {len(sent_entry_ids)} watchlist entries")
 
-    # --- Step 2: Webhooks (fire-and-forget per user) ---
+    # hit the webhooks (fire-and-forget, for now)
     triggered_at = datetime.now(timezone.utc).isoformat()
 
     for user_alerts in alerts_by_user.values():
         if not user_alerts:
             continue
 
-        # Grab webhook_url from any alert in this user's batch (all same user)
+        # pull the webhook url from the first alert (they all belong to the same user anyway)
         sample_alert = next(iter(user_alerts.values()))
         webhook_url = sample_alert.webhook_url
         if not webhook_url:
@@ -78,11 +82,13 @@ def handle_alerts(
 
         _fire_webhook(webhook_url, payload)
 
-    # --- Step 3: Map successfully sent entry_ids → alert_ids ---
+    # map successfully sent entry_ids to alert_ids
     sent_alert_ids: list[str] = [
-        entry_to_alert_id[eid]
-        for eid in sent_entry_ids
-        if eid in entry_to_alert_id
+        entry_to_alert_id[eid] for eid in sent_entry_ids if eid in entry_to_alert_id
     ]
 
-    return sent_alert_ids
+    # mark alerts as delivered (in the db)
+    print(f"Alerts successfully dispatched: {len(sent_alert_ids)}")
+    mark_alerts_as_delivered_by_id(sent_alert_ids)
+
+    return None

@@ -20,9 +20,19 @@ from logic.alerts import handle_alerts
 def process_watchlist_entries(
     watchlist_entries: list[WatchlistEntryProjection],
 ) -> tuple[dict[str, list[WatchlistEntryProjection]], list[str]]:
-    """Groups watchlist entries by asset and filters for active markets"""
+    """
+    Groups watchlist entries by asset and filters out inactive markets.
 
-    # Group entries by asset, building (ticker, exchange) pairs for the market filter
+    Args:
+        watchlist_entries: List of watchlist entries joined with asset data.
+
+    Returns:
+        A tuple containing:
+        - A dictionary mapping symbol strings to their watchlist entries.
+        - A list of active symbol strings whose markets are currently open.
+    """
+
+    # group entries by asset to build pairs for our market filter
     entries_by_asset = defaultdict(list)
     symbol_exchange_pairs = []
     seen_pairs = set()
@@ -34,15 +44,18 @@ def process_watchlist_entries(
             seen_pairs.add(pair)
             symbol_exchange_pairs.append(pair)
 
-    # Filter out assets whose markets are closed right now
+    # filter out assets whose markets are closed right now
     active_symbols = filter_inactive_markets(symbol_exchange_pairs)
     print(f"Active symbols ({len(active_symbols)}): {active_symbols}")
 
-    # change entries_by_asset from defaultdict to dict
+    # return as a normal dict instead of defaultdict
     return dict(entries_by_asset), active_symbols
 
 
 def process_alpha_vantage_backfill() -> None:
+    """
+    Runs the hourly Alpha Vantage backfill sequence to retry missed fetches.
+    """
     now = datetime.now(timezone.utc)
     if now.minute <= 3 or now.minute >= 57:
         print(
@@ -67,7 +80,16 @@ def process_sma(
     entries_by_symbol: dict[str, list[WatchlistEntryProjection]],
     prices_by_asset_id: dict[str, Decimal],
 ) -> dict[str, dict[str, TriggeredAlert]]:
-    """Checks current prices against the provisional daily SMA and builds alerts"""
+    """
+    Checks current prices against the provisional daily SMA and builds alerts.
+
+    Args:
+        entries_by_symbol: Dictionary mapping symbols to their watchlist entries.
+        prices_by_asset_id: Dictionary mapping asset IDs to their current prices.
+
+    Returns:
+        A nested dictionary mapping user IDs to their triggered alerts.
+    """
     SMA_VAL_BELOW_AVERAGE_DEVIATION_THRESHOLD = 0.02
 
     alerts_by_user: dict[str, dict[str, TriggeredAlert]] = defaultdict(dict)
@@ -83,23 +105,30 @@ def process_sma(
 
 
 def lambda_handler(event: dict, context: object) -> None:
+    """
+    Main entry point for the live alert worker.
+
+    Args:
+        event: Lambda event payload.
+        context: Lambda execution context.
+    """
     print("Starting live alert worker")
 
-    # Fetch all watchlist entries (with joins on Assets and Users)
+    # grab all active watchlist entries from the db
     watchlist_entries = get_watchlist_entries()
     print(f"Fetched {len(watchlist_entries)} active watchlist entries from DB")
 
-    # Group entries by symbol and filter out symbols whose markets are inactive
+    # group them up and toss out the ones where markets are closed
     entries_by_symbol, active_symbols = process_watchlist_entries(watchlist_entries)
     print(f"After market filtering, {len(active_symbols)} active symbols remain")
 
-    # Fetch the newest prices for all the active assets in bulk
+    # fetch the latest prices for whatever's left
     prices_by_symbol, failed_symbols = fetch_prices_bulk(active_symbols)
     print(f"Fetched prices for {len(prices_by_symbol)} symbols")
     if failed_symbols:
         print(f"Price fetch failures: {failed_symbols}")
 
-    # Record any failed fetches for the Alpha Vantage backfill
+    # log any failures so we can retry them later with alpha vantage
     missed_fetches_to_insert = []
     for s, error_msg in failed_symbols.items():
         for entry in entries_by_symbol[s]:
@@ -111,21 +140,21 @@ def lambda_handler(event: dict, context: object) -> None:
 
     process_alpha_vantage_backfill()
 
-    # Build a flat dict of asset_id -> current Decimal price for the SMA comparison
+    # build a flat dictionary of prices for the sma check
     prices_by_asset_id: dict[str, Decimal] = {}
     for s, p in prices_by_symbol.items():
         for entry in entries_by_symbol[s]:
             prices_by_asset_id[entry.asset_id] = Decimal(str(p))
 
-    # Compare prices against an in-memory provisional daily SMA
+    # check prices against the daily sma to see if anything triggered
     alerts_by_user = process_sma(entries_by_symbol, prices_by_asset_id)
 
-    # Filter out entries that already have any alert row today
+    # toss out any alerts for entries that already went off today
     alerts_by_user = filter_alerts(alerts_by_user)
     filtered_alert_count = sum(len(user_alerts) for user_alerts in alerts_by_user.values())
     print(f"Alerts remaining after filtering already-alerted entries: {filtered_alert_count}")
 
-    # Bulk add alerts to DB with delivered=False, get back entry_id -> alert_id map
+    # bulk insert the new alerts as undelivered and get their ids
     flat_alerts_to_insert: List[TriggeredAlert] = []
     for user_alerts in alerts_by_user.values():
         flat_alerts_to_insert.extend(user_alerts.values())
@@ -133,10 +162,8 @@ def lambda_handler(event: dict, context: object) -> None:
     print(f"Inserting {len(flat_alerts_to_insert)} alerts into DB")
     entry_to_alert_id = add_alerts_bulk(flat_alerts_to_insert)
 
-    # Send emails + fire webhooks; returns alert_ids for successfully emailed alerts
-    sent_alert_ids = handle_alerts(alerts_by_user, entry_to_alert_id)
-    print(f"Alerts successfully dispatched: {len(sent_alert_ids)}")
-    mark_alerts_as_delivered_by_id(sent_alert_ids)
+    # dispatch emails and webhooks, then mark the successful ones as delivered
+    handle_alerts(alerts_by_user, entry_to_alert_id)
     print("Finished live alert worker")
 
 

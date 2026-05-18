@@ -13,7 +13,15 @@ ses = boto3.client("sesv2", config=ses_config)
 def send_alerts_via_email(
     alerts_by_user: dict[str, dict[str, TriggeredAlert]],
 ) -> list[str]:
-    """Send alerts to users via email"""
+    """
+    Sends alerts to users via email using AWS SES.
+
+    Args:
+        alerts_by_user: A dictionary mapping user IDs to their triggered alerts.
+
+    Returns:
+        A list of watchlist entry IDs for which the email was successfully sent.
+    """
     sender = os.environ["SES_EMAIL_IDENTITY"]
 
     alerts_successfully_sent = []
@@ -24,7 +32,7 @@ def send_alerts_via_email(
         symbols = set()
         messages = []
         user_email = None
-        # Loop over values since entry_id is unused here
+        # loop over values since entry_id is unused here
         for alert in alert_by_entry_ids.values():
             if user_email is None:
                 user_email = alert.user_email
@@ -52,7 +60,7 @@ def send_alerts_via_email(
 
             alerts_successfully_sent.extend(alert_by_entry_ids.keys())
 
-            # Redact email from logs to protect PII
+            # redact email from logs to protect pii
             print(
                 f"Successfully sent alert to user_id: {next(iter(alert_by_entry_ids.values())).watchlist_entry_id[:8]}..."
             )
