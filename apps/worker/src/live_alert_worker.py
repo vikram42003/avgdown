@@ -4,17 +4,17 @@ from typing import List
 
 from models import WatchlistEntryProjection, TriggeredAlert
 from collections import defaultdict
-from providers.ses import send_alerts_via_email
 
 from db import (
     add_missed_fetch_bulk,
     get_watchlist_entries,
     add_alerts_bulk,
-    mark_alerts_as_delivered
+    mark_alerts_as_delivered_by_id
 )
 from providers.yf import fetch_prices_bulk
 from utils import map_symbol_exchange, filter_inactive_markets, filter_alerts
 from logic.sma import sma_val_below_average
+from logic.alerts import handle_alerts
 
 
 def process_watchlist_entries(
@@ -125,18 +125,18 @@ def lambda_handler(event: dict, context: object) -> None:
     filtered_alert_count = sum(len(user_alerts) for user_alerts in alerts_by_user.values())
     print(f"Alerts remaining after filtering already-alerted entries: {filtered_alert_count}")
 
-    # Bulk add alerts to DB with delivered=False
+    # Bulk add alerts to DB with delivered=False, get back entry_id -> alert_id map
     flat_alerts_to_insert: List[TriggeredAlert] = []
     for user_alerts in alerts_by_user.values():
         flat_alerts_to_insert.extend(user_alerts.values())
 
     print(f"Inserting {len(flat_alerts_to_insert)} alerts into DB")
-    add_alerts_bulk(flat_alerts_to_insert)
+    entry_to_alert_id = add_alerts_bulk(flat_alerts_to_insert)
 
-    # Send alerts and mark successful ones as delivered
-    watchlist_ids_for_alerts_successfully_sent = send_alerts_via_email(alerts_by_user)
-    print(f"Alerts sent successfully for {len(watchlist_ids_for_alerts_successfully_sent)} watchlist entries")
-    mark_alerts_as_delivered(watchlist_ids_for_alerts_successfully_sent)
+    # Send emails + fire webhooks; returns alert_ids for successfully emailed alerts
+    sent_alert_ids = handle_alerts(alerts_by_user, entry_to_alert_id)
+    print(f"Alerts successfully dispatched: {len(sent_alert_ids)}")
+    mark_alerts_as_delivered_by_id(sent_alert_ids)
     print("Finished live alert worker")
 
 

@@ -134,49 +134,67 @@ def get_alerted_today_entries(entry_ids: list[str]) -> set[str]:
         return {row[0] for row in cur.fetchall()}
 
 
-def add_alerts_bulk(alerts_to_add: list[TriggeredAlert]) -> None:
+def add_alerts_bulk(alerts_to_add: list[TriggeredAlert]) -> dict[str, str]:
+    """
+    Inserts alerts and returns a mapping of watchlist_entry_id -> alert_id
+    for the newly created rows, so callers can mark exact alerts as delivered.
+    """
     if not alerts_to_add:
         print("No alerts to insert")
-        return
+        return {}
 
     print(f"Inserting {len(alerts_to_add)} alerts into the alerts table")
     conn = get_db()
 
+    entry_to_alert_id: dict[str, str] = {}
     with conn.cursor() as cur:
-        with cur.copy(
-            "COPY alerts (watchlist_entry_id, triggered_price, sma_value, delivered) FROM STDIN"
-        ) as copy:
-            for alert in alerts_to_add:
-                copy.write_row(
-                    (
-                        alert.watchlist_entry_id,
-                        alert.triggered_price,
-                        alert.sma_value,
-                        alert.delivered,
-                    )
+        cur.executemany(
+            """
+            INSERT INTO alerts (watchlist_entry_id, triggered_price, sma_value, delivered)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id, watchlist_entry_id
+            """,
+            [
+                (
+                    alert.watchlist_entry_id,
+                    alert.triggered_price,
+                    alert.sma_value,
+                    alert.delivered,
                 )
+                for alert in alerts_to_add
+            ],
+            returning=True,
+        )
+        # Collect RETURNING rows from all statements
+        while True:
+            row = cur.fetchone()
+            if row:
+                alert_id, entry_id = str(row[0]), str(row[1])
+                entry_to_alert_id[entry_id] = alert_id
+            if not cur.nextset():
+                break
 
     conn.commit()
+    return entry_to_alert_id
 
 
-def mark_alerts_as_delivered(watchlist_entry_ids: list[str]) -> None:
-    """Updates alerts to delivered=true for the given entry IDs in the last 24 hours"""
-    if not watchlist_entry_ids:
+def mark_alerts_as_delivered_by_id(alert_ids: list[str]) -> None:
+    """Marks specific alert rows as delivered using their exact IDs from the current send batch."""
+    if not alert_ids:
         print("No alerts to mark as delivered")
         return
 
-    print(f"Marking {len(watchlist_entry_ids)} watchlist entries as delivered")
+    print(f"Marking {len(alert_ids)} alerts as delivered")
     conn = get_db()
     with conn.cursor() as cur:
         cur.execute(
             """
-            UPDATE alerts 
+            UPDATE alerts
             SET delivered = true, delivered_at = NOW()
-            WHERE watchlist_entry_id = ANY(%s)
+            WHERE id = ANY(%s)
             AND delivered = false
-            AND created_at > NOW() - INTERVAL '24 hours'
             """,
-            (watchlist_entry_ids,),
+            (alert_ids,),
         )
     conn.commit()
 
