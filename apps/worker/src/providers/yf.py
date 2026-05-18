@@ -89,8 +89,10 @@ def fetch_daily_closes_bulk(
 
     unique_symbols = list(dict.fromkeys(symbols))
 
-    # yfinance period is calendar-ish, so add a buffer for weekends/holidays.
-    days_needed = min_completed_closes + 30
+    # yfinance 'period' expects calendar days, but min_completed_closes is trading days.
+    # Convert trading days to calendar days (5 trading days per 7 calendar days)
+    # and add a 14-day buffer for holidays and market closures.
+    days_needed = math.ceil(min_completed_closes * 7.0 / 5.0) + 14
 
     try:
         data = yf.download(
@@ -113,7 +115,8 @@ def fetch_daily_closes_bulk(
             closes = closes.dropna().tail(min_completed_closes)
             if len(closes) < min_completed_closes:
                 failed[symbol] = (
-                    f"Not enough daily closes: got {len(closes)}, need {min_completed_closes}"
+                    f"Not enough daily closes (got {len(closes)}, need {min_completed_closes}). "
+                    f"The {days_needed}d calendar request window might be too small."
                 )
                 continue
 
