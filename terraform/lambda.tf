@@ -29,6 +29,8 @@ resource "aws_lambda_function" "live_alert_worker" {
   handler       = "live_alert_worker.lambda_handler"
   code_sha256   = data.archive_file.worker_source_code.output_base64sha256
   timeout       = 30
+  memory_size   = 256
+  reserved_concurrent_executions = 5
 
   runtime = "python3.12"
 
@@ -62,6 +64,8 @@ resource "aws_lambda_function" "daily_close_worker" {
   handler       = "daily_close_worker.lambda_handler"
   code_sha256   = data.archive_file.worker_source_code.output_base64sha256
   timeout       = 120
+  memory_size   = 512
+  reserved_concurrent_executions = 5
 
   runtime = "python3.12"
 
@@ -69,7 +73,6 @@ resource "aws_lambda_function" "daily_close_worker" {
     variables = {
       ENVIRONMENT        = "production"
       LOG_LEVEL          = "info"
-      SES_EMAIL_IDENTITY = var.ses_email_identity
       DATABASE_URL       = var.database_url
     }
   }
