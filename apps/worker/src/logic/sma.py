@@ -6,6 +6,8 @@ from db import get_recent_daily_closes_bulk
 
 def calculate_sma(values: list[Decimal]) -> Decimal:
     """Calculates a simple moving average from Decimal prices."""
+    if not values:
+        raise ValueError("calculate_sma requires a non-empty list of Decimal values")
     return sum(values) / Decimal(len(values))
 
 
@@ -47,7 +49,7 @@ def sma_val_below_average(
                 )
                 continue
 
-            sma_inputs = completed_closes[:required_daily_closes] + [current_price]
+            sma_inputs = [*completed_closes[:required_daily_closes], current_price]
             sma_value = calculate_sma(sma_inputs)
 
             threshold_multiplier = Decimal(str(1 - deviation_threshold))

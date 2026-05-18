@@ -46,7 +46,7 @@ def process_watchlist_entries(
 
     # filter out assets whose markets are closed right now
     active_symbols = filter_inactive_markets(symbol_exchange_pairs)
-    print(f"Active symbols ({len(active_symbols)}): {active_symbols}")
+    print(f"Active symbols count: {len(active_symbols)}")
 
     # return as a normal dict instead of defaultdict
     return dict(entries_by_asset), active_symbols
@@ -126,7 +126,7 @@ def lambda_handler(event: dict, context: object) -> None:
     prices_by_symbol, failed_symbols = fetch_prices_bulk(active_symbols)
     print(f"Fetched prices for {len(prices_by_symbol)} symbols")
     if failed_symbols:
-        print(f"Price fetch failures: {failed_symbols}")
+        print(f"Price fetch failures ({len(failed_symbols)}): {list(failed_symbols.keys())}")
 
     # log any failures so we can retry them later with alpha vantage
     missed_fetches_to_insert = []
@@ -143,8 +143,10 @@ def lambda_handler(event: dict, context: object) -> None:
     # build a flat dictionary of prices for the sma check
     prices_by_asset_id: dict[str, Decimal] = {}
     for s, p in prices_by_symbol.items():
-        for entry in entries_by_symbol[s]:
-            prices_by_asset_id[entry.asset_id] = Decimal(str(p))
+        # multiple entries for the same symbol share the same asset_id
+        asset_ids = {entry.asset_id for entry in entries_by_symbol[s]}
+        for aid in asset_ids:
+            prices_by_asset_id[aid] = Decimal(str(p))
 
     # check prices against the daily sma to see if anything triggered
     alerts_by_user = process_sma(entries_by_symbol, prices_by_asset_id)
