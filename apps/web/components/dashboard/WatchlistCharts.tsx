@@ -54,11 +54,20 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
   };
 
   const data: ChartDataPoint[] =
-    chartData?.points.map((p) => ({
-      date: typeof p.date === "string" ? p.date : p.date.toISOString(),
-      close: p.close,
-      sma: p.sma,
-    })) ?? [];
+    chartData?.points.map((p) => {
+      let normalizedDate = p.date;
+      if (typeof p.date !== "string") {
+        const year = p.date.getUTCFullYear();
+        const month = String(p.date.getUTCMonth() + 1).padStart(2, "0");
+        const day = String(p.date.getUTCDate()).padStart(2, "0");
+        normalizedDate = `${year}-${month}-${day}`;
+      }
+      return {
+        date: normalizedDate,
+        close: p.close,
+        sma: p.sma,
+      };
+    }) ?? [];
   const isWarmingUp = chartData?.status === "WARMING_UP";
 
   async function handleDelete() {
@@ -163,6 +172,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
                     const raw = payload?.[0]?.payload?.date;
                     if (!raw) return "";
                     return new Date(raw).toLocaleDateString(undefined, {
+                      timeZone: "UTC",
                       month: "short",
                       day: "numeric",
                       year: "numeric",
