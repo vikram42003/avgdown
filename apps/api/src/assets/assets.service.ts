@@ -30,17 +30,17 @@ export class AssetsService {
 
       this.logger.log(`[Asset Deletion Protocol Initiated] Target: ${asset.symbol} (ID: ${id})`);
 
-      const [alertsCount, weCount, psCount, mfCount] = await Promise.all([
+      const [alertsCount, weCount, dailyPriceCount, mfCount] = await Promise.all([
         tx.alert.count({ where: { watchlistEntry: { assetId: id } } }),
         tx.watchlistEntry.count({ where: { assetId: id } }),
-        tx.priceSnapshot.count({ where: { assetId: id } }),
+        tx.dailyPriceSnapshot.count({ where: { assetId: id } }),
         tx.missedFetch.count({ where: { assetId: id } }),
       ]);
 
       this.logger.warn(`Cascading delete will permanently remove:`);
       this.logger.warn(` - ${alertsCount} Alerts`);
       this.logger.warn(` - ${weCount} Watchlist Entries`);
-      this.logger.warn(` - ${psCount} Price Snapshots`);
+      this.logger.warn(` - ${dailyPriceCount} Daily Price Snapshots`);
       this.logger.warn(` - ${mfCount} Missed Fetches`);
 
       const deletedAsset = await tx.asset.delete({ where: { id } });

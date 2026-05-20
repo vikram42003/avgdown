@@ -1,11 +1,36 @@
 import math
 import yfinance as yf
+from collections.abc import Mapping
 from datetime import date
 
-
-# Number of daily SMA data points to store per asset/period.
-# This matches the chart history window on the frontend.
+# Number of daily chart points served by the frontend/API.
 HISTORY_WINDOW = 40
+
+
+def _extract_close_series(data, symbol: str) -> object:
+    """
+    yfinance can return single-level columns or MultiIndex columns depending on
+    ticker count, group_by, multi_level_index, and library version.
+    """
+    columns = data.columns
+
+    if "Close" in columns:
+        closes = data["Close"]
+        if hasattr(closes, "columns") and symbol in closes.columns:
+            return closes[symbol]
+        return closes
+
+    if symbol in columns:
+        ticker_data = data[symbol]
+        if "Close" in ticker_data:
+            return ticker_data["Close"]
+
+    if hasattr(columns, "nlevels") and columns.nlevels > 1:
+        for key in ((symbol, "Close"), ("Close", symbol)):
+            if key in columns:
+                return data[key]
+
+    raise KeyError(f"Close series not found for {symbol}")
 
 
 def fetch_prices_bulk(
@@ -27,10 +52,10 @@ def fetch_prices_bulk(
 
         prices_by_symbol = {}
         failed_symbols = {}
-        # The returned data is a pandas dataframe !!!!
         for symbol in symbols:
             try:
-                price = data[symbol]["Close"].iloc[-1]
+                closes = _extract_close_series(data, symbol)
+                price = closes.dropna().iloc[-1]
                 if math.isnan(price):
                     failed_symbols[symbol] = "yfinance returned NaN for this timeframe"
                 else:
@@ -49,26 +74,32 @@ def fetch_prices_bulk(
         return ({}, {s: str(e) for s in symbols})
 
 
-def fetch_daily_sma_bulk(
-    symbol_period_pairs: list[tuple[str, int]],
-) -> tuple[dict[tuple[str, int], list[tuple[date, float]]], list[tuple[str, int]]]:
+def fetch_daily_closes_bulk(
+    symbols: list[str],
+    min_completed_closes: int | Mapping[str, int],
+) -> tuple[dict[str, list[tuple[date, float]]], dict[str, str]]:
     """
-    For each (symbol, period) pair, fetches enough daily history from yfinance
-    to compute a rolling SMA for the last HISTORY_WINDOW trading days.
+    Fetches completed daily close history for each symbol.
 
     Returns:
-        - dict mapping (symbol, period) -> list of (date, sma_value) chronologically
-        - list of (symbol, period) pairs that failed
+        - dict mapping symbol -> list of (date, close) chronologically
+        - dict mapping failed symbol -> error message
     """
-    if not symbol_period_pairs:
-        return {}, []
+    if not symbols:
+        return {}, {}
 
-    unique_symbols = list({s for s, _ in symbol_period_pairs})
-    max_period = max(p for _, p in symbol_period_pairs)
+    unique_symbols = list(dict.fromkeys(symbols))
+    required_closes_by_symbol = (
+        {symbol: min_completed_closes[symbol] for symbol in unique_symbols}
+        if isinstance(min_completed_closes, Mapping)
+        else {symbol: min_completed_closes for symbol in unique_symbols}
+    )
+    max_required_closes = max(required_closes_by_symbol.values())
 
-    # Need HISTORY_WINDOW + max_period - 1 daily closes to compute a full rolling SMA
-    # series for the last HISTORY_WINDOW points. Add a buffer for weekends/holidays.
-    days_needed = HISTORY_WINDOW + max_period + 15
+    # yfinance 'period' expects calendar days, but completed closes are trading days.
+    # Convert trading days to calendar days (5 trading days per 7 calendar days)
+    # and add a 14-day buffer for holidays and market closures.
+    days_needed = math.ceil(max_required_closes * 7.0 / 5.0) + 14
 
     try:
         data = yf.download(
@@ -81,24 +112,24 @@ def fetch_daily_sma_bulk(
         )
     except Exception as e:
         print(f"Failed to fetch daily data from yfinance: {e}")
-        return {}, symbol_period_pairs
+        return {}, {s: str(e) for s in unique_symbols}
 
-    results: dict[tuple[str, int], list[tuple[date, float]]] = {}
-    failed: list[tuple[str, int]] = []
-
-    for symbol, period in symbol_period_pairs:
+    results: dict[str, list[tuple[date, float]]] = {}
+    failed: dict[str, str] = {}
+    for symbol in unique_symbols:
         try:
-            closes = data[symbol]["Close"].dropna()
-            if len(closes) < period:
-                print(f"Not enough daily data for {symbol} (period={period}): got {len(closes)} rows")
-                failed.append((symbol, period))
+            required_closes = required_closes_by_symbol[symbol]
+            closes = _extract_close_series(data, symbol)
+            closes = closes.dropna().tail(required_closes)
+            if len(closes) < required_closes:
+                failed[symbol] = (
+                    f"Not enough daily closes (got {len(closes)}, need {required_closes}). "
+                    f"The {days_needed}d calendar request window might be too small."
+                )
                 continue
 
-            rolling_sma = closes.rolling(window=period).mean().dropna()
-            series = rolling_sma.tail(HISTORY_WINDOW)
-            results[(symbol, period)] = [(idx.date(), float(val)) for idx, val in series.items()]
+            results[symbol] = [(idx.date(), float(val)) for idx, val in closes.items()]
         except (KeyError, IndexError) as e:
-            print(f"Failed to compute SMA for {symbol} (period={period}): {e}")
-            failed.append((symbol, period))
+            failed[symbol] = f"Missing or empty daily close series: {e}"
 
     return results, failed

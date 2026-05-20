@@ -33,13 +33,48 @@
 20. Implement the Observability layer
 21. Update Documentation and make charts/graphs and shit for it
 22. GO THROUGH THE GUIDE.md AND SEE IF THERES ANYTHING ELSE LEFT
+23. **Webhook Reliability & Visibility**: Webhooks are currently fire-and-forget with no retry logic.
+    Failures are only logged. Consider: delivery receipts stored in DB, a retry queue (SQS/dead-letter),
+    and a user-facing delivery log so they can debug their integrations.
 
 ### OTHER STUFF (handle it one day...)
-23. Add a way for auth'd users to like setup password if they used oauth and vice versa
-24. Implement the calculation of the delivery rate in dashboard summary cards
-25. Limit the watchlist charts we initially load and add pagination/infinite scrolling
-26. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
-27. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
+24. Add a way for auth'd users to like setup password if they used oauth and vice versa
+25. Implement the calculation of the delivery rate in dashboard summary cards
+26. Limit the watchlist charts we initially load and add pagination/infinite scrolling
+27. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
+28. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
+29. Add focused tests/fixtures for yfinance response shapes (`download` single ticker, multiple tickers, `group_by`, `multi_level_index`) so provider parsing breaks loudly when yfinance changes its DataFrame structure
+
+---
+
+## Webhook Payload Contract
+
+When a user configures a `webhook_url` on their account, the worker will POST the following
+JSON payload to that URL for every alert batch that fires for them. This is fired per-user,
+once per worker run, after email delivery succeeds.
+
+```json
+{
+  "event": "alert.triggered",
+  "triggered_at": "2026-05-18T18:00:00Z",
+  "alerts": [
+    {
+      "alert_id": "<uuid of the alert row in DB>",
+      "symbol": "AAPL",
+      "triggered_price": "182.50",
+      "sma_value": "187.30"
+    }
+  ]
+}
+```
+
+**Notes:**
+- `triggered_at` is UTC ISO-8601.
+- `triggered_price` and `sma_value` are serialized as strings to preserve decimal precision.
+- `alert_id` can be used to correlate with the `/alerts` API endpoint.
+- The webhook is **fire-and-forget** — failures are logged but not retried (see todo item #23).
+- The webhook fires after email; if email dispatch itself fails for a user, the webhook still fires
+  (the two are independent delivery channels).
 
 ---
 
@@ -79,7 +114,7 @@ chore/docs-review                 → 21, 22
 ### 1 May 2026 - Afternoon
 - [x] Implement WatchlistChart component and fix chart types
 - [x] Add DailySmaSnapshot model to schema and data layer
-- [x] Migrate alert logic to daily SMA and implement sma_worker lambda
+- [x] Migrate alert logic to daily SMA and implement daily close worker lambda
 
 ### 2 May 2026 - Afternoon
 - [x] Update chart data API contract to use daily SMA series

@@ -1,14 +1,18 @@
 from typing import Optional
 from dataclasses import dataclass
 from decimal import Decimal
-from datetime import datetime
+from datetime import date, datetime
 
 
 @dataclass
 class User:
     id: str
     email: str
+    password_hash: Optional[str]
+    google_id: Optional[str]
     webhook_url: Optional[str]
+    created_at: datetime
+    updated_at: datetime
 
 
 @dataclass
@@ -19,7 +23,6 @@ class Asset:
     name: str
     asset_type: str
     created_at: datetime
-    updated_at: datetime
 
 
 @dataclass
@@ -48,11 +51,14 @@ class WatchlistEntryProjection:
 
 
 @dataclass
-class PriceSnapshot:
+class DailyPriceSnapshot:
     id: str
     asset_id: str
-    price: Decimal
-    fetched_at: datetime
+    close: Decimal
+    date: date
+    source: str
+    created_at: datetime
+    updated_at: datetime
 
 
 @dataclass

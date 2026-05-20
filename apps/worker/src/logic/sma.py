@@ -1,7 +1,14 @@
 from decimal import Decimal
 from models import WatchlistEntryProjection, TriggeredAlert
 from utils import generate_sma_drop_message
-from db import get_daily_sma_bulk
+from db import get_recent_daily_closes_bulk
+
+
+def calculate_sma(values: list[Decimal]) -> Decimal:
+    """Calculates a simple moving average from Decimal prices."""
+    if not values:
+        raise ValueError("calculate_sma requires a non-empty list of Decimal values")
+    return sum(values) / Decimal(len(values))
 
 
 def sma_val_below_average(
@@ -11,19 +18,20 @@ def sma_val_below_average(
     deviation_threshold: float,
 ) -> None:
     """
-    Compares the current live price for each asset against today's precomputed daily SMA.
-    Fires an alert if the price is below the SMA by more than the deviation threshold.
+    Compares the current live price against an intraday/provisional daily SMA.
 
-    daily SMA is fetched from daily_sma_snapshots (written by the daily SMA worker).
-    If no SMA exists for today yet (e.g. market just opened), the entry is skipped.
+    The SMA uses the last N-1 completed daily closes from daily_price_snapshots
+    plus the current live price as today's provisional close.
     """
-    # Collect all (asset_id, period) pairs up-front for a single bulk DB fetch
-    all_pairs = [
-        (entry.asset_id, entry.sma_period)
-        for entries in entries_by_symbol.values()
-        for entry in entries
-    ]
-    daily_smas = get_daily_sma_bulk(all_pairs)
+    closes_required_by_asset_id: dict[str, int] = {}
+    for entries in entries_by_symbol.values():
+        for entry in entries:
+            closes_required_by_asset_id[entry.asset_id] = max(
+                closes_required_by_asset_id.get(entry.asset_id, 0),
+                entry.sma_period - 1,
+            )
+
+    recent_closes = get_recent_daily_closes_bulk(closes_required_by_asset_id)
 
     for symbol, entries in entries_by_symbol.items():
         for entry in entries:
@@ -31,18 +39,30 @@ def sma_val_below_average(
             if current_price is None:
                 continue
 
-            daily_sma = daily_smas.get((entry.asset_id, entry.sma_period))
-            if daily_sma is None:
-                # SMA not yet computed for today - skip rather than use stale data
-                print(f"No daily SMA for {symbol} (period={entry.sma_period}), skipping.")
+            required_daily_closes = entry.sma_period - 1
+            completed_closes = recent_closes.get(entry.asset_id, [])
+            if len(completed_closes) < required_daily_closes:
+                print(
+                    f"Not enough daily closes for {symbol} "
+                    f"(period={entry.sma_period}, got={len(completed_closes)}, "
+                    f"need={required_daily_closes}), skipping."
+                )
                 continue
 
+            recent_completed_closes = (
+                completed_closes[-required_daily_closes:]
+                if required_daily_closes > 0
+                else []
+            )
+            sma_inputs = [*recent_completed_closes, current_price]
+            sma_value = calculate_sma(sma_inputs)
+
             threshold_multiplier = Decimal(str(1 - deviation_threshold))
-            if current_price < (daily_sma * threshold_multiplier):
+            if current_price < (sma_value * threshold_multiplier):
                 message = generate_sma_drop_message(
                     symbol=entry.asset_symbol,
                     current_price=current_price,
-                    sma_value=daily_sma,
+                    sma_value=sma_value,
                     period=entry.sma_period,
                 )
 
@@ -52,7 +72,7 @@ def sma_val_below_average(
                     triggered_price=current_price,
                     delivered=False,
                     symbol=symbol,
-                    sma_value=daily_sma,
+                    sma_value=sma_value,
                     user_email=entry.user_email,
                     webhook_url=entry.user_webhook_url,
                 )

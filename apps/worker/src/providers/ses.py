@@ -5,17 +5,23 @@ from botocore.exceptions import ClientError
 from models import TriggeredAlert
 
 # Set strict timeouts so SES doesn't hang longer than the Lambda timeout (10s)
-ses_config = Config(
-    connect_timeout=2,
-    read_timeout=5,
-    retries={'max_attempts': 2}
-)
+ses_config = Config(connect_timeout=2, read_timeout=5, retries={"max_attempts": 2})
 
 ses = boto3.client("sesv2", config=ses_config)
 
 
-def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
-    """Send alerts to users via email"""
+def send_alerts_via_email(
+    alerts_by_user: dict[str, dict[str, TriggeredAlert]],
+) -> list[str]:
+    """
+    Sends alerts to users via email using AWS SES.
+
+    Args:
+        alerts_by_user: A dictionary mapping user IDs to their triggered alerts.
+
+    Returns:
+        A list of watchlist entry IDs for which the email was successfully sent.
+    """
     sender = os.environ["SES_EMAIL_IDENTITY"]
 
     alerts_successfully_sent = []
@@ -26,7 +32,7 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
         symbols = set()
         messages = []
         user_email = None
-        # Loop over values since entry_id is unused here
+        # loop over values since entry_id is unused here
         for alert in alert_by_entry_ids.values():
             if user_email is None:
                 user_email = alert.user_email
@@ -54,12 +60,16 @@ def send_alerts_via_email(alerts_by_user: dict[str, dict[str, TriggeredAlert]]):
 
             alerts_successfully_sent.extend(alert_by_entry_ids.keys())
 
-            # Redact email from logs to protect PII
-            print(f"Successfully sent alert to user_id: {next(iter(alert_by_entry_ids.values())).watchlist_entry_id[:8]}...")
+            # redact email from logs to protect pii
+            print(
+                f"Successfully sent alert to user_id: {next(iter(alert_by_entry_ids.values())).watchlist_entry_id[:8]}..."
+            )
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "MessageRejected":
-                print(f"Skipped: Recipient not verified in SES Sandbox. Code: {error_code}")
+                print(
+                    f"Skipped: Recipient not verified in SES Sandbox. Code: {error_code}"
+                )
             else:
                 print(f"Failed to send alert. SES Error: {error_code}")
 

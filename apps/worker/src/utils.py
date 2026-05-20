@@ -1,5 +1,5 @@
 from models import TriggeredAlert
-from db import get_recently_alerted_entries
+from db import get_alerted_today_entries
 from datetime import datetime, timezone
 from decimal import Decimal
 
@@ -66,7 +66,7 @@ def generate_sma_drop_message(symbol: str, current_price: Decimal, sma_value: De
     )
 
 def filter_alerts(alerts_by_user: dict[str, dict[str, TriggeredAlert]]) -> dict[str, dict[str, TriggeredAlert]]:
-    """Filter out alerts that were successfully sent out in the last 24 hours"""
+    """Filter out alerts for entries that already have any alert row today."""
     pending_entry_ids = []
     for user_alerts in alerts_by_user.values():
         pending_entry_ids.extend(user_alerts.keys())
@@ -74,7 +74,7 @@ def filter_alerts(alerts_by_user: dict[str, dict[str, TriggeredAlert]]) -> dict[
     if not pending_entry_ids:
         return {}
 
-    recently_alerted_ids = get_recently_alerted_entries(pending_entry_ids)
+    already_alerted_ids = get_alerted_today_entries(pending_entry_ids)
 
     filtered_alerts = {}
     for user_id, user_alerts in alerts_by_user.items():
@@ -82,7 +82,7 @@ def filter_alerts(alerts_by_user: dict[str, dict[str, TriggeredAlert]]) -> dict[
         remaining = {
             eid: alert 
             for eid, alert in user_alerts.items() 
-            if eid not in recently_alerted_ids
+            if eid not in already_alerted_ids
         }
         
         if remaining:
