@@ -10,7 +10,6 @@ from db import (
     add_missed_fetch_bulk,
     get_watchlist_entries,
     add_alerts_bulk,
-    mark_alerts_as_delivered_by_id
 )
 
 logger = logging.getLogger(__name__)

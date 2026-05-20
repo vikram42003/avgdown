@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import urllib.request
 import urllib.error
+from urllib.parse import urlparse
 
 from models import TriggeredAlert
 from providers.ses import send_alerts_via_email
@@ -18,6 +19,11 @@ def _serialize_decimal(obj: object) -> str:
 
 def _fire_webhook(webhook_url: str, payload: dict) -> None:
     """Fire-and-forget HTTP POST to the user's webhook URL. Logs failures but never raises."""
+    parsed_url = urlparse(webhook_url)
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+        print(f"Rejected invalid webhook URL: {webhook_url[:40]}...")
+        return
+
     try:
         body = json.dumps(payload, default=_serialize_decimal).encode("utf-8")
         req = urllib.request.Request(

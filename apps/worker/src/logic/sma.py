@@ -49,7 +49,12 @@ def sma_val_below_average(
                 )
                 continue
 
-            sma_inputs = [*completed_closes[:required_daily_closes], current_price]
+            recent_completed_closes = (
+                completed_closes[-required_daily_closes:]
+                if required_daily_closes > 0
+                else []
+            )
+            sma_inputs = [*recent_completed_closes, current_price]
             sma_value = calculate_sma(sma_inputs)
 
             threshold_multiplier = Decimal(str(1 - deviation_threshold))
