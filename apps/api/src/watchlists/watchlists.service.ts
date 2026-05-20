@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "src/common/database/prisma/prisma.service";
+import { PrismaService } from "../common/database/prisma/prisma.service";
+import { HISTORY_WINDOW } from "../constants";
 import {
   WatchlistEntryCreateDto,
   WatchlistEntryUpdateDto,
@@ -113,8 +114,6 @@ export class WatchlistsService {
     if (entry?.userId !== userId) {
       throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
     }
-
-    const HISTORY_WINDOW = 40;
 
     const dailyRows = await this.prisma.dailyPriceSnapshot.findMany({
       where: { assetId: entry.assetId },

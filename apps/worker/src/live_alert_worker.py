@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 from datetime import datetime, timezone
 from typing import List
@@ -11,6 +12,8 @@ from db import (
     add_alerts_bulk,
     mark_alerts_as_delivered_by_id
 )
+
+logger = logging.getLogger(__name__)
 from providers.yf import fetch_prices_bulk
 from utils import map_symbol_exchange, filter_inactive_markets, filter_alerts
 from logic.sma import sma_val_below_average
@@ -46,7 +49,7 @@ def process_watchlist_entries(
 
     # filter out assets whose markets are closed right now
     active_symbols = filter_inactive_markets(symbol_exchange_pairs)
-    print(f"Active symbols count: {len(active_symbols)}")
+    logger.debug("Active symbols count: %d", len(active_symbols))
 
     # return as a normal dict instead of defaultdict
     return dict(entries_by_asset), active_symbols
@@ -58,8 +61,8 @@ def process_alpha_vantage_backfill() -> None:
     """
     now = datetime.now(timezone.utc)
     if now.minute <= 3 or now.minute >= 57:
-        print(
-            "Running hourly Alpha Vantage backfill sequence...is what we'd do if this was implemented, gonna do it right after finishing up with the project"
+        logger.info(
+            "Running hourly Alpha Vantage backfill sequence. This is a placeholder path and will run once implemented."
         )
         # 1. Fetch unresolved missed fetches from DB
         #    (SELECT DISTINCT asset_id FROM missed_fetches WHERE resolved = false)
@@ -70,9 +73,9 @@ def process_alpha_vantage_backfill() -> None:
 
         # 4. Save successful prices AND mark them as resolved in missed_fetches
     else:
-        print(
-            f"Skipping Alpha Vantage backfill because current minute is {now.minute}."
-            " It only runs around the top/bottom of the hour."
+        logger.debug(
+            "Skipping Alpha Vantage backfill because current minute is %d. It only runs around the top/bottom of the hour.",
+            now.minute,
         )
 
 
@@ -112,21 +115,30 @@ def lambda_handler(event: dict, context: object) -> None:
         event: Lambda event payload.
         context: Lambda execution context.
     """
-    print("Starting live alert worker")
+    logger.info("Starting live alert worker")
 
     # grab all active watchlist entries from the db
     watchlist_entries = get_watchlist_entries()
-    print(f"Fetched {len(watchlist_entries)} active watchlist entries from DB")
+    logger.info("Fetched %d active watchlist entries from DB", len(watchlist_entries))
 
     # group them up and toss out the ones where markets are closed
     entries_by_symbol, active_symbols = process_watchlist_entries(watchlist_entries)
-    print(f"After market filtering, {len(active_symbols)} active symbols remain")
+    logger.info("After market filtering, %d active symbols remain", len(active_symbols))
 
     # fetch the latest prices for whatever's left
     prices_by_symbol, failed_symbols = fetch_prices_bulk(active_symbols)
-    print(f"Fetched prices for {len(prices_by_symbol)} symbols")
+    logger.info("Fetched prices for %d symbols", len(prices_by_symbol))
     if failed_symbols:
-        print(f"Price fetch failures ({len(failed_symbols)}): {list(failed_symbols.keys())}")
+        sanitized_errors = [
+            f"{symbol}: {str(error).splitlines()[0][:80]}"
+            for symbol, error in failed_symbols.items()
+        ]
+        logger.warning(
+            "Price fetch failures (%d) for symbols: %s; errors: %s",
+            len(failed_symbols),
+            list(failed_symbols.keys()),
+            sanitized_errors,
+        )
 
     # log any failures so we can retry them later with alpha vantage
     missed_fetches_to_insert = []
@@ -134,7 +146,7 @@ def lambda_handler(event: dict, context: object) -> None:
         for entry in entries_by_symbol[s]:
             missed_fetches_to_insert.append((entry.asset_id, "yfinance", error_msg))
 
-    print(f"Prepared {len(missed_fetches_to_insert)} missed_fetch records")
+    logger.info("Prepared %d missed_fetch records", len(missed_fetches_to_insert))
     if missed_fetches_to_insert:
         add_missed_fetch_bulk(missed_fetches_to_insert)
 
@@ -154,19 +166,22 @@ def lambda_handler(event: dict, context: object) -> None:
     # toss out any alerts for entries that already went off today
     alerts_by_user = filter_alerts(alerts_by_user)
     filtered_alert_count = sum(len(user_alerts) for user_alerts in alerts_by_user.values())
-    print(f"Alerts remaining after filtering already-alerted entries: {filtered_alert_count}")
+    logger.info(
+        "Alerts remaining after filtering already-alerted entries: %d",
+        filtered_alert_count,
+    )
 
     # bulk insert the new alerts as undelivered and get their ids
     flat_alerts_to_insert: List[TriggeredAlert] = []
     for user_alerts in alerts_by_user.values():
         flat_alerts_to_insert.extend(user_alerts.values())
 
-    print(f"Inserting {len(flat_alerts_to_insert)} alerts into DB")
+    logger.info("Inserting %d alerts into DB", len(flat_alerts_to_insert))
     entry_to_alert_id = add_alerts_bulk(flat_alerts_to_insert)
 
     # dispatch emails and webhooks, then mark the successful ones as delivered
     handle_alerts(alerts_by_user, entry_to_alert_id)
-    print("Finished live alert worker")
+    logger.info("Finished live alert worker")
 
 
 if __name__ == "__main__":
