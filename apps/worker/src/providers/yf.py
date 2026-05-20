@@ -1,5 +1,6 @@
 import math
 import yfinance as yf
+from collections.abc import Mapping
 from datetime import date
 
 # Number of daily chart points served by the frontend/API.
@@ -75,7 +76,7 @@ def fetch_prices_bulk(
 
 def fetch_daily_closes_bulk(
     symbols: list[str],
-    min_completed_closes: int,
+    min_completed_closes: int | Mapping[str, int],
 ) -> tuple[dict[str, list[tuple[date, float]]], dict[str, str]]:
     """
     Fetches completed daily close history for each symbol.
@@ -88,11 +89,17 @@ def fetch_daily_closes_bulk(
         return {}, {}
 
     unique_symbols = list(dict.fromkeys(symbols))
+    required_closes_by_symbol = (
+        {symbol: min_completed_closes[symbol] for symbol in unique_symbols}
+        if isinstance(min_completed_closes, Mapping)
+        else {symbol: min_completed_closes for symbol in unique_symbols}
+    )
+    max_required_closes = max(required_closes_by_symbol.values())
 
-    # yfinance 'period' expects calendar days, but min_completed_closes is trading days.
+    # yfinance 'period' expects calendar days, but completed closes are trading days.
     # Convert trading days to calendar days (5 trading days per 7 calendar days)
     # and add a 14-day buffer for holidays and market closures.
-    days_needed = math.ceil(min_completed_closes * 7.0 / 5.0) + 14
+    days_needed = math.ceil(max_required_closes * 7.0 / 5.0) + 14
 
     try:
         data = yf.download(
@@ -111,11 +118,12 @@ def fetch_daily_closes_bulk(
     failed: dict[str, str] = {}
     for symbol in unique_symbols:
         try:
+            required_closes = required_closes_by_symbol[symbol]
             closes = _extract_close_series(data, symbol)
-            closes = closes.dropna().tail(min_completed_closes)
-            if len(closes) < min_completed_closes:
+            closes = closes.dropna().tail(required_closes)
+            if len(closes) < required_closes:
                 failed[symbol] = (
-                    f"Not enough daily closes (got {len(closes)}, need {min_completed_closes}). "
+                    f"Not enough daily closes (got {len(closes)}, need {required_closes}). "
                     f"The {days_needed}d calendar request window might be too small."
                 )
                 continue

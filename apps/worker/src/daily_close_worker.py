@@ -80,7 +80,10 @@ def lambda_handler(event: dict, context: object) -> None:
         )
         return
 
-    max_required_closes = max(required_closes_by_symbol[s] for s in symbols_to_fetch)
+    fetch_requirements_by_symbol = {
+        symbol: required_closes_by_symbol[symbol] for symbol in symbols_to_fetch
+    }
+    max_required_closes = max(fetch_requirements_by_symbol.values())
     print(
         f"Hydrating daily closes for {len(symbols_to_fetch)} symbols "
         f"({skipped} skipped, need up to {max_required_closes} closes)..."
@@ -88,7 +91,7 @@ def lambda_handler(event: dict, context: object) -> None:
 
     daily_closes_by_symbol, failed_symbols = fetch_daily_closes_bulk(
         symbols_to_fetch,
-        max_required_closes,
+        fetch_requirements_by_symbol,
     )
 
     if failed_symbols:
