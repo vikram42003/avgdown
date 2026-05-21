@@ -8,7 +8,7 @@ import {
   RecentAlertDto,
 } from "./watchlist.dto";
 import { AuthGuard } from "@nestjs/passport";
-import type { AuthenticatedRequest } from "src/users/users.dto";
+import type { AuthenticatedRequest } from "../users/users.dto";
 
 @UseGuards(AuthGuard("jwt"))
 @Controller("watchlists")

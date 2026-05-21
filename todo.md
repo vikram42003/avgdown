@@ -133,8 +133,12 @@ chore/docs-review                 → 21, 22
 - [x] Add `proxy.ts` middleware for edge-level cookie existence checks on protected routes
 
 ### 8 May 2026 - Night
-- [x] Fix P2028 transaction timeout — raised `maxWait`/`timeout` for Neon cold starts
+- [x] Fix P2028 transaction timeout — initially raised `maxWait`/`timeout` for Neon cold starts
 - [x] Implement `ClientAuthGuard` with stale cookie handling and dashboard skeleton (Task #7)
+
+### 21 May 2026 - Morning
+
+- [x] Replace the OAuth user upsert interactive transaction with unique-constraint-driven writes plus P2002 retry handling. Auth needs correctness, but this path only mutates one `User` row and already has unique constraints on `email` and `googleId`; avoiding an interactive transaction keeps login resilient when the free-tier database is cold or slow to acquire a transaction.
 
 ### 9 May 2026 - Night
 - [x] Implement SWR hooks: `useUser`, `useWatchlists`, `useRecentAlerts`, `useChartData` (Task #5)

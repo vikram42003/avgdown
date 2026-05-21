@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { AssetResponseDto } from "./assets.dto";
-import { PrismaService } from "src/common/database/prisma/prisma.service";
+import { PrismaService } from "../common/database/prisma/prisma.service";
 
 @Injectable()
 export class AssetsService {

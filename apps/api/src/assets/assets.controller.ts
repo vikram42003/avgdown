@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Delete, UseGuards } from "@nestjs/common";
 import { AssetsService } from "./assets.service";
-import { DevOnlyGuard } from "src/common/guards/dev-only/dev-only.guard";
+import { DevOnlyGuard } from "../common/guards/dev-only/dev-only.guard";
 import { AssetResponseDto } from "./assets.dto";
 
 @Controller("assets")

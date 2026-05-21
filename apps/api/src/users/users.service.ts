@@ -12,6 +12,68 @@ export class UsersService {
   private readonly logger = new Logger(UsersService.name);
   constructor(private readonly prisma: PrismaService) {}
 
+  private isPrismaError(error: unknown, code: string): boolean {
+    return typeof error === "object" && error !== null && "code" in error && error.code === code;
+  }
+
+  private async updateExistingAuthUser(
+    user: User,
+    data: { email: string; googleId?: string; passwordHash?: string },
+  ): Promise<User> {
+    const { email, googleId, passwordHash } = data;
+
+    if (user.email !== email) {
+      this.logger.log(
+        `Google email drift detected: Updating email for user ${truncateId(user.id)} from ${redactEmail(user.email)} to ${redactEmail(email)}`,
+      );
+    }
+
+    return this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email,
+        googleId: googleId || user.googleId,
+        passwordHash: passwordHash || user.passwordHash,
+      },
+    });
+  }
+
+  private async linkGoogleUserByEmail(email: string, googleId: string, passwordHash?: string): Promise<User | null> {
+    try {
+      const linkedUser = await this.prisma.user.update({
+        where: { email },
+        data: { googleId, ...(passwordHash ? { passwordHash } : {}) },
+      });
+      this.logger.log(`OAuth Link: Linking Google account to existing email-based user ${truncateId(linkedUser.id)}`);
+      return linkedUser;
+    } catch (error) {
+      if (this.isPrismaError(error, "P2025")) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  private async retryUserUpsertAfterUniqueConflict(
+    error: unknown,
+    data: { email: string; googleId?: string; passwordHash?: string },
+  ): Promise<User> {
+    if (!this.isPrismaError(error, "P2002")) {
+      throw error;
+    }
+
+    const { email, googleId } = data;
+    const existingUser =
+      (googleId ? await this.prisma.user.findUnique({ where: { googleId } }) : null) ??
+      (await this.prisma.user.findUnique({ where: { email } }));
+
+    if (!existingUser) {
+      throw error;
+    }
+
+    return this.updateExistingAuthUser(existingUser, data);
+  }
+
   async findAll(): Promise<UserResponseDto[]> {
     return this.prisma.user.findMany().then((users) => users.map((user) => UserResponseSchema.parse(user)));
   }
@@ -52,57 +114,40 @@ export class UsersService {
   async upsertUser(data: { email: string; password?: string; googleId?: string }) {
     const { email, password, googleId } = data;
 
-    const updateData: { googleId?: string; passwordHash?: string } = {};
-    if (googleId) updateData.googleId = googleId;
-
     let passwordHash: string | undefined;
     if (password) {
       const salt = await bcrypt.genSalt(10);
       passwordHash = await bcrypt.hash(password, salt);
-      updateData.passwordHash = passwordHash;
     }
 
-    return await this.prisma.$transaction(async (tx) => {
-      let user: null | User = null;
-      if (updateData.googleId) {
-        user = await tx.user.findUnique({ where: { googleId } });
+    // Auth runs on the OAuth callback path, which is especially sensitive to cold-start
+    // connection delays on free-tier/serverless databases. This is intentionally not an
+    // interactive transaction: the User table's unique email/googleId constraints provide
+    // the safety boundary, and rare races are resolved by retrying after P2002 conflicts.
+    try {
+      const userByGoogleId = googleId ? await this.prisma.user.findUnique({ where: { googleId } }) : null;
+      if (userByGoogleId) {
+        return this.updateExistingAuthUser(userByGoogleId, { email, googleId, passwordHash });
       }
 
-      user ??= await tx.user.findUnique({ where: { email } });
-
-      if (user) {
-        if (user.email !== email) {
-          this.logger.log(
-            `Google email drift detected: Updating email for user ${truncateId(user.id)} from ${redactEmail(user.email)} to ${redactEmail(email)}`,
-          );
+      if (googleId) {
+        const linkedUser = await this.linkGoogleUserByEmail(email, googleId, passwordHash);
+        if (linkedUser) {
+          return linkedUser;
         }
-
-        if (!user.googleId && googleId) {
-          this.logger.log(`OAuth Link: Linking Google account to existing email-based user ${truncateId(user.id)}`);
-        }
-
-        return tx.user.update({
-          where: { id: user.id },
-          data: {
-            email,
-            googleId: googleId || user.googleId,
-            passwordHash: passwordHash || user.passwordHash,
-          },
-        });
       }
 
       this.logger.log(`New user registered: ${redactEmail(email)} ${googleId ? "(via Google)" : "(via Credentials)"}`);
-      return tx.user.create({
+      return await this.prisma.user.create({
         data: {
           email,
           googleId,
           passwordHash,
         },
       });
-    }, {
-      maxWait: 10000, // 10 seconds to connect
-      timeout: 20000, // 20 seconds for the transaction to complete
-    });
+    } catch (error) {
+      return this.retryUserUpsertAfterUniqueConflict(error, { email, googleId, passwordHash });
+    }
   }
 
   async findUserByEmailHelper(email: string): Promise<User | null> {
