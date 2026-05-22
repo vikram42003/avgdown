@@ -1,4 +1,4 @@
-variable "ses_email_identity" {
+variable "domain_name" {
   type = string
 }
 

@@ -30,16 +30,15 @@ resource "aws_lambda_function" "live_alert_worker" {
   code_sha256   = data.archive_file.worker_source_code.output_base64sha256
   timeout       = 30
   memory_size   = 256
-  reserved_concurrent_executions = 5
 
   runtime = "python3.12"
 
   environment {
     variables = {
-      ENVIRONMENT        = "production"
-      LOG_LEVEL          = "info"
-      SES_EMAIL_IDENTITY = var.ses_email_identity
-      DATABASE_URL       = var.database_url
+      ENVIRONMENT  = "production"
+      LOG_LEVEL    = "info"
+      DOMAIN_NAME  = var.domain_name
+      DATABASE_URL = var.database_url
     }
   }
 
@@ -65,15 +64,14 @@ resource "aws_lambda_function" "daily_close_worker" {
   code_sha256   = data.archive_file.worker_source_code.output_base64sha256
   timeout       = 120
   memory_size   = 512
-  reserved_concurrent_executions = 5
 
   runtime = "python3.12"
 
   environment {
     variables = {
-      ENVIRONMENT        = "production"
-      LOG_LEVEL          = "info"
-      DATABASE_URL       = var.database_url
+      ENVIRONMENT  = "production"
+      LOG_LEVEL    = "info"
+      DATABASE_URL = var.database_url
     }
   }
 
