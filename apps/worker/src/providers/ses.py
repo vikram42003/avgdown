@@ -22,7 +22,8 @@ def send_alerts_via_email(
     Returns:
         A list of watchlist entry IDs for which the email was successfully sent.
     """
-    sender = os.environ["SES_EMAIL_IDENTITY"]
+    domain_name = os.environ["DOMAIN_NAME"]
+    sender = f"alerts@{domain_name}"
 
     alerts_successfully_sent = []
     for alert_by_entry_ids in alerts_by_user.values():

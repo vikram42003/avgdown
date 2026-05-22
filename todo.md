@@ -44,7 +44,8 @@
 27. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
 28. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
 29. Add focused tests/fixtures for yfinance response shapes (`download` single ticker, multiple tickers, `group_by`, `multi_level_index`) so provider parsing breaks loudly when yfinance changes its DataFrame structure
-
+30. Move DNS management from Porkbun to Route 53, and manage it through IAC
+31. (Maybe Imp) Implement Secure One-Click Email Unsubscribe, we send a one time presigned url + token along with emails so users can unsubscribe
 ---
 
 ## Webhook Payload Contract
@@ -90,6 +91,11 @@ feat/logging-observability        → 17, 20
 feat/theme-toggle                 → 18
 feat/landing-page                 → 19
 chore/docs-review                 → 21, 22
+
+## Things to learn more about
+- **AWS SESv2 Email Identities (`aws_sesv2_email_identity`)**: Unified resource type in SESv2 that replaces the legacy SESv1 domain and email address identity resources. It permits associating default configuration sets directly to the identity.
+- **Easy DKIM (3x CNAME records)**: Authenticates outbound emails and verifies domain ownership simultaneously. Recipient mail servers check these records to verify that the email actually originated from your domain and wasn't spoofed/tampered with in transit.
+- **Custom MAIL FROM Domain (MX & SPF TXT records)**: Overrides the default `amazonses.com` envelope-sender address with your own subdomain (e.g., `mail.avgdown.xyz`). This aligns the "MAIL FROM" domain with your "From" header address, which is required for DMARC (Domain-based Message Authentication) to pass.
 
 ## Productivity Logs -
 
