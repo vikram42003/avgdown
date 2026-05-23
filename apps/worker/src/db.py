@@ -286,3 +286,43 @@ def get_daily_price_snapshot_coverage(
             (asset_ids,),
         )
         return {str(row[0]): (row[1], row[2]) for row in cur.fetchall()}
+
+
+def cleanup_old_data() -> None:
+    """
+    Deletes price snapshots, alerts, and missed fetches older than 1 year to keep the DB size bounded.
+    """
+    conn = get_db()
+    with conn.cursor() as cur:
+        # daily_price_snapshots uses a DATE column
+        cur.execute(
+            """
+            DELETE FROM daily_price_snapshots
+            WHERE date < CURRENT_DATE - INTERVAL '1 year'
+            """
+        )
+        snapshots_deleted = cur.rowcount
+
+        # alerts uses a TIMESTAMP WITH TIME ZONE column
+        cur.execute(
+            """
+            DELETE FROM alerts
+            WHERE created_at < NOW() - INTERVAL '1 year'
+            """
+        )
+        alerts_deleted = cur.rowcount
+
+        # missed_fetches uses a TIMESTAMP WITH TIME ZONE column
+        cur.execute(
+            """
+            DELETE FROM missed_fetches
+            WHERE created_at < NOW() - INTERVAL '1 year'
+            """
+        )
+        missed_deleted = cur.rowcount
+
+    conn.commit()
+    print(
+        f"Cleaned up old data: deleted {snapshots_deleted} snapshots, "
+        f"{alerts_deleted} alerts, and {missed_deleted} missed fetches."
+    )

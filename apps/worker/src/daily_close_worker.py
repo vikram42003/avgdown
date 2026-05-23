@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from db import (
+    cleanup_old_data,
     get_daily_price_snapshot_coverage,
     get_watchlist_entries,
     upsert_daily_price_snapshots_bulk,
@@ -74,41 +75,43 @@ def lambda_handler(event: dict, context: object) -> None:
         else:
             symbols_to_fetch.append(symbol)
 
-    if not symbols_to_fetch:
+    if symbols_to_fetch:
+        fetch_requirements_by_symbol = {
+            symbol: required_closes_by_symbol[symbol] for symbol in symbols_to_fetch
+        }
+        max_required_closes = max(fetch_requirements_by_symbol.values())
+        print(
+            f"Hydrating daily closes for {len(symbols_to_fetch)} symbols "
+            f"({skipped} skipped, need up to {max_required_closes} closes)..."
+        )
+
+        daily_closes_by_symbol, failed_symbols = fetch_daily_closes_bulk(
+            symbols_to_fetch,
+            fetch_requirements_by_symbol,
+        )
+
+        if failed_symbols:
+            print(f"Failed to fetch daily closes for: {failed_symbols}")
+
+        # Flatten into (asset_id, date, close, source) rows for bulk upsert.
+        rows_to_upsert = []
+        for symbol, series in daily_closes_by_symbol.items():
+            for asset_id in asset_ids_by_symbol[symbol]:
+                for snapshot_date, close in series[-required_closes_by_symbol[symbol] :]:
+                    rows_to_upsert.append(
+                        (asset_id, snapshot_date, Decimal(str(close)), "yfinance")
+                    )
+
+        print(f"Preparing to upsert {len(rows_to_upsert)} daily close rows")
+        upsert_daily_price_snapshots_bulk(rows_to_upsert)
+        print(f"Upserted {len(rows_to_upsert)} daily close rows.")
+    else:
         print(
             f"Daily close hydration skipped: {skipped} symbols already have enough recent data."
         )
-        return
 
-    fetch_requirements_by_symbol = {
-        symbol: required_closes_by_symbol[symbol] for symbol in symbols_to_fetch
-    }
-    max_required_closes = max(fetch_requirements_by_symbol.values())
-    print(
-        f"Hydrating daily closes for {len(symbols_to_fetch)} symbols "
-        f"({skipped} skipped, need up to {max_required_closes} closes)..."
-    )
-
-    daily_closes_by_symbol, failed_symbols = fetch_daily_closes_bulk(
-        symbols_to_fetch,
-        fetch_requirements_by_symbol,
-    )
-
-    if failed_symbols:
-        print(f"Failed to fetch daily closes for: {failed_symbols}")
-
-    # Flatten into (asset_id, date, close, source) rows for bulk upsert.
-    rows_to_upsert = []
-    for symbol, series in daily_closes_by_symbol.items():
-        for asset_id in asset_ids_by_symbol[symbol]:
-            for snapshot_date, close in series[-required_closes_by_symbol[symbol] :]:
-                rows_to_upsert.append(
-                    (asset_id, snapshot_date, Decimal(str(close)), "yfinance")
-                )
-
-    print(f"Preparing to upsert {len(rows_to_upsert)} daily close rows")
-    upsert_daily_price_snapshots_bulk(rows_to_upsert)
-    print(f"Upserted {len(rows_to_upsert)} daily close rows.")
+    # Clean up data older than 1 year
+    cleanup_old_data()
 
 
 if __name__ == "__main__":

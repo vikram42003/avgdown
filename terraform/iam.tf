@@ -1,4 +1,4 @@
-# IAM role for Lambda execution
+# Lambda
 data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"
@@ -44,5 +44,38 @@ resource "aws_iam_role_policy" "lambda_ses" {
         }
       }
     ]
+  })
+}
+
+# Event Bridge Scheduler
+resource "aws_iam_role" "scheduler_lambda_role" {
+  name = "avgdown-scheduler-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "scheduler.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "scheduler_lambda_policy" {
+  name = "avgdown-scheduler-lambda-policy"
+  role = aws_iam_role.scheduler_lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = "lambda:InvokeFunction"
+      Resource = [
+        aws_lambda_function.daily_close_worker.arn,
+        aws_lambda_function.live_alert_worker.arn
+      ]
+    }]
   })
 }
