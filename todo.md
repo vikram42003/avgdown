@@ -21,7 +21,7 @@
 
 14. ✅ Terraform Cron: Configure Event Bridge with Terraform to run the Lambda worker every 30 min (EventBridge Scheduler).
 15. ✅ Database Cleanup: Implement daily cleanup of price snapshots, alerts, and failed fetches logs older than 1 year in the daily worker.
-16. Add a basic Privacy Policy or Terms of Service link in the footer
+16. ✅ Add a basic Privacy Policy or Terms of Service link in the footer
 17. Production Database: Setup Prisma migrations for production (`prisma migrate deploy` in the CI/CD or deployment step).
 18. Hosting: Deploy the frontend, backend, and database!
 
