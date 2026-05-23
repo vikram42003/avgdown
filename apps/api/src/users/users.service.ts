@@ -173,17 +173,23 @@ export class UsersService {
       if (this.isPrismaError(error, "P2002")) {
         throw new ConflictException("Email already in use");
       }
+      if (this.isPrismaError(error, "P2025")) {
+        throw new NotFoundException("User not found");
+      }
       throw error;
     }
   }
 
   async deleteMe(userId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      this.logger.warn(`Deletion failed: User with id ${truncateId(userId)} not found`);
-      throw new NotFoundException("User not found");
+    try {
+      await this.prisma.user.delete({ where: { id: userId } });
+      this.logger.log(`User deleted: ${truncateId(userId)}`);
+    } catch (error) {
+      if (this.isPrismaError(error, "P2025")) {
+        this.logger.warn(`Deletion failed: User with id ${truncateId(userId)} not found`);
+        throw new NotFoundException("User not found");
+      }
+      throw error;
     }
-    await this.prisma.user.delete({ where: { id: userId } });
-    this.logger.log(`User deleted: ${truncateId(userId)}`);
   }
 }
