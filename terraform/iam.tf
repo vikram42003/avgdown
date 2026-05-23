@@ -49,7 +49,7 @@ resource "aws_iam_role_policy" "lambda_ses" {
 
 # Event Bridge Scheduler
 resource "aws_iam_role" "scheduler_lambda_role" {
-  name = "avgdown-scheduler-lambda-role"
+  name = "tf_avgdown-scheduler-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
