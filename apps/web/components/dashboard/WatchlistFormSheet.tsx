@@ -126,6 +126,43 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
     }
   }
 
+  const renderDropdownContent = () => {
+    if (assetsLoading) {
+      return (
+        <div className="flex flex-col gap-2 p-2">
+          {["sk-1", "sk-2", "sk-3"].map((key) => <Skeleton key={key} className="h-9 w-full" />)}
+        </div>
+      );
+    }
+    if (filteredAssets.length === 0) {
+      return <p className="text-sm text-muted-foreground p-3">No assets found.</p>;
+    }
+    return (
+      <ul className="max-h-52 overflow-y-auto custom-scrollbar-primary">
+        {filteredAssets.map((asset) => (
+          <li key={asset.id}>
+            <button
+              type="button"
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 transition-colors text-left"
+              onClick={() => handleAssetSelect(asset)}
+            >
+              <span className="font-semibold text-sm min-w-16">{asset.symbol}</span>
+              <span className="text-sm text-muted-foreground truncate flex-1">{asset.name}</span>
+              <span className="text-xs text-muted-foreground shrink-0">{asset.exchange}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  let submitButtonText: string;
+  if (submitting) {
+    submitButtonText = isEditMode ? "Saving…" : "Adding…";
+  } else {
+    submitButtonText = isEditMode ? "Save Changes" : "Add to Watchlist";
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-md flex flex-col">
@@ -185,29 +222,7 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
                 {/* Results dropdown */}
                 {dropdownOpen && (
                   <div className="absolute top-full mt-1 left-0 right-0 z-50 glass border border-border rounded-lg shadow-lg overflow-hidden">
-                    {assetsLoading ? (
-                      <div className="flex flex-col gap-2 p-2">
-                        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-9 w-full" />)}
-                      </div>
-                    ) : filteredAssets.length === 0 ? (
-                      <p className="text-sm text-muted-foreground p-3">No assets found.</p>
-                    ) : (
-                      <ul className="max-h-52 overflow-y-auto custom-scrollbar-primary">
-                        {filteredAssets.map((asset) => (
-                          <li key={asset.id}>
-                            <button
-                              type="button"
-                              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 transition-colors text-left"
-                              onClick={() => handleAssetSelect(asset)}
-                            >
-                              <span className="font-semibold text-sm min-w-16">{asset.symbol}</span>
-                              <span className="text-sm text-muted-foreground truncate flex-1">{asset.name}</span>
-                              <span className="text-xs text-muted-foreground shrink-0">{asset.exchange}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                    {renderDropdownContent()}
                   </div>
                 )}
               </div>
@@ -267,9 +282,7 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
               Cancel
             </Button>
             <Button type="submit" disabled={submitting || !selectedAsset}>
-              {submitting
-                ? isEditMode ? "Saving…" : "Adding…"
-                : isEditMode ? "Save Changes" : "Add to Watchlist"}
+              {submitButtonText}
             </Button>
           </SheetFooter>
         </form>

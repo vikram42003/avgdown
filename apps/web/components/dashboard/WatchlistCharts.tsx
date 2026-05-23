@@ -55,8 +55,10 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
 
   const data: ChartDataPoint[] =
     chartData?.points.map((p) => {
-      let normalizedDate = p.date;
-      if (typeof p.date !== "string") {
+      let normalizedDate: string;
+      if (typeof p.date === "string") {
+        normalizedDate = p.date;
+      } else {
         const year = p.date.getUTCFullYear();
         const month = String(p.date.getUTCMonth() + 1).padStart(2, "0");
         const day = String(p.date.getUTCDate()).padStart(2, "0");
@@ -83,6 +85,95 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
       setDeleting(false);
     }
   }
+
+  const renderChart = () => {
+    if (isLoading) {
+      return <Skeleton className="h-40 w-full rounded-lg" />;
+    }
+    if (isWarmingUp && data.length === 0) {
+      return (
+        <div className="h-40 w-full rounded-lg border border-border/60 bg-muted/20 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
+          Preparing daily chart data
+        </div>
+      );
+    }
+    return (
+      <ChartContainer config={chartConfig} className="h-40 w-full">
+        <LineChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+          <CartesianGrid vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
+
+          <XAxis dataKey="date" tickLine={false} axisLine={false} tick={false} />
+
+          <YAxis
+            domain={["auto", "auto"]}
+            tickLine={false}
+            axisLine={false}
+            width={45}
+            tickFormatter={formatPriceTick}
+            tick={{ fontSize: 10.5, fill: "var(--color-foreground)" }}
+          />
+
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                labelFormatter={(_, payload) => {
+                  const raw = payload?.[0]?.payload?.date;
+                  if (!raw) return "";
+                  return new Date(raw).toLocaleDateString(undefined, {
+                    timeZone: "UTC",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  });
+                }}
+                formatter={(value, name) => [
+                  formatPrice(Number(value)),
+                  name === "close" ? "Close" : `SMA-${entry.smaPeriod}`,
+                ]}
+              />
+            }
+          />
+
+          <Line
+            type="monotone"
+            dataKey="close"
+            stroke="var(--color-primary)"
+            strokeWidth={1.5}
+            dot={false}
+            activeDot={{ r: 3 }}
+          />
+          <Line
+            type="monotone"
+            dataKey="sma"
+            stroke="var(--color-muted-foreground)"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+            dot={false}
+            connectNulls={false}
+          />
+
+          {/* Alert marker - shown if the last SMA value is above the last price */}
+          {data.length > 0 &&
+            (() => {
+              const last = data.at(-1)!;
+              if (last.sma !== null && last.close < last.sma) {
+                return (
+                  <ReferenceDot
+                    x={last.date}
+                    y={last.close}
+                    r={5}
+                    fill="var(--color-destructive)"
+                    stroke="var(--background)"
+                    strokeWidth={1.5}
+                  />
+                );
+              }
+              return null;
+            })()}
+        </LineChart>
+      </ChartContainer>
+    );
+  };
 
   return (
     <div className="glass rounded-xl p-4 flex flex-col gap-3">
@@ -143,88 +234,7 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
         </div>
       </div>
 
-      {isLoading ? (
-        <Skeleton className="h-40 w-full rounded-lg" />
-      ) : isWarmingUp && data.length === 0 ? (
-        <div className="h-40 w-full rounded-lg border border-border/60 bg-muted/20 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
-          Preparing daily chart data
-        </div>
-      ) : (
-        <ChartContainer config={chartConfig} className="h-40 w-full">
-          <LineChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-            <CartesianGrid vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
-
-            <XAxis dataKey="date" tickLine={false} axisLine={false} tick={false} />
-
-            <YAxis
-              domain={["auto", "auto"]}
-              tickLine={false}
-              axisLine={false}
-              width={45}
-              tickFormatter={formatPriceTick}
-              tick={{ fontSize: 10.5, fill: "var(--color-foreground)" }}
-            />
-
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(_, payload) => {
-                    const raw = payload?.[0]?.payload?.date;
-                    if (!raw) return "";
-                    return new Date(raw).toLocaleDateString(undefined, {
-                      timeZone: "UTC",
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    });
-                  }}
-                  formatter={(value, name) => [
-                    formatPrice(Number(value)),
-                    name === "close" ? "Close" : `SMA-${entry.smaPeriod}`,
-                  ]}
-                />
-              }
-            />
-
-            <Line
-              type="monotone"
-              dataKey="close"
-              stroke="var(--color-primary)"
-              strokeWidth={1.5}
-              dot={false}
-              activeDot={{ r: 3 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="sma"
-              stroke="var(--color-muted-foreground)"
-              strokeWidth={1}
-              strokeDasharray="4 3"
-              dot={false}
-              connectNulls={false}
-            />
-
-            {/* Alert marker - shown if the last SMA value is above the last price */}
-            {data.length > 0 &&
-              (() => {
-                const last = data.at(-1)!;
-                if (last.sma !== null && last.close < last.sma) {
-                  return (
-                    <ReferenceDot
-                      x={last.date}
-                      y={last.close}
-                      r={5}
-                      fill="var(--color-destructive)"
-                      stroke="var(--background)"
-                      strokeWidth={1.5}
-                    />
-                  );
-                }
-                return null;
-              })()}
-          </LineChart>
-        </ChartContainer>
-      )}
+      {renderChart()}
 
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
@@ -267,6 +277,25 @@ const WatchlistCharts = ({ initialWatchlists }: Readonly<WatchlistChartsProps>) 
     setSheetOpen(true);
   }
 
+  const renderWatchlists = () => {
+    if (isLoading) {
+      return ["sk-1", "sk-2", "sk-3", "sk-4"].map((key) => <ChartCardSkeleton key={key} />);
+    }
+    if (watchlists.length === 0) {
+      return (
+        <p className="col-span-2 text-sm text-muted-foreground ml-1">
+          No watchlists yet.{" "}
+          <button type="button" className="text-primary hover:underline" onClick={handleAddNew}>
+            Add one to get started!
+          </button>
+        </p>
+      );
+    }
+    return watchlists.map((entry) => (
+      <WatchlistChartCard key={entry.id} entry={entry} onEditRequest={handleEditRequest} />
+    ));
+  };
+
   return (
     <div className="h-full overflow-y-auto custom-scrollbar-primary">
       <div className="flex items-center justify-between mb-4 ml-1">
@@ -278,20 +307,7 @@ const WatchlistCharts = ({ initialWatchlists }: Readonly<WatchlistChartsProps>) 
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {isLoading ? (
-          new Array(4).fill(0).map((_, i) => <ChartCardSkeleton key={i} />) // NOSONAR: its a static set of skeletons bro shut up sonar line
-        ) : watchlists.length === 0 ? (
-          <p className="col-span-2 text-sm text-muted-foreground ml-1">
-            No watchlists yet.{" "}
-            <button type="button" className="text-primary hover:underline" onClick={handleAddNew}>
-              Add one to get started!
-            </button>
-          </p>
-        ) : (
-          watchlists.map((entry) => (
-            <WatchlistChartCard key={entry.id} entry={entry} onEditRequest={handleEditRequest} />
-          ))
-        )}
+        {renderWatchlists()}
       </div>
 
       {/* Single form sheet instance — create or edit depending on editingEntry */}
