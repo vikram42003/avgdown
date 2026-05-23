@@ -3,7 +3,7 @@ import { User } from "@avgdown/db";
 import { UserResponseSchema } from "@avgdown/types";
 import * as bcrypt from "bcrypt";
 
-import { UserResponseDto } from "./users.dto";
+import { UserResponseDto, UserUpdateDto } from "./users.dto";
 import { PrismaService } from "../common/database/prisma/prisma.service";
 import { truncateId, redactEmail } from "../common/utils/redact";
 
@@ -152,5 +152,38 @@ export class UsersService {
 
   async findUserByEmailHelper(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
+  }
+
+  async updateMe(userId: string, data: UserUpdateDto): Promise<UserResponseDto> {
+    const updateData: { email?: string; webhookUrl?: string | null } = {};
+    if (data.email !== undefined) {
+      updateData.email = data.email;
+    }
+    if (data.webhookUrl !== undefined) {
+      updateData.webhookUrl = data.webhookUrl;
+    }
+
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+      });
+      return UserResponseSchema.parse(updatedUser);
+    } catch (error) {
+      if (this.isPrismaError(error, "P2002")) {
+        throw new ConflictException("Email already in use");
+      }
+      throw error;
+    }
+  }
+
+  async deleteMe(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      this.logger.warn(`Deletion failed: User with id ${truncateId(userId)} not found`);
+      throw new NotFoundException("User not found");
+    }
+    await this.prisma.user.delete({ where: { id: userId } });
+    this.logger.log(`User deleted: ${truncateId(userId)}`);
   }
 }
