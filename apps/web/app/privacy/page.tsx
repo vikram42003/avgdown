@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LegalSection } from "@/components/common/LegalSection";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy | AvgDown",
+  description: "Learn how AvgDown collects, uses, and protects your personal data and watchlist information.",
+};
 
 export default function PrivacyPage() {
   return (
@@ -8,7 +14,7 @@ export default function PrivacyPage() {
       <LandingNav />
       
       <main className="flex-1 max-w-4xl mx-auto px-6 pt-32 pb-16">
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl mb-4 bg-linear-to-r from-white to-white/60 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl mb-4 bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
           Privacy Policy
         </h1>
         <p className="text-sm text-muted-foreground mb-8">Last updated: May 23, 2026</p>

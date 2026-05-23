@@ -3,9 +3,11 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useUser } from "@/hooks/useUser";
 import { UserIcon, KeyIcon } from "@phosphor-icons/react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProfileDetails() {
   const { user } = useUser();
+  const isLoading = !user;
 
   const joinedDate = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString(undefined, {
@@ -32,15 +34,23 @@ export function ProfileDetails() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address</span>
-            <span className="text-base font-medium bg-input/20 px-3 py-2 rounded-lg border border-border/30 text-foreground/80 max-w-md truncate">
-              {user?.email}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-10 w-full max-w-md" />
+            ) : (
+              <span className="text-base font-medium bg-input/20 px-3 py-2 rounded-lg border border-border/30 text-foreground/80 max-w-md truncate">
+                {user.email}
+              </span>
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Member Since</span>
-            <span className="text-base font-medium bg-input/20 px-3 py-2 rounded-lg border border-border/30 text-foreground/80 max-w-md">
-              {joinedDate}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-10 w-full max-w-md" />
+            ) : (
+              <span className="text-base font-medium bg-input/20 px-3 py-2 rounded-lg border border-border/30 text-foreground/80 max-w-md">
+                {joinedDate}
+              </span>
+            )}
           </div>
         </div>
 

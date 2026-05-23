@@ -6,10 +6,51 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GlobeIcon, WarningIcon } from "@phosphor-icons/react";
 import { useWebhookSettings } from "@/hooks/useWebhookSettings";
+import { useUser } from "@/hooks/useUser";
+import { Skeleton } from "@/components/ui/skeleton";
 import WebhookPayloadInfoSheet from "./WebhookPayloadInfoSheet";
 
-export function WebhookSettings() {
-  const { webhookUrl, setWebhookUrl, isSaving, webhookError, setWebhookError, saveWebhook } = useWebhookSettings();
+function WebhookSettingsSkeleton() {
+  return (
+    <Card className="glass-primary rounded-xl overflow-hidden">
+      <CardHeader className="border-b border-border/40 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <GlobeIcon size={20} weight="bold" />
+          </div>
+          <div>
+            <CardTitle>Integrations & Webhooks</CardTitle>
+            <CardDescription>Receive alert notifications outside of email.</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-10 w-full max-w-2xl" />
+            <Skeleton className="h-4 w-full max-w-xl" />
+          </div>
+          <Skeleton className="h-10 w-44" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface WebhookSettingsFormProps {
+  readonly initialUrl: string;
+}
+
+function WebhookSettingsForm({ initialUrl }: WebhookSettingsFormProps) {
+  const {
+    webhookUrl,
+    setWebhookUrl,
+    isSaving,
+    webhookError,
+    setWebhookError,
+    saveWebhook,
+  } = useWebhookSettings(initialUrl);
 
   return (
     <Card className="glass-primary rounded-xl overflow-hidden">
@@ -24,7 +65,6 @@ export function WebhookSettings() {
           </div>
         </div>
       </CardHeader>
-
       <CardContent className="pt-6">
         <form onSubmit={saveWebhook} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
@@ -67,4 +107,14 @@ export function WebhookSettings() {
       </CardContent>
     </Card>
   );
+}
+
+export function WebhookSettings() {
+  const { user } = useUser();
+
+  if (!user) {
+    return <WebhookSettingsSkeleton />;
+  }
+
+  return <WebhookSettingsForm key={user.webhookUrl ?? ""} initialUrl={user.webhookUrl ?? ""} />;
 }

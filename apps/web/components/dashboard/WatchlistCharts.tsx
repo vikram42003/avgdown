@@ -55,15 +55,11 @@ function WatchlistChartCard({ entry, onEditRequest }: Readonly<WatchlistChartCar
 
   const data: ChartDataPoint[] =
     chartData?.points.map((p) => {
-      let normalizedDate: string;
-      if (typeof p.date === "string") {
-        normalizedDate = p.date;
-      } else {
-        const year = p.date.getUTCFullYear();
-        const month = String(p.date.getUTCMonth() + 1).padStart(2, "0");
-        const day = String(p.date.getUTCDate()).padStart(2, "0");
-        normalizedDate = `${year}-${month}-${day}`;
-      }
+      const dateObj = typeof p.date === "string" ? new Date(p.date) : p.date;
+      const year = dateObj.getUTCFullYear();
+      const month = String(dateObj.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getUTCDate()).padStart(2, "0");
+      const normalizedDate = `${year}-${month}-${day}`;
       return {
         date: normalizedDate,
         close: p.close,

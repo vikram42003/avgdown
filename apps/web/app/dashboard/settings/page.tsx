@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { PageTitle } from "@/components/common/PageTitle";
 import { ProfileDetails } from "@/components/settings/ProfileDetails";
 import { WebhookSettings } from "@/components/settings/WebhookSettings";
 import { DangerZone } from "@/components/settings/DangerZone";
+
+export const metadata: Metadata = {
+  title: "Account Settings | AvgDown",
+  description: "Manage your AvgDown profile, email preferences, custom webhook notifications, and account credentials.",
+};
 
 export default function SettingsPage() {
   return (
