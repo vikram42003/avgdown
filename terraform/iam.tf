@@ -35,7 +35,11 @@ resource "aws_iam_role_policy" "lambda_ses" {
           "ses:SendEmail",
           "ses:SendRawEmail"
         ],
-        Resource = aws_sesv2_email_identity.ses_domain_identity.arn,
+        Resource = [
+          aws_sesv2_email_identity.ses_domain_identity.arn,
+          aws_sesv2_configuration_set.ses_configs.arn,
+          "arn:aws:ses:${var.aws_region}:${data.aws_caller_identity.current.account_id}:identity/*"
+        ],
         # Enforce that the 'From' address header must match our verified identity to prevent header spoofing.
         Condition = {
           StringLike = {

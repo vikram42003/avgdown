@@ -72,6 +72,6 @@ def send_alerts_via_email(
                     f"Skipped: Recipient not verified in SES Sandbox. Code: {error_code}"
                 )
             else:
-                print(f"Failed to send alert. SES Error: {error_code}")
+                print(f"Failed to send alert. SES Error: {e}")
 
     return alerts_successfully_sent
