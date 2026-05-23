@@ -66,7 +66,7 @@ def send_alerts_via_email(
 
             # redact email from logs to protect pii
             logger.info(
-                "Successfully sent alert to user_id: %s...",
+                "Successfully sent alert for watchlist_entry_id: %s...",
                 next(iter(alert_by_entry_ids.values())).watchlist_entry_id[:8]
             )
         except ClientError as e:

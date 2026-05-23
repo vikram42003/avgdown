@@ -135,10 +135,15 @@ def lambda_handler(event: dict, context: object) -> None:
     Runs once per day via EventBridge
     """
     logger.info("Starting daily close worker")
+
+    # Clean up snapshot, alert, and failed fetch logs older than 1 year
+    cleanup_old_data()
+
     watchlist_entries = get_watchlist_entries()
 
     if not watchlist_entries:
         logger.info("No active watchlist entries - nothing to compute.")
+        logger.info("Finished daily close worker")
         return
 
     logger.info("Found %d active watchlist entries", len(watchlist_entries))
@@ -164,8 +169,6 @@ def lambda_handler(event: dict, context: object) -> None:
     else:
         logger.info("Daily close hydration skipped: %d symbols already have enough recent data.", skipped)
 
-    # Clean up snapshot, alert, and failed fetch logs older than 1 year
-    cleanup_old_data()
     logger.info("Finished daily close worker")
 
 

@@ -178,37 +178,37 @@ def lambda_handler(event: dict, context: object) -> None:
     watchlist_entries = get_watchlist_entries()
     logger.info("Fetched %d active watchlist entries from DB", len(watchlist_entries))
 
-    if not watchlist_entries:
-        logger.info("No active watchlist entries - nothing to compute.")
-        return
+    if watchlist_entries:
+        # Group them and filter out closed exchanges
+        entries_by_symbol, active_symbols = process_watchlist_entries(watchlist_entries)
+        logger.info("After market filtering, %d active symbols remain", len(active_symbols))
 
-    # Group them and filter out closed exchanges
-    entries_by_symbol, active_symbols = process_watchlist_entries(watchlist_entries)
-    logger.info("After market filtering, %d active symbols remain", len(active_symbols))
-
-    # Fetch latest price details from provider
-    prices_by_symbol, failed_symbols = fetch_prices_bulk(active_symbols)
-    logger.info("Fetched prices for %d symbols", len(prices_by_symbol))
-    
-    if failed_symbols:
-        record_missed_fetches(failed_symbols, entries_by_symbol)
+        # Fetch latest price details from provider
+        prices_by_symbol, failed_symbols = fetch_prices_bulk(active_symbols)
+        logger.info("Fetched prices for %d symbols", len(prices_by_symbol))
+        
+        if failed_symbols:
+            record_missed_fetches(failed_symbols, entries_by_symbol)
+    else:
+        logger.info("No active watchlist entries - skipping direct price checks.")
 
     process_alpha_vantage_backfill()
 
-    # Check prices against daily SMA bounds
-    prices_by_asset_id = map_prices_to_assets(prices_by_symbol, entries_by_symbol)
-    alerts_by_user = process_sma(entries_by_symbol, prices_by_asset_id)
+    if watchlist_entries:
+        # Check prices against daily SMA bounds
+        prices_by_asset_id = map_prices_to_assets(prices_by_symbol, entries_by_symbol)
+        alerts_by_user = process_sma(entries_by_symbol, prices_by_asset_id)
 
-    # Filter already notified entries and save/dispatch
-    alerts_by_user = filter_alerts(alerts_by_user)
-    filtered_alert_count = sum(len(user_alerts) for user_alerts in alerts_by_user.values())
-    logger.info(
-        "Alerts remaining after filtering already-alerted entries: %d",
-        filtered_alert_count,
-    )
+        # Filter already notified entries and save/dispatch
+        alerts_by_user = filter_alerts(alerts_by_user)
+        filtered_alert_count = sum(len(user_alerts) for user_alerts in alerts_by_user.values())
+        logger.info(
+            "Alerts remaining after filtering already-alerted entries: %d",
+            filtered_alert_count,
+        )
 
-    if filtered_alert_count > 0:
-        save_and_dispatch_alerts(alerts_by_user)
+        if filtered_alert_count > 0:
+            save_and_dispatch_alerts(alerts_by_user)
 
     logger.info("Finished live alert worker")
 
