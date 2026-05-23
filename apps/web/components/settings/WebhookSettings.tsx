@@ -6,16 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GlobeIcon, WarningIcon } from "@phosphor-icons/react";
 import { useWebhookSettings } from "@/hooks/useWebhookSettings";
+import WebhookPayloadInfoSheet from "./WebhookPayloadInfoSheet";
 
 export function WebhookSettings() {
-  const {
-    webhookUrl,
-    setWebhookUrl,
-    isSaving,
-    webhookError,
-    setWebhookError,
-    saveWebhook,
-  } = useWebhookSettings();
+  const { webhookUrl, setWebhookUrl, isSaving, webhookError, setWebhookError, saveWebhook } = useWebhookSettings();
 
   return (
     <Card className="glass-primary rounded-xl overflow-hidden">
@@ -30,10 +24,13 @@ export function WebhookSettings() {
           </div>
         </div>
       </CardHeader>
+
       <CardContent className="pt-6">
         <form onSubmit={saveWebhook} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="webhook-url">Custom Webhook URL</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="webhook-url">Custom Webhook URL</Label>
+            </div>
             <Input
               id="webhook-url"
               placeholder="https://discord.com/api/webhooks/... or https://your-server.com/endpoint"
@@ -47,7 +44,8 @@ export function WebhookSettings() {
               autoComplete="off"
             />
             <p className="text-xs text-muted-foreground max-w-2xl mt-1">
-              Whenever price conditions cross your specified simple moving average (SMA) watchlist thresholds, we will make a HTTP POST request to this URL with alert details. Leave empty to disable.
+              Whenever price conditions cross your specified simple moving average (SMA) watchlist thresholds, we will
+              make a HTTP POST request to this URL with alert details. Leave empty to disable.
             </p>
           </div>
 
@@ -58,10 +56,12 @@ export function WebhookSettings() {
             </p>
           )}
 
-          <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <Button type="submit" disabled={isSaving} className="gap-2 transition-transform active:scale-98">
               {isSaving ? "Saving..." : "Save Webhook Settings"}
             </Button>
+
+            <WebhookPayloadInfoSheet />
           </div>
         </form>
       </CardContent>
