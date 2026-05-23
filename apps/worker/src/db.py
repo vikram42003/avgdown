@@ -4,9 +4,12 @@ from datetime import date
 from psycopg.rows import class_row
 import psycopg
 import os
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 _conn = None
 
@@ -53,7 +56,7 @@ def add_missed_fetch_bulk(missed_fetches: list[tuple[str, str, str]]) -> None:
     if not missed_fetches:
         return
 
-    print(f"Saving {len(missed_fetches)} missed fetch records")
+    logger.info("Saving %d missed fetch records", len(missed_fetches))
     conn = get_db()
 
     with conn.cursor() as cur:
@@ -165,26 +168,29 @@ def add_alerts_bulk(alerts_to_add: list[TriggeredAlert]) -> dict[str, str]:
         A dictionary mapping watchlist entry IDs to their new alert IDs.
     """
     if not alerts_to_add:
-        print("No alerts to insert")
+        logger.info("No alerts to insert")
         return {}
 
-    print(f"Inserting {len(alerts_to_add)} alerts into the alerts table")
+    logger.info("Inserting %d alerts into the alerts table", len(alerts_to_add))
     conn = get_db()
 
     entry_to_alert_id: dict[str, str] = {}
     with conn.cursor() as cur:
         cur.executemany(
             """
-            INSERT INTO alerts (watchlist_entry_id, triggered_price, sma_value, delivered)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO alerts (watchlist_entry_id, user_id, symbol, exchange, sma_period, asset_name, triggered_price, sma_value, delivered)
+            SELECT w.id, w.user_id, a.symbol, a.exchange, w.sma_period, a.name, %s, %s, %s
+            FROM watchlist_entries w
+            JOIN assets a ON w.asset_id = a.id
+            WHERE w.id = %s
             RETURNING id, watchlist_entry_id
             """,
             [
                 (
-                    alert.watchlist_entry_id,
                     alert.triggered_price,
                     alert.sma_value,
                     alert.delivered,
+                    alert.watchlist_entry_id,
                 )
                 for alert in alerts_to_add
             ],
@@ -211,10 +217,10 @@ def mark_alerts_as_delivered_by_id(alert_ids: list[str]) -> None:
         alert_ids: A list of alert IDs to mark as delivered.
     """
     if not alert_ids:
-        print("No alerts to mark as delivered")
+        logger.info("No alerts to mark as delivered")
         return
 
-    print(f"Marking {len(alert_ids)} alerts as delivered")
+    logger.info("Marking %d alerts as delivered", len(alert_ids))
     conn = get_db()
     with conn.cursor() as cur:
         cur.execute(
@@ -242,9 +248,9 @@ def upsert_daily_price_snapshots_bulk(
     if not rows:
         return
 
+    logger.info("Upserting %d daily_price_snapshots rows...", len(rows))
     conn = get_db()
     with conn.cursor() as cur:
-        print(f"Upserting {len(rows)} daily_price_snapshots rows...")
         cur.executemany(
             """
             INSERT INTO daily_price_snapshots (asset_id, date, close, source)
@@ -322,7 +328,9 @@ def cleanup_old_data() -> None:
         missed_deleted = cur.rowcount
 
     conn.commit()
-    print(
-        f"Cleaned up old data: deleted {snapshots_deleted} snapshots, "
-        f"{alerts_deleted} alerts, and {missed_deleted} missed fetches."
+    logger.info(
+        "Cleaned up old data: deleted %d snapshots, %d alerts, and %d missed fetches.",
+        snapshots_deleted,
+        alerts_deleted,
+        missed_deleted,
     )

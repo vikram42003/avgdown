@@ -1,8 +1,11 @@
 import os
+import logging
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 from models import TriggeredAlert
+
+logger = logging.getLogger(__name__)
 
 # Set strict timeouts so SES doesn't hang longer than the Lambda timeout (10s)
 ses_config = Config(connect_timeout=2, read_timeout=5, retries={"max_attempts": 2})
@@ -62,16 +65,18 @@ def send_alerts_via_email(
             alerts_successfully_sent.extend(alert_by_entry_ids.keys())
 
             # redact email from logs to protect pii
-            print(
-                f"Successfully sent alert to user_id: {next(iter(alert_by_entry_ids.values())).watchlist_entry_id[:8]}..."
+            logger.info(
+                "Successfully sent alert to user_id: %s...",
+                next(iter(alert_by_entry_ids.values())).watchlist_entry_id[:8]
             )
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "MessageRejected":
-                print(
-                    f"Skipped: Recipient not verified in SES Sandbox. Code: {error_code}"
+                logger.warning(
+                    "Skipped: Recipient not verified in SES Sandbox. Code: %s",
+                    error_code
                 )
             else:
-                print(f"Failed to send alert. SES Error: {e}")
+                logger.exception("Failed to send alert due to SES error.")
 
     return alerts_successfully_sent

@@ -1,7 +1,10 @@
+import logging
 from decimal import Decimal
 from models import WatchlistEntryProjection, TriggeredAlert
 from utils import generate_sma_drop_message
 from db import get_recent_daily_closes_bulk
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_sma(values: list[Decimal]) -> Decimal:
@@ -42,10 +45,12 @@ def sma_val_below_average(
             required_daily_closes = entry.sma_period - 1
             completed_closes = recent_closes.get(entry.asset_id, [])
             if len(completed_closes) < required_daily_closes:
-                print(
-                    f"Not enough daily closes for {symbol} "
-                    f"(period={entry.sma_period}, got={len(completed_closes)}, "
-                    f"need={required_daily_closes}), skipping."
+                logger.warning(
+                    "Not enough daily closes for %s (period=%d, got=%d, need=%d), skipping.",
+                    symbol,
+                    entry.sma_period,
+                    len(completed_closes),
+                    required_daily_closes,
                 )
                 continue
 

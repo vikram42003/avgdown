@@ -61,6 +61,14 @@ def process_alpha_vantage_backfill() -> None:
         logger.info(
             "Running hourly Alpha Vantage backfill sequence. This is a placeholder path and will run once implemented."
         )
+        # 1. Fetch unresolved missed fetches from DB
+        #    (SELECT DISTINCT asset_id FROM missed_fetches WHERE resolved = false)
+
+        # 2. Extract their symbols
+
+        # 3. Hit Alpha Vantage in a bulk fetch just for those symbols
+
+        # 4. Save successful prices AND mark them as resolved in missed_fetches
     else:
         logger.debug(
             "Skipping Alpha Vantage backfill because current minute is %d. It only runs around the top/bottom of the hour.",
@@ -170,6 +178,10 @@ def lambda_handler(event: dict, context: object) -> None:
     watchlist_entries = get_watchlist_entries()
     logger.info("Fetched %d active watchlist entries from DB", len(watchlist_entries))
 
+    if not watchlist_entries:
+        logger.info("No active watchlist entries - nothing to compute.")
+        return
+
     # Group them and filter out closed exchanges
     entries_by_symbol, active_symbols = process_watchlist_entries(watchlist_entries)
     logger.info("After market filtering, %d active symbols remain", len(active_symbols))
@@ -202,4 +214,8 @@ def lambda_handler(event: dict, context: object) -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
     lambda_handler({}, {})

@@ -1,7 +1,10 @@
+import logging
 from models import TriggeredAlert
 from db import get_alerted_today_entries
 from datetime import datetime, timezone
 from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 
 # Trading hours in UTC for each exchange
 # These are approximate — does not account for early closes or regional holidays
@@ -93,6 +96,6 @@ def filter_alerts(alerts_by_user: dict[str, dict[str, TriggeredAlert]]) -> dict[
             filtered_alerts[user_id] = remaining
 
     if skipped_count > 0:
-        print(f"Skipping {skipped_count} alerts - already alerted today")
+        logger.info("Skipping %d alerts - already alerted today", skipped_count)
 
     return filtered_alerts

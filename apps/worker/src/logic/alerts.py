@@ -1,3 +1,4 @@
+import logging
 from db import mark_alerts_as_delivered_by_id
 import json
 from datetime import datetime, timezone
@@ -10,6 +11,8 @@ from urllib.parse import urlparse
 from models import TriggeredAlert
 from providers.ses import send_alerts_via_email
 
+logger = logging.getLogger(__name__)
+
 
 def _serialize_decimal(obj: object) -> str:
     if isinstance(obj, Decimal):
@@ -21,7 +24,7 @@ def _fire_webhook(webhook_url: str, payload: dict) -> None:
     """Fire-and-forget HTTP POST to the user's webhook URL. Logs failures but never raises."""
     parsed_url = urlparse(webhook_url)
     if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
-        print(f"Rejected invalid webhook URL: {webhook_url[:40]}...")
+        logger.warning("Rejected invalid webhook URL: %s...", webhook_url[:40])
         return
 
     try:
@@ -33,11 +36,11 @@ def _fire_webhook(webhook_url: str, payload: dict) -> None:
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=5) as resp:
-            print(f"Webhook delivered to {webhook_url[:40]}... → HTTP {resp.status}")
+            logger.info("Webhook delivered to %s... -> HTTP %s", webhook_url[:40], resp.status)
     except urllib.error.HTTPError as e:
-        print(f"Webhook HTTP error {e.code} for {webhook_url[:40]}...")
+        logger.exception("Webhook HTTP error %s for %s...", e.code, webhook_url[:40])
     except Exception as e:
-        print(f"Webhook failed for {webhook_url[:40]}...: {e}")
+        logger.exception("Webhook failed for %s...", webhook_url[:40])
 
 
 def handle_alerts(
@@ -57,7 +60,7 @@ def handle_alerts(
     """
     # send out emails
     sent_entry_ids: list[str] = send_alerts_via_email(alerts_by_user)
-    print(f"Email sent for {len(sent_entry_ids)} watchlist entries")
+    logger.info("Email sent for %d watchlist entries", len(sent_entry_ids))
 
     # hit the webhooks (fire-and-forget, for now)
     triggered_at = datetime.now(timezone.utc).isoformat()
@@ -94,7 +97,7 @@ def handle_alerts(
     ]
 
     # mark alerts as delivered (in the db)
-    print(f"Alerts successfully dispatched: {len(sent_alert_ids)}")
+    logger.info("Alerts successfully dispatched: %d", len(sent_alert_ids))
     mark_alerts_as_delivered_by_id(sent_alert_ids)
 
     return None

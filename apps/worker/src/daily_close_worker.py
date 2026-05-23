@@ -1,3 +1,4 @@
+import logging
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -10,6 +11,8 @@ from db import (
 from models import WatchlistEntryProjection
 from providers.yf import HISTORY_WINDOW, fetch_daily_closes_bulk
 from utils import map_symbol_exchange
+
+logger = logging.getLogger(__name__)
 
 
 def group_entries_by_symbol(
@@ -98,8 +101,10 @@ def hydrate_and_format_closes(
     fetch_requirements = {symbol: required_closes_by_symbol[symbol] for symbol in symbols_to_fetch}
     max_required_closes = max(fetch_requirements.values())
 
-    print(
-        f"Hydrating daily closes for {len(symbols_to_fetch)} symbols ", f"(need up to {max_required_closes} closes)..."
+    logger.info(
+        "Hydrating daily closes for %d symbols (need up to %d closes)...",
+        len(symbols_to_fetch),
+        max_required_closes,
     )
 
     daily_closes, failed_symbols = fetch_daily_closes_bulk(
@@ -108,7 +113,7 @@ def hydrate_and_format_closes(
     )
 
     if failed_symbols:
-        print(f"Failed to fetch daily closes for: {failed_symbols}")
+        logger.warning("Failed to fetch daily closes for: %s", failed_symbols)
 
     rows_to_upsert = []
     for symbol, series in daily_closes.items():
@@ -129,13 +134,14 @@ def lambda_handler(event: dict, context: object) -> None:
 
     Runs once per day via EventBridge
     """
+    logger.info("Starting daily close worker")
     watchlist_entries = get_watchlist_entries()
 
     if not watchlist_entries:
-        print("No active watchlist entries - nothing to compute.")
+        logger.info("No active watchlist entries - nothing to compute.")
         return
 
-    print(f"Found {len(watchlist_entries)} active watchlist entries")
+    logger.info("Found %d active watchlist entries", len(watchlist_entries))
 
     # Group active watchlists by their yfinance symbol
     asset_ids_by_symbol, max_period_by_symbol, asset_ids = group_entries_by_symbol(watchlist_entries)
@@ -152,15 +158,20 @@ def lambda_handler(event: dict, context: object) -> None:
     if symbols_to_fetch:
         rows_to_upsert = hydrate_and_format_closes(symbols_to_fetch, required_closes_by_symbol, asset_ids_by_symbol)
         if rows_to_upsert:
-            print(f"Preparing to upsert {len(rows_to_upsert)} daily close rows")
+            logger.info("Preparing to upsert %d daily close rows", len(rows_to_upsert))
             upsert_daily_price_snapshots_bulk(rows_to_upsert)
-            print(f"Upserted {len(rows_to_upsert)} daily close rows.")
+            logger.info("Upserted %d daily close rows.", len(rows_to_upsert))
     else:
-        print(f"Daily close hydration skipped: {skipped} symbols already have enough recent data.")
+        logger.info("Daily close hydration skipped: %d symbols already have enough recent data.", skipped)
 
     # Clean up snapshot, alert, and failed fetch logs older than 1 year
     cleanup_old_data()
+    logger.info("Finished daily close worker")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
     lambda_handler({}, {})
