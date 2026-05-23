@@ -72,7 +72,7 @@ export class WatchlistsService {
 
     const alerts = await this.prisma.alert.findMany({
       where: {
-        watchlistEntry: { userId },
+        userId,
         createdAt: { gte: sevenDaysAgo },
       },
       select: {
@@ -80,27 +80,28 @@ export class WatchlistsService {
         triggeredPrice: true,
         smaValue: true,
         createdAt: true,
-        watchlistEntry: {
-          select: {
-            smaPeriod: true,
-            asset: {
-              select: {
-                symbol: true,
-                name: true,
-                exchange: true,
-              },
-            },
-          },
-        },
+        smaPeriod: true,
+        symbol: true,
+        assetName: true,
+        exchange: true,
       },
       orderBy: { createdAt: "desc" },
       take: 10,
     });
 
     return alerts.map((alert) => ({
-      ...alert,
+      id: alert.id,
       triggeredPrice: alert.triggeredPrice.toNumber(),
       smaValue: alert.smaValue.toNumber(),
+      createdAt: alert.createdAt,
+      watchlistEntry: {
+        smaPeriod: alert.smaPeriod,
+        asset: {
+          symbol: alert.symbol,
+          name: alert.assetName,
+          exchange: alert.exchange,
+        },
+      },
     }));
   }
 
