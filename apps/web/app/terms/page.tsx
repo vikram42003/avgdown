@@ -14,7 +14,7 @@ export default function TermsPage() {
       <LandingNav />
 
       <main className="flex-1 max-w-4xl mx-auto px-6 pt-32 pb-16">
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl mb-4 bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl mb-4 bg-linear-to-r from-white to-white/60 bg-clip-text text-transparent">
           Terms of Service
         </h1>
         <p className="text-sm text-muted-foreground mb-8">Last updated: May 23, 2026</p>

@@ -76,7 +76,7 @@ once per worker run, after email delivery succeeds.
 - `triggered_at` is UTC ISO-8601.
 - `triggered_price` and `sma_value` are serialized as strings to preserve decimal precision.
 - `alert_id` can be used to correlate with the `/alerts` API endpoint.
-- The webhook is **fire-and-forget** — failures are logged but not retried (see todo item #23).
+- The webhook is **fire-and-forget** — failures are logged but not retried (see todo item #25).
 - The webhook fires after email; if email dispatch itself fails for a user, the webhook still fires
   (the two are independent delivery channels).
 
