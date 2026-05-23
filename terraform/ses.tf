@@ -12,8 +12,9 @@ output "dkim_tokens" {
 }
 
 resource "aws_sesv2_email_identity_mail_from_attributes" "ses_mail_from" {
-  email_identity   = aws_sesv2_email_identity.ses_domain_identity.email_identity
-  mail_from_domain = "mail.${var.domain_name}"
+  email_identity         = aws_sesv2_email_identity.ses_domain_identity.email_identity
+  mail_from_domain       = "mail.${var.domain_name}"
+  behavior_on_mx_failure = "REJECT_MESSAGE"
 }
 
 resource "aws_sesv2_configuration_set_event_destination" "ses_cw_logs" {
