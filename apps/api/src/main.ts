@@ -47,12 +47,8 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  // Enable CORS only for local frontend, for now
-  const allowedOrigins = ["http://localhost:3000"];
-  const frontendUrl = configService.get<string>("FRONTEND_URL");
-  if (frontendUrl) {
-    allowedOrigins.push(frontendUrl.replace(/\/$/, ""));
-  }
+  // Enable CORS
+  const allowedOrigins = configService.getOrThrow<string>("FRONTEND_URL").replace(/\/$/, "");
   app.enableCors({
     origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
