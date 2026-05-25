@@ -28,5 +28,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Skip Next.js internals and static files
-  matcher: [String.raw`/((?!_next|favicon\.ico|.*\..*).*)`],
+  matcher: ["/((?!_next|favicon\\.ico|.*\\..*).*)"], // NOSONAR: String.raw would make the static AST parsing during the next build step fail
 };
