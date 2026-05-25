@@ -24,3 +24,6 @@ provider "aws" {
     role_arn = var.terraform_deploy_role_arn
   }
 }
+
+# Used to dynamically reference the AWS account ID in ARNs
+data "aws_caller_identity" "current" {}

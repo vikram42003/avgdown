@@ -1,7 +1,10 @@
+import logging
 from models import TriggeredAlert
 from db import get_alerted_today_entries
 from datetime import datetime, timezone
 from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 
 # Trading hours in UTC for each exchange
 # These are approximate — does not account for early closes or regional holidays
@@ -58,12 +61,14 @@ def map_symbol_exchange(symbol: str, exchange: str) -> str:
     else:
         raise ValueError(f"Unsupported exchange: {exchange}")
 
+
 def generate_sma_drop_message(symbol: str, current_price: Decimal, sma_value: Decimal, period: int) -> str:
     """Single source of truth for SMA alert messages"""
     return (
         f"The current value for {symbol} is trading below the average SMA value.\n"
         f"Current value: {current_price:.2f} | Average SMA for {period} period: {sma_value:.2f}"
     )
+
 
 def filter_alerts(alerts_by_user: dict[str, dict[str, TriggeredAlert]]) -> dict[str, dict[str, TriggeredAlert]]:
     """Filter out alerts for entries that already have any alert row today."""
@@ -76,16 +81,21 @@ def filter_alerts(alerts_by_user: dict[str, dict[str, TriggeredAlert]]) -> dict[
 
     already_alerted_ids = get_alerted_today_entries(pending_entry_ids)
 
+    skipped_count = 0
     filtered_alerts = {}
     for user_id, user_alerts in alerts_by_user.items():
         # Build a new dict for each user, excluding recently alerted IDs
-        remaining = {
-            eid: alert 
-            for eid, alert in user_alerts.items() 
-            if eid not in already_alerted_ids
-        }
+        remaining = {}
+        for eid, alert in user_alerts.items():
+            if eid in already_alerted_ids:
+                skipped_count += 1
+            else:
+                remaining[eid] = alert
         
         if remaining:
             filtered_alerts[user_id] = remaining
+
+    if skipped_count > 0:
+        logger.info("Skipping %d alerts - already alerted today", skipped_count)
 
     return filtered_alerts

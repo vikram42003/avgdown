@@ -19,32 +19,36 @@
 12. ✅ Toast Notifications: Add toast feedback (via Sonner) for CRUD actions (e.g., "Watchlist created").
 13. ✅ Error Handling: Add robust error boundaries and handling to critical areas.
 
-14. Terraform Cron: Configure Event Bridge with Terraform to run the Lambda worker every 15 min.
-15. Production Database: Setup Prisma migrations for production (`prisma migrate deploy` in the CI/CD or deployment step).
-16. Hosting: Deploy the frontend, backend, and database!
+14. ✅ Terraform Cron: Configure Event Bridge with Terraform to run the Lambda worker every 30 min (EventBridge Scheduler).
+15. ✅ Database Cleanup: Implement daily cleanup of price snapshots, alerts, and failed fetches logs older than 1 year in the daily worker.
+16. ✅ Add a basic Privacy Policy or Terms of Service link in the footer
+17. Production Database: Setup Prisma migrations for production (`prisma migrate deploy` in the CI/CD or deployment step).
+18. Hosting: Deploy the frontend, backend, and database!
 
 ---
 
 ### Post-MVP
 
-17. Logging: Implement structured, centralized logging across the stack.
-18. Theme Toggle: Add a Dark/Light mode switch in the settings tab.
-19. Landing Page: Build a public landing page at the root `/` and move the main app to `/dashboard`.
-20. Implement the Observability layer
-21. Update Documentation and make charts/graphs and shit for it
-22. GO THROUGH THE GUIDE.md AND SEE IF THERES ANYTHING ELSE LEFT
-23. **Webhook Reliability & Visibility**: Webhooks are currently fire-and-forget with no retry logic.
+19. Logging: Implement structured, centralized logging across the stack.
+20. Theme Toggle: Add a Dark/Light mode switch in the settings tab.
+21. Landing Page: Build a public landing page at the root `/` and move the main app to `/dashboard`.
+22. Implement the Observability layer
+23. Update Documentation and make charts/graphs and shit for it
+24. GO THROUGH THE GUIDE.md AND SEE IF THERES ANYTHING ELSE LEFT
+25. Webhook Reliability & Visibility: Webhooks are currently fire-and-forget with no retry logic.
     Failures are only logged. Consider: delivery receipts stored in DB, a retry queue (SQS/dead-letter),
     and a user-facing delivery log so they can debug their integrations.
 
 ### OTHER STUFF (handle it one day...)
-24. Add a way for auth'd users to like setup password if they used oauth and vice versa
-25. Implement the calculation of the delivery rate in dashboard summary cards
-26. Limit the watchlist charts we initially load and add pagination/infinite scrolling
-27. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
-28. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
-29. Add focused tests/fixtures for yfinance response shapes (`download` single ticker, multiple tickers, `group_by`, `multi_level_index`) so provider parsing breaks loudly when yfinance changes its DataFrame structure
-
+26. Add a way for auth'd users to like setup password if they used oauth and vice versa
+27. Implement the calculation of the delivery rate in dashboard summary cards
+28. Limit the watchlist charts we initially load and add pagination/infinite scrolling
+29. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
+30. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
+31. Add focused tests/fixtures for yfinance response shapes (`download` single ticker, multiple tickers, `group_by`, `multi_level_index`) so provider parsing breaks loudly when yfinance changes its DataFrame structure
+32. Move DNS management from Porkbun to Route 53, and manage it through IAC
+33. (Maybe Imp) Implement Secure One-Click Email Unsubscribe, we send a one time presigned url + token along with emails so users can unsubscribe
+34. Send emails in bulk in live_alerts_worker
 ---
 
 ## Webhook Payload Contract
@@ -72,7 +76,7 @@ once per worker run, after email delivery succeeds.
 - `triggered_at` is UTC ISO-8601.
 - `triggered_price` and `sma_value` are serialized as strings to preserve decimal precision.
 - `alert_id` can be used to correlate with the `/alerts` API endpoint.
-- The webhook is **fire-and-forget** — failures are logged but not retried (see todo item #23).
+- The webhook is **fire-and-forget** — failures are logged but not retried (see todo item #25).
 - The webhook fires after email; if email dispatch itself fails for a user, the webhook still fires
   (the two are independent delivery channels).
 
@@ -90,6 +94,11 @@ feat/logging-observability        → 17, 20
 feat/theme-toggle                 → 18
 feat/landing-page                 → 19
 chore/docs-review                 → 21, 22
+
+## Things to learn more about
+- **AWS SESv2 Email Identities (`aws_sesv2_email_identity`)**: Unified resource type in SESv2 that replaces the legacy SESv1 domain and email address identity resources. It permits associating default configuration sets directly to the identity.
+- **Easy DKIM (3x CNAME records)**: Authenticates outbound emails and verifies domain ownership simultaneously. Recipient mail servers check these records to verify that the email actually originated from your domain and wasn't spoofed/tampered with in transit.
+- **Custom MAIL FROM Domain (MX & SPF TXT records)**: Overrides the default `amazonses.com` envelope-sender address with your own subdomain (e.g., `mail.avgdown.xyz`). This aligns the "MAIL FROM" domain with your "From" header address, which is required for DMARC (Domain-based Message Authentication) to pass.
 
 ## Productivity Logs -
 

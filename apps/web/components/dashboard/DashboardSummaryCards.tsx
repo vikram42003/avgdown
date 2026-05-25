@@ -41,7 +41,6 @@ const DashboardSummaryCards = ({ initialWatchlists, initialAlerts }: Readonly<Da
         isLoading={isLoading}
       />
       <SummaryCard title="Total Assets Tracked" value={assetCount} isLoading={isLoading} />
-      <SummaryCard title="Delivery Rate" value="99%" />
     </div>
   );
 };

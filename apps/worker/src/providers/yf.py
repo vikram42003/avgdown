@@ -1,7 +1,10 @@
+import logging
 import math
 import yfinance as yf
 from collections.abc import Mapping
 from datetime import date
+
+logger = logging.getLogger(__name__)
 
 # Number of daily chart points served by the frontend/API.
 HISTORY_WINDOW = 40
@@ -40,6 +43,9 @@ def fetch_prices_bulk(
     Fetches prices for all the assets passed in, in bulk
     Returns good prices for all the ones we could fetch and failed prices for the ones we could not
     """
+    if not symbols:
+        return {}, {}
+
     try:
         data = yf.download(
             tickers=symbols,
@@ -70,7 +76,7 @@ def fetch_prices_bulk(
 
     except Exception as e:
         # Handles complete request failure or other uncaught errors
-        print(f"Failed to fetch prices with yfinance for {symbols}: {e}")
+        logger.exception("Failed to fetch prices with yfinance for %s", symbols)
         return ({}, {s: str(e) for s in symbols})
 
 
@@ -111,7 +117,7 @@ def fetch_daily_closes_bulk(
             progress=False,
         )
     except Exception as e:
-        print(f"Failed to fetch daily data from yfinance: {e}")
+        logger.exception("Failed to fetch daily data from yfinance")
         return {}, {s: str(e) for s in unique_symbols}
 
     results: dict[str, list[tuple[date, float]]] = {}
