@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { Toaster } from "sonner";
 import { Providers } from "@/components/common/Providers";
+import { PendingToast } from "@/components/common/PendingToast";
 import { cn } from "@/lib/utils";
 
 const raleway = Raleway({ subsets: ["latin"], variable: "--font-sans" });
@@ -27,6 +28,7 @@ export default function RootLayout({
           {children}
         </Providers>
         <Toaster theme="dark" position="bottom-right" richColors />
+        <PendingToast />
       </body>
     </html>
   );

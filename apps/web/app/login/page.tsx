@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChartLineUpIcon } from "@phosphor-icons/react";
-import { setPendingToast, PendingToast } from "@/components/common/PendingToast";
+import { setPendingToast } from "@/components/common/PendingToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
@@ -47,7 +47,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-1 min-h-screen items-center justify-center bg-background px-4">
-      <PendingToast />
+
       <div className="glass w-full max-w-md rounded-2xl p-8 space-y-6">
         {/* Brand mark */}
         <div className="flex flex-col items-center gap-2 text-center">

@@ -26,7 +26,7 @@ const AccountProfile = () => {
       // Revalidate the /users/me cache so all consumers update instantly
       await mutate(undefined, { revalidate: false });
       setPendingToast("success", "Signed out successfully");
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
       // Fallback in case of server failure - we don't redirect so session remains intact

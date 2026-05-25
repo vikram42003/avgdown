@@ -22,8 +22,12 @@
 14. ✅ Terraform Cron: Configure Event Bridge with Terraform to run the Lambda worker every 30 min (EventBridge Scheduler).
 15. ✅ Database Cleanup: Implement daily cleanup of price snapshots, alerts, and failed fetches logs older than 1 year in the daily worker.
 16. ✅ Add a basic Privacy Policy or Terms of Service link in the footer
-17. Production Database: Setup Prisma migrations for production (`prisma migrate deploy` in the CI/CD or deployment step).
+17. ✅ Production Database: Setup Prisma migrations for production (`prisma migrate deploy` in the CI/CD or deployment step).
 18. Hosting: Deploy the frontend, backend, and database!
+    - Logout should take you to root page, it currently stays at the dashboard page after logout
+    - Do check if im still on strict mode in react on something, cause I have some suspicion that the requests are being sent 2 times
+    - I saw the signed out successfully notification AFTER logging out then clicking on app title "avgdown" on the sidebar and then clicking on the sign in button again
+    - The login flow with Google OAuth does not work in the live version, what happens is, I clock sign in, it takes me to login page, I click on google oauth button, then seelct my account but then after finishing the oauth consent screen it takes me back to the login page, in devtools requests I can see that we did go to dashboard but it did a 307 back to login, maybe its because the cookie wasnt set cause I dont see the access token cookie being set in the live version on opening devtools. It works fine locally on the dev version
 
 ---
 
