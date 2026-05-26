@@ -29,8 +29,8 @@ export class AuthController {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: this.configService.get("NODE_ENV") === "production",
-      sameSite: "lax",
+      secure: this.configService.get("NODE_ENV") === "production" ? true : undefined,
+      sameSite: this.configService.get("NODE_ENV") === "production" ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
@@ -44,7 +44,7 @@ export class AuthController {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: this.configService.get("NODE_ENV") === "production",
-      sameSite: "lax",
+      sameSite: this.configService.get("NODE_ENV") === "production" ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
@@ -61,7 +61,7 @@ export class AuthController {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: this.configService.get("NODE_ENV") === "production",
-      sameSite: "lax",
+      sameSite: this.configService.get("NODE_ENV") === "production" ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
@@ -73,7 +73,7 @@ export class AuthController {
     res.clearCookie("accessToken", {
       httpOnly: true,
       secure: this.configService.get("NODE_ENV") === "production",
-      sameSite: "lax",
+      sameSite: this.configService.get("NODE_ENV") === "production" ? "none" : "lax",
     });
     return { success: true };
   }
