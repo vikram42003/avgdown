@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSWRConfig } from "swr";
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon, SpinnerGapIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useAssets } from "@/hooks/useAssets";
 import { apiMutate } from "@/lib/api";
-import type { WatchlistEntryResponse, AssetResponse, WatchlistEntryCreateDto, WatchlistEntryUpdateDto } from "@avgdown/types";
+import type { WatchlistEntryResponse, AssetResponse, AssetSearchResult, WatchlistEntryUpdateDto } from "@avgdown/types";
 
 interface WatchlistFormSheetProps {
   open: boolean;
@@ -20,15 +20,26 @@ interface WatchlistFormSheetProps {
   // undefined = create mode, defined = edit mode
   entry?: WatchlistEntryResponse;
   prefilledAsset?: AssetResponse | null;
+  prefilledSearchResult?: AssetSearchResult | null;
 }
 
-export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }: Readonly<WatchlistFormSheetProps>) {
+type SelectedAsset =
+  | { kind: "existing"; asset: AssetResponse }
+  | { kind: "search"; result: AssetSearchResult };
+
+export function WatchlistFormSheet({
+  open,
+  onOpenChange,
+  entry,
+  prefilledAsset,
+  prefilledSearchResult,
+}: Readonly<WatchlistFormSheetProps>) {
   const { mutate } = useSWRConfig();
   const { assets, isLoading: assetsLoading } = useAssets();
   const isEditMode = !!entry;
 
   // Form state
-  const [selectedAsset, setSelectedAsset] = useState<AssetResponse | null>(null);
+  const [selected, setSelected] = useState<SelectedAsset | null>(null);
   const [assetQuery, setAssetQuery] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [smaPeriod, setSmaPeriod] = useState(20);
@@ -44,17 +55,27 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
     setError(null);
     setDropdownOpen(false);
     if (entry) {
-      setSelectedAsset(entry.asset);
+      setSelected({ kind: "existing", asset: entry.asset });
       setAssetQuery(entry.asset.symbol);
       setSmaPeriod(entry.smaPeriod);
       setIsActive(entry.isActive);
+    } else if (prefilledSearchResult) {
+      setSelected({ kind: "search", result: prefilledSearchResult });
+      setAssetQuery(prefilledSearchResult.symbol);
+      setSmaPeriod(20);
+      setIsActive(true);
+    } else if (prefilledAsset) {
+      setSelected({ kind: "existing", asset: prefilledAsset });
+      setAssetQuery(prefilledAsset.symbol);
+      setSmaPeriod(20);
+      setIsActive(true);
     } else {
-      setSelectedAsset(prefilledAsset ?? null);
-      setAssetQuery(prefilledAsset?.symbol ?? "");
+      setSelected(null);
+      setAssetQuery("");
       setSmaPeriod(20);
       setIsActive(true);
     }
-  }, [open, entry, prefilledAsset]);
+  }, [open, entry, prefilledAsset, prefilledSearchResult]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -67,7 +88,7 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Client-side asset filtering - max 8 results shown at once
+  // Client-side asset filtering for the dropdown — max 8 results shown at once
   const filteredAssets = assets
     .filter(({ symbol, name }) => {
       const q = assetQuery.toLowerCase();
@@ -76,28 +97,35 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
     .slice(0, 8);
 
   function handleAssetSelect(asset: AssetResponse) {
-    setSelectedAsset(asset);
+    setSelected({ kind: "existing", asset });
     setAssetQuery(asset.symbol);
     setDropdownOpen(false);
   }
 
   function handleAssetQueryChange(value: string) {
     setAssetQuery(value);
-    setSelectedAsset(null);
+    setSelected(null);
     setDropdownOpen(value.length > 0);
   }
 
   function handleClearAsset() {
-    setSelectedAsset(null);
+    setSelected(null);
     setAssetQuery("");
     setDropdownOpen(false);
   }
+
+  // Derived display info from whatever is selected
+  const selectedSymbol = selected?.kind === "existing" ? selected.asset.symbol : selected?.result.symbol;
+  const selectedName =
+    selected?.kind === "existing" ? selected.asset.name : selected?.result.name;
+  const selectedExchange =
+    selected?.kind === "existing" ? selected.asset.exchange : selected?.result.exchange;
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     e.preventDefault();
     setError(null);
 
-    if (!selectedAsset) {
+    if (!selected) {
       setError("Please select an asset.");
       return;
     }
@@ -109,13 +137,36 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
     setSubmitting(true);
     try {
       if (isEditMode) {
-        const payload: WatchlistEntryUpdateDto = { assetId: selectedAsset.id, smaPeriod, isActive };
+        const payload: WatchlistEntryUpdateDto = {
+          assetId: selected.kind === "existing" ? selected.asset.id : undefined,
+          smaPeriod,
+          isActive,
+        };
         await apiMutate<WatchlistEntryResponse>(`/watchlists/${entry.id}`, "PATCH", payload);
-        toast.success(`Updated ${selectedAsset.symbol} watchlist entry`);
+        toast.success(`Updated ${selectedSymbol} watchlist entry`);
       } else {
-        const payload: WatchlistEntryCreateDto = { assetId: selectedAsset.id, smaPeriod, isActive: true };
+        // Build create payload — either existing asset or new from search
+        let payload: Record<string, unknown>;
+
+        if (selected.kind === "existing") {
+          payload = { assetId: selected.asset.id, smaPeriod, isActive: true };
+        } else if (selected.result.existingAssetId) {
+          // Search result that already exists in our DB
+          payload = { assetId: selected.result.existingAssetId, smaPeriod, isActive: true };
+        } else {
+          // Brand new asset from search
+          payload = {
+            symbol: selected.result.symbol,
+            exchange: selected.result.exchange,
+            name: selected.result.name,
+            assetType: selected.result.assetType,
+            smaPeriod,
+            isActive: true,
+          };
+        }
+
         await apiMutate<WatchlistEntryResponse>("/watchlists", "POST", payload);
-        toast.success(`Added ${selectedAsset.symbol} to watchlist`);
+        toast.success(`Added ${selectedSymbol} to watchlist`);
       }
       await mutate("/watchlists");
       onOpenChange(false);
@@ -135,7 +186,7 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
       );
     }
     if (filteredAssets.length === 0) {
-      return <p className="text-sm text-muted-foreground p-3">No assets found.</p>;
+      return <p className="text-sm text-muted-foreground p-3">No popular assets found. Try the search on the browse page.</p>;
     }
     return (
       <ul className="max-h-52 overflow-y-auto custom-scrollbar-primary">
@@ -156,11 +207,19 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
     );
   };
 
-  let submitButtonText: string;
+  // Submit button text — show loading state with spinner during backfill
+  let submitButtonContent: React.ReactNode;
   if (submitting) {
-    submitButtonText = isEditMode ? "Saving…" : "Adding…";
+    submitButtonContent = isEditMode ? (
+      "Saving..."
+    ) : (
+      <span className="flex items-center gap-2">
+        <SpinnerGapIcon className="size-4 animate-spin" />
+        Hold on, fetching price data...
+      </span>
+    );
   } else {
-    submitButtonText = isEditMode ? "Save Changes" : "Add to Watchlist";
+    submitButtonContent = isEditMode ? "Save Changes" : "Add to Watchlist";
   }
 
   return (
@@ -178,16 +237,16 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
           <div className="flex flex-col gap-2">
             <Label htmlFor="asset-search">Asset</Label>
             
-            {selectedAsset ? (
+            {selected ? (
               <div className="glass p-3 rounded-lg flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex flex-col items-center justify-center size-10 rounded-md bg-primary/10 shrink-0">
-                    <span className="text-xs font-bold text-primary leading-none">{selectedAsset.symbol.slice(0, 3)}</span>
+                    <span className="text-xs font-bold text-primary leading-none">{selectedSymbol?.slice(0, 3)}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-semibold text-sm">{selectedAsset.symbol}</span>
+                    <span className="font-semibold text-sm">{selectedSymbol}</span>
                     <span className="text-xs text-muted-foreground truncate max-w-[180px] sm:max-w-[200px]">
-                      {selectedAsset.name} · {selectedAsset.exchange}
+                      {selectedName} · {selectedExchange}
                     </span>
                   </div>
                 </div>
@@ -210,7 +269,7 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
                   <Input
                     id="asset-search"
                     className="pl-9"
-                    placeholder="Search by symbol or name…"
+                    placeholder="Search by symbol or name..."
                     value={assetQuery}
                     onChange={(e) => handleAssetQueryChange(e.target.value)}
                     onFocus={() => { if (assetQuery) setDropdownOpen(true); }}
@@ -281,8 +340,8 @@ export function WatchlistFormSheet({ open, onOpenChange, entry, prefilledAsset }
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting || !selectedAsset}>
-              {submitButtonText}
+            <Button type="submit" disabled={submitting || !selected}>
+              {submitButtonContent}
             </Button>
           </SheetFooter>
         </form>
