@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { AssetResponseSchema } from "./asset.js";
+import { AssetResponseSchema, SupportedExchangesEnum, AssetTypeEnum } from "./asset.js";
 
 // Base
 
@@ -20,13 +20,37 @@ export const WatchlistEntrySchema = z.object({
 });
 
 // Input: Frontend -> Backend
+// Supports two modes:
+//   1. Existing asset:  { assetId: "uuid", smaPeriod: 20 }
+//   2. New from search: { symbol: "GOOG", exchange: "NASDAQ", name: "Alphabet", assetType: "STOCK", smaPeriod: 20 }
 
-export const WatchlistEntryCreateSchema = WatchlistEntrySchema.omit({
-  id: true,
-  userId: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const WatchlistEntryCreateSchema = z
+  .object({
+    // Mode 1: existing asset
+    assetId: z.uuid().optional().describe("ID of an existing asset (mutually exclusive with symbol/exchange/name/assetType)"),
+    // Mode 2: new asset from search
+    symbol: z.string().optional().describe("Ticker symbol for a new asset from search"),
+    exchange: SupportedExchangesEnum.optional().describe("Exchange for a new asset from search"),
+    name: z.string().optional().describe("Display name for a new asset from search"),
+    assetType: AssetTypeEnum.optional().describe("Asset type for a new asset from search"),
+    // Common fields
+    smaPeriod: z
+      .number()
+      .int()
+      .min(1)
+      .max(250)
+      .default(20)
+      .describe("Number of daily trading candles used to calculate the SMA"),
+    isActive: z.boolean().default(true).describe("Whether this watchlist entry is actively being monitored"),
+  })
+  .refine(
+    (data) => {
+      const hasAssetId = data.assetId !== undefined;
+      const hasSearchFields = data.symbol !== undefined && data.exchange !== undefined && data.name !== undefined && data.assetType !== undefined;
+      return hasAssetId || hasSearchFields;
+    },
+    { message: "Either assetId or all of (symbol, exchange, name, assetType) must be provided" },
+  );
 
 // (Update)Input: Frontend -> Backend (partial)
 // When you call partial on an object with fields with default values then those fields DO GET FILLED with
