@@ -1,4 +1,7 @@
 import logging
+logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
+
 from datetime import date, timedelta
 from decimal import Decimal
 

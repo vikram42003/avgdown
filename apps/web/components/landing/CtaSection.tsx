@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "./AuthAwareButtons";
 
 export function CtaSection() {
   return (
@@ -16,12 +14,7 @@ export function CtaSection() {
           <p className="relative text-muted-foreground max-w-lg mx-auto mb-8">
             Join AvgDown and stop guessing when to buy the dip. Set up your watchlist in minutes.
           </p>
-          <Button size="lg" asChild className="relative rounded-full px-10 text-base gap-2">
-            <Link href="/signup">
-              Create a free account
-              <ArrowRightIcon weight="bold" className="size-4" />
-            </Link>
-          </Button>
+          <CtaButton />
         </div>
       </div>
     </section>
