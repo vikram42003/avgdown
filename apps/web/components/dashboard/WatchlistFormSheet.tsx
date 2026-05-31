@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSWRConfig } from "swr";
-import { MagnifyingGlassIcon, SpinnerGapIcon } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { SpinnerButton } from "@/components/ui/spinner-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -211,20 +212,7 @@ export function WatchlistFormSheet({
     );
   };
 
-  // Submit button text — show loading state with spinner during backfill
-  let submitButtonContent: React.ReactNode;
-  if (submitting) {
-    submitButtonContent = isEditMode ? (
-      "Saving..."
-    ) : (
-      <span className="flex items-center gap-2">
-        <SpinnerGapIcon className="size-4 animate-spin" />
-        Hold on, fetching price data...
-      </span>
-    );
-  } else {
-    submitButtonContent = isEditMode ? "Save Changes" : "Add to Watchlist";
-  }
+
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -344,9 +332,14 @@ export function WatchlistFormSheet({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting || !selected}>
-              {submitButtonContent}
-            </Button>
+            <SpinnerButton
+              type="submit"
+              disabled={!selected}
+              isLoading={submitting}
+              loadingText="Hold on, fetching price data..."
+            >
+              {isEditMode ? "Save Changes" : "Add to Watchlist"}
+            </SpinnerButton>
           </SheetFooter>
         </form>
       </SheetContent>

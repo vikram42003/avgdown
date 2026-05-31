@@ -86,23 +86,28 @@ export class WatchlistsService {
 
       // Upsert in bulk using a single transaction
       await this.prisma.$transaction(
-        validQuotes.map((q) =>
-          this.prisma.dailyPriceSnapshot.upsert({
-            where: {
-              assetId_date: {
-                assetId,
-                date: new Date(q.date.toISOString().split("T")[0]!),
-              },
-            },
-            update: { close: q.close!, source: "yahoo-finance2" },
-            create: {
-              assetId,
-              date: new Date(q.date.toISOString().split("T")[0]!),
-              close: q.close!,
-              source: "yahoo-finance2",
-            },
-          }),
-        ),
+        async (tx) => {
+          await Promise.all(
+            validQuotes.map((q) =>
+              tx.dailyPriceSnapshot.upsert({
+                where: {
+                  assetId_date: {
+                    assetId,
+                    date: new Date(q.date.toISOString().split("T")[0]!),
+                  },
+                },
+                update: { close: q.close!, source: "yahoo-finance2" },
+                create: {
+                  assetId,
+                  date: new Date(q.date.toISOString().split("T")[0]!),
+                  close: q.close!,
+                  source: "yahoo-finance2",
+                },
+              }),
+            ),
+          );
+        },
+        { timeout: 10000 },
       );
 
       this.logger.log(`Backfilled ${validQuotes.length} daily closes for ${symbol}`);
