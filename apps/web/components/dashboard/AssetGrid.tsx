@@ -104,13 +104,21 @@ export function AssetGrid({ initialAssets }: Readonly<AssetGridProps>) {
 
       {/* Contextual search hints */}
       {isSearching ? (
-        <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1">
-          <span className="text-xs text-muted-foreground/60">
-            <span className="text-muted-foreground font-mono">.NS</span>{" "}={" "}NSE{"  "}
-            <span className="text-muted-foreground font-mono">.BO</span>{" "}={" "}BSE{"  "}
-            <span className="text-muted-foreground font-mono">INAV</span>{" "}tickers are ETF pricing instruments, not directly tradeable
-          </span>
-          <span className="text-xs text-muted-foreground/60">
+        <div className="mb-4 flex flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+            <span className="text-muted-foreground/90">
+              <span className="font-mono text-muted-foreground">.NS</span> = NSE
+            </span>
+            <span className="text-muted-foreground/80">·</span>
+            <span className="text-muted-foreground/90">
+              <span className="font-mono text-muted-foreground">.BO</span> = BSE
+            </span>
+            <span className="text-muted-foreground/80">·</span>
+            <span className="text-muted-foreground/90">
+              <span className="font-mono text-muted-foreground">INAV</span> tickers are ETF pricing instruments, not directly tradeable
+            </span>
+          </div>
+          <span className="text-xs text-muted-foreground/75">
             Same company name may appear from multiple countries — check the exchange
           </span>
         </div>
@@ -136,7 +144,11 @@ export function AssetGrid({ initialAssets }: Readonly<AssetGridProps>) {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {searchResults.map((result) => (
-                <SearchResultCard key={`${result.symbol}:${result.exchange}`} result={result} onAdd={handleCreateFromSearch} />
+                <SearchResultCard
+                  key={`${result.symbol}:${result.exchange}`}
+                  result={result}
+                  onAdd={handleCreateFromSearch}
+                />
               ))}
             </div>
           )}
