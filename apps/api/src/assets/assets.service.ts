@@ -97,7 +97,8 @@ export class AssetsService {
     // Cast to unknown[] first to avoid the SDK's complex union type conflicting with our
     // narrower local interface — isYahooFinance is the runtime discriminant we rely on.
     const yahooQuotes = (quotes as unknown[]).filter(
-      (q): q is YahooSearchQuote => typeof q === "object" && q !== null && (q as YahooSearchQuote).isYahooFinance === true,
+      (q): q is YahooSearchQuote =>
+        typeof q === "object" && q !== null && (q as YahooSearchQuote).isYahooFinance === true,
     );
 
     // Cross-reference with our DB to find existing asset IDs

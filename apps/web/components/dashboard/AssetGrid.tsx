@@ -28,7 +28,7 @@ export function AssetGrid({ initialAssets }: Readonly<AssetGridProps>) {
   // Debounced search query for the backend
   const [debouncedQuery, setDebouncedQuery] = useState("");
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    const timer = setTimeout(() => setDebouncedQuery(query), 600);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -101,6 +101,20 @@ export function AssetGrid({ initialAssets }: Readonly<AssetGridProps>) {
           </fieldset>
         )}
       </div>
+
+      {/* Contextual search hints */}
+      {isSearching ? (
+        <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1">
+          <span className="text-xs text-muted-foreground/60">
+            <span className="text-muted-foreground font-mono">.NS</span>{" "}={" "}NSE{"  "}
+            <span className="text-muted-foreground font-mono">.BO</span>{" "}={" "}BSE{"  "}
+            <span className="text-muted-foreground font-mono">INAV</span>{" "}tickers are ETF pricing instruments, not directly tradeable
+          </span>
+          <span className="text-xs text-muted-foreground/60">
+            Same company name may appear from multiple countries — check the exchange
+          </span>
+        </div>
+      ) : null}
 
       {isSearching ? (
         // Search results section
@@ -177,12 +191,12 @@ function SearchResultCard({
       className="group relative glass rounded-xl p-4 flex flex-col gap-2 hover:bg-primary/5 transition-colors text-left w-full"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="font-bold text-base">{result.symbol}</span>
+        <span className="font-bold text-sm break-all leading-snug">{result.symbol}</span>
         <span className="text-xs font-medium px-2 py-0.5 rounded-full border shrink-0 bg-primary/10 text-primary border-primary/20">
           {result.assetType}
         </span>
       </div>
-      <p className="text-sm text-muted-foreground leading-snug line-clamp-2">{result.name}</p>
+      <p className="text-sm text-muted-foreground leading-snug">{result.name}</p>
       <span className="text-xs text-muted-foreground mt-auto">{result.exchange}</span>
     </button>
   );

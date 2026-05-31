@@ -32,12 +32,7 @@ export class WatchlistsService {
       assetId = dto.assetId;
     } else {
       // New asset from search — find or create
-      const asset = await this.assetsService.findOrCreateAsset(
-        dto.symbol!,
-        dto.exchange!,
-        dto.name!,
-        dto.assetType!,
-      );
+      const asset = await this.assetsService.findOrCreateAsset(dto.symbol!, dto.exchange!, dto.name!, dto.assetType!);
       assetId = asset.id;
     }
 

@@ -7,8 +7,8 @@ import { useUser } from "@/hooks/useUser";
 
 /**
  * Renders different CTAs depending on auth state:
- * - Logged in  → "Go to Dashboard"
- * - Logged out → the normal "Start for free" / "Sign in" pair
+ * - Logged in  -> "Go to Dashboard"
+ * - Logged out -> the normal "Start for free" / "Sign in" pair
  *
  * Intentionally not shown during the loading state to avoid flicker.
  * The parent server component renders the logged-out variant as the
