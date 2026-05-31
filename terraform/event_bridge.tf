@@ -26,7 +26,9 @@ resource "aws_scheduler_schedule" "live_alert_scheduler_schedule" {
     mode = "OFF"
   }
 
-  schedule_expression = "cron(0/30 * ? * * *)"
+  # Temporarily changing it to every 2 hours from every 30 min
+  # schedule_expression = "cron(0/30 * ? * * *)"
+  schedule_expression = "cron(0 */2 ? * * *)"
 
   target {
     arn = aws_lambda_function.live_alert_worker.arn

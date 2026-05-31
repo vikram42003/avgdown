@@ -33,26 +33,27 @@
 
 ### Post-MVP
 
-19. Logging: Implement structured, centralized logging across the stack.
-20. Theme Toggle: Add a Dark/Light mode switch in the settings tab.
-21. Landing Page: Build a public landing page at the root `/` and move the main app to `/dashboard`.
-22. Implement the Observability layer
-23. Update Documentation and make charts/graphs and shit for it
-24. GO THROUGH THE GUIDE.md AND SEE IF THERES ANYTHING ELSE LEFT
-25. Webhook Reliability & Visibility: Webhooks are currently fire-and-forget with no retry logic.
+19. Make the Deviation Threshold selectable by the user
+20. Logging: Implement structured, centralized logging across the stack.
+21. Theme Toggle: Add a Dark/Light mode switch in the settings tab.
+22. Landing Page: Build a public landing page at the root `/` and move the main app to `/dashboard`.
+23. Implement the Observability layer
+24. Update Documentation and make charts/graphs and shit for it
+25. GO THROUGH THE GUIDE.md AND SEE IF THERES ANYTHING ELSE LEFT
+26. Webhook Reliability & Visibility: Webhooks are currently fire-and-forget with no retry logic.
     Failures are only logged. Consider: delivery receipts stored in DB, a retry queue (SQS/dead-letter),
     and a user-facing delivery log so they can debug their integrations.
 
 ### OTHER STUFF (handle it one day...)
-26. Add a way for auth'd users to like setup password if they used oauth and vice versa
-27. Implement the calculation of the delivery rate in dashboard summary cards
-28. Limit the watchlist charts we initially load and add pagination/infinite scrolling
-29. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
-30. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
-31. Add focused tests/fixtures for yfinance response shapes (`download` single ticker, multiple tickers, `group_by`, `multi_level_index`) so provider parsing breaks loudly when yfinance changes its DataFrame structure
-32. Move DNS management from Porkbun to Route 53, and manage it through IAC
-33. (Maybe Imp) Implement Secure One-Click Email Unsubscribe, we send a one time presigned url + token along with emails so users can unsubscribe
-34. Send emails in bulk in live_alerts_worker
+27. Add a way for auth'd users to like setup password if they used oauth and vice versa
+28. Implement the calculation of the delivery rate in dashboard summary cards
+29. Limit the watchlist charts we initially load and add pagination/infinite scrolling
+30. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
+31. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
+32. Add focused tests/fixtures for yfinance response shapes (`download` single ticker, multiple tickers, `group_by`, `multi_level_index`) so provider parsing breaks loudly when yfinance changes its DataFrame structure
+33. Move DNS management from Porkbun to Route 53, and manage it through IAC
+34. (Maybe Imp) Implement Secure One-Click Email Unsubscribe, we send a one time presigned url + token along with emails so users can unsubscribe
+35. Send emails in bulk in live_alerts_worker
 ---
 
 ## Webhook Payload Contract
