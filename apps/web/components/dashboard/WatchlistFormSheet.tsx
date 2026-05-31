@@ -170,8 +170,12 @@ export function WatchlistFormSheet({
       }
       await mutate("/watchlists");
       onOpenChange(false);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }

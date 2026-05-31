@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, ConflictException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../common/database/prisma/prisma.service";
 import { AssetsService } from "../assets/assets.service";
 import { HISTORY_WINDOW } from "../constants";
@@ -28,12 +28,21 @@ export class WatchlistsService {
     // Resolve the asset — either by existing ID or by creating from search result
     let assetId: string;
 
+    // Guard against a non-existent assetId being passed directly
     if (dto.assetId) {
+      const exists = await this.prisma.asset.findUnique({ where: { id: dto.assetId }, select: { id: true } });
+      if (!exists) throw new BadRequestException(`Asset with id ${dto.assetId} not found`);
       assetId = dto.assetId;
     } else {
       // New asset from search — find or create
       const asset = await this.assetsService.findOrCreateAsset(dto.symbol!, dto.exchange!, dto.name!, dto.assetType!);
       assetId = asset.id;
+    }
+
+    // Check for duplicate before creating so we can return a clean 409
+    const existing = await this.prisma.watchlistEntry.findFirst({ where: { userId, assetId } });
+    if (existing) {
+      throw new ConflictException("This asset is already in your watchlist");
     }
 
     const createdWatchlistEntry = await this.prisma.watchlistEntry.create({

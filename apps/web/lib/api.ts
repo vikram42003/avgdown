@@ -14,7 +14,18 @@ export async function fetcher<T>(path: string): Promise<T> {
   });
 
   if (!res.ok) {
-    const error = new Error("API request failed");
+    let message = "API request failed";
+    try {
+      const body = await res.json() as Record<string, unknown>;
+      if (body && typeof body.message === "string") {
+        message = body.message;
+      } else if (body && Array.isArray(body.message)) {
+        message = body.message.join(", ");
+      }
+    } catch {
+      // Ignored
+    }
+    const error = new Error(message);
     (error as Error & { status: number }).status = res.status;
     throw error;
   }
@@ -35,7 +46,18 @@ export async function apiMutate<T>(path: string, method: "POST" | "PATCH" | "DEL
   });
 
   if (!res.ok) {
-    const error = new Error("API request failed");
+    let message = "API request failed";
+    try {
+      const body = await res.json() as Record<string, unknown>;
+      if (body && typeof body.message === "string") {
+        message = body.message;
+      } else if (body && Array.isArray(body.message)) {
+        message = body.message.join(", ");
+      }
+    } catch {
+      // Ignored
+    }
+    const error = new Error(message);
     (error as Error & { status: number }).status = res.status;
     throw error;
   }
@@ -56,7 +78,18 @@ export async function apiMutateVoid(path: string, method: "POST" | "PATCH" | "DE
   });
 
   if (!res.ok) {
-    const error = new Error("API request failed");
+    let message = "API request failed";
+    try {
+      const body = await res.json() as Record<string, unknown>;
+      if (body && typeof body.message === "string") {
+        message = body.message;
+      } else if (body && Array.isArray(body.message)) {
+        message = body.message.join(", ");
+      }
+    } catch {
+      // Ignored
+    }
+    const error = new Error(message);
     (error as Error & { status: number }).status = res.status;
     throw error;
   }
