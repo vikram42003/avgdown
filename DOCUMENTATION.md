@@ -6,7 +6,7 @@ A Turborepo-powered monorepo for setting up alert triggers when asset prices dro
 
 ## 1. Project Overview
 
-**avgdown** is a serverless-friendly Simple Moving Average (SMA) stock alert and dashboard application. It allows users to track financial assets (stocks, crypto) by specifying a rolling daily SMA period (e.g. 20-day, 50-day, 200-day) and triggers email notifications and webhook payloads when the live asset price dips below the target average.
+**avgdown** is a serverless-friendly stock alert and dashboard application. While the system currently triggers notifications based on a rolling daily Simple Moving Average (SMA) period (e.g., 20-day, 50-day, 200-day), the platform is architected to expand and support other technical indicators (such as EMA, RSI, and MACD) in the future. It monitors live asset prices (stocks, crypto) and triggers email notifications and webhook payloads when the asset price dips below the configured threshold.
 
 ### Tech Stack & Rationale
 
@@ -447,18 +447,15 @@ python apps/worker/src/live_alert_worker.py
 ```
 
 ---
-
 ## 11. Known Limitations & TODOs
 
-1.  **OAuth Email Drift Collision**:
-    If a user signs up via email/password and later changes their Google account's primary email, logging in via Google OAuth will trigger an upsert failure. The database will attempt to create a duplicate user with the same `googleId`. The current workaround relies on manual database correction.
-2.  **Fire-and-Forget Webhooks**:
+1.  **Fire-and-Forget Webhooks**:
     Webhook notifications are sent directly from the worker. If the recipient's endpoint is down, the request fails silently and is only logged. A retry queue using SQS and dead-letter queues is planned.
-3.  **Time-Weighted SMA Gaps**:
+2.  **Time-Weighted SMA Gaps**:
     The SMA calculation assumes a constant frequency of daily price snapshots. If a price check is missed due to provider outages, the average window drifts slightly. Time-weighted SMA formulas will be introduced in future updates.
-4.  **Secure Unsubscribe Link**:
+3.  **Secure Unsubscribe Link**:
     Emails do not currently include a secure unsubscribe option. We plan to add a pre-signed unsubscribe link containing an encrypted token, allowing users to disable alerts with a single click.
-5.  **User-Selectable Deviation Threshold**:
+4.  **User-Selectable Deviation Threshold**:
     The deviation threshold for price alerts is currently hardcoded to 2% (`0.02`) in [live_alert_worker.py](file:///home/vikram/Dev-Stuff/avgdown/apps/worker/src/live_alert_worker.py#L96). In the future, this will be made configurable per watchlist entry by adding a field to the database and exposing it on the frontend watchlist form.
-6.  **Idempotence Delivery Failure Edge Case**:
+5.  **Idempotence Delivery Failure Edge Case**:
     Since alerts are written to the database before the email dispatch is attempted, any crash that happens _after_ the database write but _before_ the email is sent will result in the alert being permanently skipped for that day. This is because subsequent worker runs filter out any entries that already have an alert row created on the current calendar day, regardless of whether `delivered` is true or false.
