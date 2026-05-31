@@ -107,7 +107,7 @@ export class WatchlistsService {
 
       this.logger.log(`Backfilled ${validQuotes.length} daily closes for ${symbol}`);
     } catch (error) {
-      // Non-fatal — the daily worker will catch up. Log and continue.
+      // Non-fatal - the daily worker will catch up. Log and continue.
       this.logger.error(`Failed to backfill daily closes for ${symbol}: ${String(error)}`);
     }
   }
@@ -134,16 +134,25 @@ export class WatchlistsService {
     entryId: string,
     watchlistUpdateData: WatchlistEntryUpdateDto,
   ): Promise<WatchlistEntryResponseDto> {
-    const existingEntry = await this.prisma.watchlistEntry.findUnique({ where: { id: entryId } });
+    const existingEntry = await this.prisma.watchlistEntry.findUnique({
+      where: { id: entryId },
+      include: { asset: true },
+    });
     if (existingEntry?.userId !== userId) {
       throw new NotFoundException(`Watchlist entry with ID ${entryId} not found`);
     }
 
-    return await this.prisma.watchlistEntry.update({
+    const updated = await this.prisma.watchlistEntry.update({
       where: { id: entryId },
       data: watchlistUpdateData,
       include: { asset: true },
     });
+
+    if (watchlistUpdateData.smaPeriod && watchlistUpdateData.smaPeriod !== existingEntry.smaPeriod) {
+      await this.backfillDailyCloses(updated.assetId, updated.asset.symbol, watchlistUpdateData.smaPeriod);
+    }
+
+    return updated;
   }
 
   async remove(userId: string, entryId: string): Promise<WatchlistEntryResponseDto> {
