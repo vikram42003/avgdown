@@ -47,13 +47,15 @@ export function HeroCtas() {
 
 /**
  * Compact variant for the nav bar.
+ * Shows Sign In / Get Started by default (including during auth check),
+ * and switches to Dashboard only once login is confirmed.
  */
 export function NavAuthButtons() {
   const { isLoggedIn, isLoading } = useUser();
 
-  if (isLoading) return null;
-
-  if (isLoggedIn) {
+  // While loading, show the logged-out variant so the navbar is never empty.
+  // It'll flip to Dashboard silently once /me resolves.
+  if (!isLoading && isLoggedIn) {
     return (
       <Button size="sm" asChild className="rounded-full px-5">
         <Link href="/dashboard">Dashboard</Link>

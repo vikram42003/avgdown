@@ -11,13 +11,9 @@ import {
 } from "./watchlist.dto";
 
 // yahoo-finance2 for backfilling daily price snapshots on watchlist creation
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const yahooFinance = require("yahoo-finance2").default as {
-  chart: (
-    symbol: string,
-    opts: { period1: string; interval: "1d" },
-  ) => Promise<{ quotes: { date: Date; close: number | null }[] }>;
-};
+import YahooFinance from "yahoo-finance2";
+
+const yahooFinance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 @Injectable()
 export class WatchlistsService {

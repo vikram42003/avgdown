@@ -3,18 +3,17 @@ import { AssetResponseDto, AssetSearchResultDto } from "./assets.dto";
 import { PrismaService } from "../common/database/prisma/prisma.service";
 import type { Exchange, AssetType } from "@avgdown/types";
 
-// yahoo-finance2's type stubs are incomplete/deprecated for .search() — define the shape locally
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const yahooFinance = require("yahoo-finance2").default as {
-  search: (query: string, opts?: { newsCount?: number }) => Promise<{ quotes: YahooQuote[] }>;
-  chart: (symbol: string, opts: Record<string, unknown>) => Promise<{ quotes: { date: Date; close: number | null }[] }>;
-};
+import YahooFinance from "yahoo-finance2";
 
-interface YahooQuote {
+const yahooFinance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
+
+/** Minimal shape of a Yahoo Finance-backed search quote result we care about. */
+interface YahooSearchQuote {
+  isYahooFinance: true;
   symbol: string;
+  exchange: string;
   shortname?: string;
   longname?: string;
-  exchange?: string;
   quoteType?: string;
 }
 
@@ -94,8 +93,15 @@ export class AssetsService {
     const yahooResults = await yahooFinance.search(query, { newsCount: 0 });
     const quotes = yahooResults.quotes ?? [];
 
+    // Filter to Yahoo Finance-backed quotes only (non-Yahoo results have no symbol/exchange).
+    // Cast to unknown[] first to avoid the SDK's complex union type conflicting with our
+    // narrower local interface — isYahooFinance is the runtime discriminant we rely on.
+    const yahooQuotes = (quotes as unknown[]).filter(
+      (q): q is YahooSearchQuote => typeof q === "object" && q !== null && (q as YahooSearchQuote).isYahooFinance === true,
+    );
+
     // Cross-reference with our DB to find existing asset IDs
-    const symbolExchangePairs = quotes
+    const symbolExchangePairs = yahooQuotes
       .map((q) => {
         const exchange = mapYahooExchange(q.exchange);
         return exchange ? { symbol: q.symbol, exchange } : null;
@@ -114,20 +120,18 @@ export class AssetsService {
 
     const existingMap = new Map(existingAssets.map((a) => [`${a.symbol}:${a.exchange}`, a.id]));
 
-    const results = quotes
-      .map((q) => {
-        const exchange = mapYahooExchange(q.exchange);
-        if (!exchange) return null;
-
-        return {
-          symbol: q.symbol,
-          name: q.shortname ?? q.longname ?? q.symbol,
-          exchange,
-          assetType: mapYahooTypeToAssetType(q.quoteType),
-          existingAssetId: existingMap.get(`${q.symbol}:${exchange}`) ?? null,
-        };
-      })
-      .filter((r): r is NonNullable<typeof r> => r !== null);
+    const results: AssetSearchResultDto[] = [];
+    for (const q of yahooQuotes) {
+      const exchange = mapYahooExchange(q.exchange);
+      if (!exchange) continue;
+      results.push({
+        symbol: q.symbol,
+        name: q.shortname ?? q.longname ?? q.symbol,
+        exchange,
+        assetType: mapYahooTypeToAssetType(q.quoteType),
+        existingAssetId: existingMap.get(`${q.symbol}:${exchange}`) ?? null,
+      });
+    }
 
     // Cache the results
     searchCache.set(cacheKey, { results, timestamp: Date.now() });
