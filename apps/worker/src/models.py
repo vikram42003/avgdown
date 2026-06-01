@@ -82,6 +82,7 @@ class TriggeredAlert:
     sma_value: Decimal
     user_email: str
     webhook_url: Optional[str]
+    currency: Optional[str] = None
 
 
 @dataclass

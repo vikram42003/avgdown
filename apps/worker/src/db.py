@@ -335,7 +335,7 @@ def cleanup_old_data() -> None:
             """
             DELETE FROM assets
             WHERE is_popular = false
-              AND id NOT IN (SELECT DISTINCT asset_id FROM watchlist_entries)
+              AND NOT EXISTS (SELECT 1 FROM watchlist_entries w WHERE w.asset_id = assets.id)
               AND created_at < NOW() - INTERVAL '30 days'
             """
         )

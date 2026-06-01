@@ -1,41 +1,58 @@
+import html
+import logging
 from datetime import date
 from typing import List
 from models import TriggeredAlert
+from utils import validate_domain_name, get_currency_symbol
+
+logger = logging.getLogger(__name__)
 
 def render_alert_email_html(domain_name: str, alerts: List[TriggeredAlert]) -> str:
     """
     Renders a highly styled, modern, dark-theme HTML email for SMA drop alerts.
     Fits with the AvgDown premium brand style.
     """
+    validated_domain = validate_domain_name(domain_name)
+    escaped_domain = html.escape(validated_domain)
+
     alert_rows = ""
     for alert in alerts:
-        # Determine format based on symbol (e.g., crypto/currencies might not use $)
-        is_crypto = alert.symbol.endswith("-USD") or "/" in alert.symbol
-        currency_symbol = "" if is_crypto else "$"
+        # to fetch and store explicit currency codes.
+        currency_symbol = get_currency_symbol(alert.symbol, getattr(alert, "currency", None))
+        
+        escaped_symbol = html.escape(alert.symbol)
+        escaped_currency = html.escape(currency_symbol)
+        
+        # Numeric fields formatted and then escaped
+        formatted_price = f"{alert.triggered_price:,.2f}"
+        formatted_sma = f"{alert.sma_value:,.2f}"
+        escaped_price = html.escape(formatted_price)
+        escaped_sma = html.escape(formatted_sma)
         
         alert_rows += f"""
         <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
             <td style="padding: 16px; font-weight: 700; color: #ffffff; font-size: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-                {alert.symbol}
+                {escaped_symbol}
             </td>
             <td style="padding: 16px; color: #f43f5e; font-size: 14px; font-weight: 500; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
                 Below SMA
             </td>
             <td style="padding: 16px; color: #e2e8f0; font-size: 14px; font-family: monospace; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-                {currency_symbol}{alert.triggered_price:,.2f}
+                {escaped_currency}{escaped_price}
             </td>
             <td style="padding: 16px; color: #94a3b8; font-size: 14px; font-family: monospace; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-                {currency_symbol}{alert.sma_value:,.2f}
+                {escaped_currency}{escaped_sma}
             </td>
             <td style="padding: 16px; text-align: right; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-                <a href="https://{domain_name}/dashboard" style="color: #8b5cf6; text-decoration: none; font-size: 13px; font-weight: 600;">
+                <a href="https://{escaped_domain}/dashboard" style="color: #8b5cf6; text-decoration: none; font-size: 13px; font-weight: 600;">
                     View Chart &rarr;
                 </a>
             </td>
         </tr>
         """
 
-    html = f"""<!DOCTYPE html>
+
+    html_content = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -85,7 +102,7 @@ def render_alert_email_html(domain_name: str, alerts: List[TriggeredAlert]) -> s
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                                 <tr>
                                     <td align="center">
-                                        <a href="https://{domain_name}/dashboard" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 9999px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);">
+                                        <a href="https://{escaped_domain}/dashboard" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 9999px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);">
                                             Go to Dashboard
                                         </a>
                                     </td>
@@ -111,7 +128,7 @@ def render_alert_email_html(domain_name: str, alerts: List[TriggeredAlert]) -> s
 </body>
 </html>
 """
-    return html
+    return html_content
 
 def render_alert_email_text(alerts: List[TriggeredAlert]) -> str:
     """Plain text fallback for emails"""

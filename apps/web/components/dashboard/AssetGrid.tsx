@@ -36,6 +36,7 @@ export function AssetGrid({ initialAssets }: Readonly<AssetGridProps>) {
 
   // True when the user has typed something and we should show search results
   const isSearching = query.trim().length > 0;
+  const effectiveLoading = searchLoading || (isSearching && debouncedQuery.trim() !== query.trim());
 
   const handleCreateWatchlist = (asset: AssetResponse) => {
     setPrefilledAsset(asset);
@@ -128,9 +129,9 @@ export function AssetGrid({ initialAssets }: Readonly<AssetGridProps>) {
         // Search results section
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-3">
-            {searchLoading ? "Searching..." : `Search results for "${query}"`}
+            {effectiveLoading ? "Searching..." : `Search results for "${query}"`}
           </h3>
-          {searchLoading ? (
+          {effectiveLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {new Array(4).fill(0).map((_, i) => (
                 <AssetCardSkeleton key={i} /> // NOSONAR

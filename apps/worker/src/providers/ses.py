@@ -35,7 +35,6 @@ def send_alerts_via_email(
             continue
 
         symbols = set()
-        messages = []
         user_email = None
         # loop over values since entry_id is unused here
         for alert in alert_by_entry_ids.values():
@@ -43,7 +42,6 @@ def send_alerts_via_email(
                 user_email = alert.user_email
 
             symbols.add(alert.symbol)
-            messages.append(alert.message)
 
         alert_list = list(alert_by_entry_ids.values())
         content = {

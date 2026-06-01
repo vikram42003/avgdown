@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ConflictException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../common/database/prisma/prisma.service";
+import { Prisma } from "@avgdown/db";
 import { AssetsService } from "../assets/assets.service";
 import { HISTORY_WINDOW } from "../constants";
 import {
@@ -45,10 +46,18 @@ export class WatchlistsService {
       throw new ConflictException("This asset is already in your watchlist");
     }
 
-    const createdWatchlistEntry = await this.prisma.watchlistEntry.create({
-      data: { userId, assetId, smaPeriod: dto.smaPeriod, isActive: dto.isActive },
-      include: { asset: true },
-    });
+    let createdWatchlistEntry: WatchlistEntryResponseDto;
+    try {
+      createdWatchlistEntry = await this.prisma.watchlistEntry.create({
+        data: { userId, assetId, smaPeriod: dto.smaPeriod, isActive: dto.isActive },
+        include: { asset: true },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new ConflictException("This asset is already in your watchlist");
+      }
+      throw error;
+    }
 
     // Synchronously backfill daily price snapshots so charts render immediately
     await this.backfillDailyCloses(assetId, createdWatchlistEntry.asset.symbol, dto.smaPeriod);

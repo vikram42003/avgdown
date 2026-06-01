@@ -1,6 +1,11 @@
+import os
 import logging
-logging.getLogger().setLevel(logging.INFO)
+
+level_name = os.getenv("LOG_LEVEL", "info").upper()
+level_value = getattr(logging, level_name, logging.INFO)
+logging.getLogger().setLevel(level_value)
 logger = logging.getLogger(__name__)
+
 
 from decimal import Decimal
 from typing import List
@@ -18,7 +23,7 @@ from utils import map_symbol_exchange, filter_inactive_markets, filter_alerts
 from logic.sma import sma_val_below_average
 from logic.alerts import handle_alerts
 
-logger = logging.getLogger(__name__)
+
 
 
 def process_watchlist_entries(

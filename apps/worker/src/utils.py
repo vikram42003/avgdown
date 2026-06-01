@@ -1,4 +1,5 @@
 import logging
+import re
 from models import TriggeredAlert
 from db import get_alerted_today_entries
 from datetime import datetime, timezone
@@ -99,3 +100,51 @@ def filter_alerts(alerts_by_user: dict[str, dict[str, TriggeredAlert]]) -> dict[
         logger.info("Skipping %d alerts - already alerted today", skipped_count)
 
     return filtered_alerts
+
+
+def validate_domain_name(domain: str) -> str:
+    """
+    Validates a domain name to prevent link injection.
+    Allows only letters, digits, hyphens, and dots.
+    Returns a safe fallback domain if validation fails.
+    """
+    if domain and re.match(r"^[a-zA-Z0-9.-]+$", domain):
+        return domain
+    
+    logger.warning(f"Invalid domain name detected: {domain!r}. Using fallback.")
+    return "avgdown.com"
+
+
+def get_currency_symbol(symbol: str, explicit_currency: str = None) -> str:
+    """
+    Derives a currency symbol for formatting based on the asset symbol
+    or an optional explicit currency.
+    """
+    if explicit_currency:
+        curr = explicit_currency.upper()
+        symbols = {"USD": "$", "EUR": "€", "GBP": "£", "JPY": "¥", "INR": "₹"}
+        return symbols.get(curr, f"{curr} ")
+
+    symbol_upper = symbol.upper()
+
+    # Regex patterns for crypto/currency pairs
+    # Treat crypto pairs (e.g. BTC-USD, ETH-EUR, or containing "/") as no symbol (use raw value or empty)
+    if re.search(r"^[A-Z0-9]{3,}/[A-Z0-9]{3,}$", symbol_upper) or any(suffix in symbol_upper for suffix in ["-USD", "-BTC", "-ETH"]):
+        return ""
+
+    # Check common Yahoo Finance suffixes and patterns
+    # EUR: =F (futures), .PA (Paris), .HE (Helsinki), .DE (Germany)
+    # GBP: .L (London)
+    # JPY: .T (Tokyo)
+    # INR: .BO (Bombay), .NS (National Stock Exchange of India)
+    if re.search(r"(?:-EUR|=F|\.(?:PA|HE|DE))$", symbol_upper):
+        return "€"
+    if re.search(r"(?:-GBP|\.L)$", symbol_upper):
+        return "£"
+    if re.search(r"(?:-JPY|\.T)$", symbol_upper):
+        return "¥"
+    if re.search(r"(?:-INR|\.(?:BO|NS))$", symbol_upper):
+        return "₹"
+
+    # Default fallback for regular stocks (usually USD/$)
+    return "$"

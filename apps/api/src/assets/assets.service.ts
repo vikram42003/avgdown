@@ -17,8 +17,6 @@ interface YahooSearchQuote {
   quoteType?: string;
 }
 
-const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
 /**
  * Maps Yahoo Finance quote types to our internal AssetType enum.
  * Defaults to "STOCK" for unrecognized types.
@@ -54,7 +52,31 @@ function mapYahooExchange(exchange: string | undefined): Exchange | null {
 }
 
 /** Simple in-memory TTL cache for search results. Works on serverless warm instances. */
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_CACHE_ENTRIES = 500;
+
 const searchCache = new Map<string, { results: AssetSearchResultDto[]; timestamp: number }>();
+
+function pruneCache() {
+  const now = Date.now();
+
+  // Remove expired entries
+  for (const [key, value] of searchCache.entries()) {
+    if (now - value.timestamp >= SEARCH_CACHE_TTL_MS) {
+      searchCache.delete(key);
+    } else {
+      break;
+    }
+  }
+
+  // Enforce size limit
+  while (searchCache.size > MAX_CACHE_ENTRIES) {
+    const oldestKey = searchCache.keys().next().value;
+    if (!oldestKey) break;
+
+    searchCache.delete(oldestKey);
+  }
+}
 
 @Injectable()
 export class AssetsService {
@@ -85,6 +107,9 @@ export class AssetsService {
     const cached = searchCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
       this.logger.debug(`Search cache hit for "${cacheKey}"`);
+      // Move key to end (MRU) and refresh timestamp
+      searchCache.delete(cacheKey);
+      searchCache.set(cacheKey, { results: cached.results, timestamp: Date.now() });
       return cached.results;
     }
 
@@ -134,7 +159,8 @@ export class AssetsService {
       });
     }
 
-    // Cache the results
+    // Cache the results, prune it before using it so it doesnt grow infinitely
+    pruneCache();
     searchCache.set(cacheKey, { results, timestamp: Date.now() });
 
     return results;
@@ -150,17 +176,11 @@ export class AssetsService {
     name: string,
     assetType: AssetType,
   ): Promise<AssetResponseDto> {
-    const existing = await this.prisma.asset.findUnique({
+    this.logger.log(`Ensuring asset exists: ${symbol} on ${exchange}`);
+    return await this.prisma.asset.upsert({
       where: { symbol_exchange: { symbol, exchange } },
-    });
-
-    if (existing) {
-      return existing;
-    }
-
-    this.logger.log(`Creating new asset: ${symbol} on ${exchange}`);
-    return await this.prisma.asset.create({
-      data: { symbol, exchange, name, assetType, isPopular: false },
+      create: { symbol, exchange, name, assetType, isPopular: false },
+      update: {},
     });
   }
 

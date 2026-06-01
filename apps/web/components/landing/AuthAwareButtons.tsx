@@ -10,9 +10,10 @@ import { useUser } from "@/hooks/useUser";
  * - Logged in  -> "Go to Dashboard"
  * - Logged out -> the normal "Start for free" / "Sign in" pair
  *
- * Intentionally not shown during the loading state to avoid flicker.
- * The parent server component renders the logged-out variant as the
- * static default, so there's no layout shift for unauthenticated visitors.
+ * Trade-off: While the isLoading flag is true, HeroCtas returns null to prevent
+ * unauthenticated buttons from flickering for authenticated users. This avoids
+ * rendering the incorrect call-to-actions initially, but can result in a minor
+ * layout shift in HeroSection once the auth state resolves.
  */
 export function HeroCtas() {
   const { isLoggedIn, isLoading } = useUser();
