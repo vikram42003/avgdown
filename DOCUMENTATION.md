@@ -35,7 +35,7 @@ graph TD
   end
 
   subgraph AWS ["AWS Serverless Cloud"]
-    EB_LIVE[EventBridge Scheduler\nEvery 30 mins]
+    EB_LIVE[EventBridge Scheduler\nEvery 2h beta / 30m prod]
     EB_DAILY[EventBridge Scheduler\nDaily 21:30 UTC]
 
     LAMBDA_LIVE[live_alert_worker\nPython 3.12]
@@ -85,7 +85,7 @@ Rather than calculating SMAs on database rows for every single request, the syst
 
 ## 3. Directory Structure
 
-```
+```text
 .
 ├── apps/
 │   ├── api/                   # NestJS REST API (deployed to Vercel)
@@ -132,12 +132,12 @@ Rather than calculating SMAs on database rows for every single request, the syst
 
 ### High-Leverage Files to Read First
 
-1.  [schema.prisma](file:///home/vikram/Dev-Stuff/avgdown/packages/database/prisma/schema.prisma): The foundational relational model representing users, assets, watches, snapshots, and alerts.
-2.  [watchlist.ts](file:///home/vikram/Dev-Stuff/avgdown/packages/types/src/watchlist.ts): The Zod definitions detailing how inputs are parsed and outputs are sanitized.
-3.  [watchlists.service.ts](file:///home/vikram/Dev-Stuff/avgdown/apps/api/src/watchlists/watchlists.service.ts): The central service managing client queries and on-the-fly chart calculations.
-4.  [live_alert_worker.py](file:///home/vikram/Dev-Stuff/avgdown/apps/worker/src/live_alert_worker.py): The entry point managing live price collection and triggering alerts.
-5.  [sma.py](file:///home/vikram/Dev-Stuff/avgdown/apps/worker/src/logic/sma.py): Contains the core mathematical comparison loop between live values and completed closes.
-6.  [db.py](file:///home/vikram/Dev-Stuff/avgdown/apps/worker/src/db.py): The database interface showing bulk operations and PostgreSQL lateral join logic.
+1.  [schema.prisma](packages/database/prisma/schema.prisma): The foundational relational model representing users, assets, watches, snapshots, and alerts.
+2.  [watchlist.ts](packages/types/src/watchlist.ts): The Zod definitions detailing how inputs are parsed and outputs are sanitized.
+3.  [watchlists.service.ts](apps/api/src/watchlists/watchlists.service.ts): The central service managing client queries and on-the-fly chart calculations.
+4.  [live_alert_worker.py](apps/worker/src/live_alert_worker.py): The entry point managing live price collection and triggering alerts.
+5.  [sma.py](apps/worker/src/logic/sma.py): Contains the core mathematical comparison loop between live values and completed closes.
+6.  [db.py](apps/worker/src/db.py): The database interface showing bulk operations and PostgreSQL lateral join logic.
 
 ---
 
@@ -145,7 +145,7 @@ Rather than calculating SMAs on database rows for every single request, the syst
 
 ### The Alerting Loop (Live Alert Worker)
 
-The live alert worker runs every 30 minutes. It evaluates active user watchlists, collects stock prices, and fires notifications.
+The live alert worker runs every 2 hours in beta (designed for every 30 minutes in production). It evaluates active user watchlists, collects stock prices, and fires notifications.
 
 ```mermaid
 sequenceDiagram
@@ -225,7 +225,7 @@ sequenceDiagram
 
 #### `WatchlistsService`
 
-- **File**: [watchlists.service.ts](file:///home/vikram/Dev-Stuff/avgdown/apps/api/src/watchlists/watchlists.service.ts)
+- **File**: [watchlists.service.ts](apps/api/src/watchlists/watchlists.service.ts)
 - **Purpose**: Manages CRUD endpoints, calculates historical chart data, and triggers synchronous data backfilling.
 - **Core Logic (`getChartData`)**:
   Queries the daily price snapshot database table for the selected asset, fetching exactly `HISTORY_WINDOW + smaPeriod - 1` closes. It calculates the moving average series on-the-fly and returns the dataset. If the database has fewer closes than `smaPeriod`, it sets the status to `"WARMING_UP"`, allowing the frontend to show a skeleton loader instead of an empty chart.
@@ -234,7 +234,7 @@ sequenceDiagram
 
 #### `UsersService`
 
-- **File**: [users.service.ts](file:///home/vikram/Dev-Stuff/avgdown/apps/api/src/users/users.service.ts)
+- **File**: [users.service.ts](apps/api/src/users/users.service.ts)
 - **Purpose**: Manages user profiles, account deletion cascades, and OAuth integrations.
 - **Resilient OAuth Upsert (`upsertUser`)**:
   During cold starts on Neon's serverless database, interactive transactions can face timeout failures (e.g. Prisma P2028). To prevent this, user upserts are written as simple non-transactional statements. If a race condition triggers a unique constraint collision (Prisma P2002), the error is caught, and the service retries by finding the existing record and updating its Google ID linkage.
@@ -243,15 +243,15 @@ sequenceDiagram
 
 #### `daily_close_worker.py`
 
-- **File**: [daily_close_worker.py](file:///home/vikram/Dev-Stuff/avgdown/apps/worker/src/daily_close_worker.py)
+- **File**: [daily_close_worker.py](apps/worker/src/daily_close_worker.py)
 - **Purpose**: Runs daily post-market hours. It updates historical daily closes for all active assets.
 - **Details**:
   It queries database coverage, identifies assets missing recent closes, and triggers bulk downloads. Successful results are upserted into `daily_price_snapshots`. It also calls a cleanup script deleting snapshots and logs older than 1 year.
 
 #### `live_alert_worker.py`
 
-- **File**: [live_alert_worker.py](file:///home/vikram/Dev-Stuff/avgdown/apps/worker/src/live_alert_worker.py)
-- **Purpose**: Runs every 30 minutes to fetch live prices, compute provisional daily SMAs in-memory, and notify users.
+- **File**: [live_alert_worker.py](apps/worker/src/live_alert_worker.py)
+- **Purpose**: Runs every 2 hours in beta (every 30 minutes in production) to fetch live prices, compute provisional daily SMAs in-memory, and notify users.
 - **Details**:
   Filters out assets whose exchanges are currently closed. It downloads live prices via `yfinance` and retrieves historical closes in a single query via a lateral join. If the price falls below the calculated threshold, it schedules emails and webhooks.
 
@@ -261,7 +261,7 @@ sequenceDiagram
 
 ### 1. Schema Validation (CQRS Segregation)
 
-Zod schemas in [packages/types/src](file:///home/vikram/Dev-Stuff/avgdown/packages/types/src) enforce strict data contract boundaries:
+Zod schemas in [packages/types/src](packages/types/src) enforce strict data contract boundaries:
 
 - **Base (`[Resource]Schema`)**: Matches the raw database row structure. Never sent directly to the client to prevent leaking sensitive fields (e.g. `passwordHash`).
 - **Create (`[Resource]CreateSchema`)**: Validates payloads sent to `POST` routes, omitting auto-generated database columns.
@@ -282,7 +282,7 @@ The TypeScript NestJS service layer uses the Prisma Client. In contrast, the Pyt
 
 The frontend avoids heavy global state managers (like Redux or Zustand) in favor of **Server-State Synchronization** using SWR:
 
-```
+```text
 +--------------------------------------------------+
 |                    Next.js UI                    |
 +--------------------------------------------------+
@@ -297,7 +297,7 @@ The frontend avoids heavy global state managers (like Redux or Zustand) in favor
      +----------------------------------------+
 ```
 
-- **SWR Hook System**: Client pages fetch watchlist records using custom hooks (e.g. [useWatchlists.ts](file:///home/vikram/Dev-Stuff/avgdown/apps/web/hooks/useWatchlists.ts)). SWR caches the response, updates the UI immediately, and triggers background revalidation.
+- **SWR Hook System**: Client pages fetch watchlist records using custom hooks (e.g. [useWatchlists.ts](apps/web/hooks/useWatchlists.ts)). SWR caches the response, updates the UI immediately, and triggers background revalidation.
 - **Optimistic UI Mutators**: When a watchlist entry is deleted or updated, the application triggers a local cache mutate. SWR updates the UI instantly, calls the API in the background, and rolls back changes if the API request fails.
 
 ---
@@ -324,7 +324,7 @@ The frontend avoids heavy global state managers (like Redux or Zustand) in favor
 
 ## 9. Scalability & Future Roadmap
 
-```
+```text
 Phase 1: Foundation (Current)     Phase 2: Observability & Fallbacks     Phase 3: Scale Up (Future)
 +-----------------------------+   +-------------------------------+   +-----------------------------+
 | • yfinance Price Collection |-->| • Winston JSON Logging        |-->| • Paid API (Upstox) Migration|
@@ -340,7 +340,7 @@ Phase 1: Foundation (Current)     Phase 2: Observability & Fallbacks     Phase 3
 
 ### 2. Paid Provider Upgrade (Upstox API)
 
-If yfinance's scraping structure breaks under load, the system is designed to transition to a paid broker API (e.g. Upstox API). The provider logic is isolated in [yf.py](file:///home/vikram/Dev-Stuff/avgdown/apps/worker/src/providers/yf.py), allowing developers to add a new provider without modifying the database or alerting logic.
+If yfinance's scraping structure breaks under load, the system is designed to transition to a paid broker API (e.g. Upstox API). The provider logic is isolated in [yf.py](apps/worker/src/providers/yf.py), allowing developers to add a new provider without modifying the database or alerting logic.
 
 ### 3. Message Queue Batching (SQS & Lambda Concurrency)
 
@@ -369,9 +369,9 @@ bun install
 
 ### Step 2: Configure Environment Files
 
-Create a `.env.local` file at the root of the repository:
+Create `apps/api/.env.local` for the backend REST API:
 
-```bash
+```env
 DATABASE_URL="postgresql://<username>:<password>@<neon-pooled-url>/avgdown?sslmode=require"
 DIRECT_URL="postgresql://<username>:<password>@<neon-direct-url>/avgdown?sslmode=require"
 JWT_SECRET="generate-a-long-random-string-here"
@@ -383,11 +383,10 @@ FRONTEND_URL="http://localhost:3000"
 PORT="3001"
 ```
 
-Copy this `.env.local` to the corresponding application directories:
+Create `apps/web/.env.local` for the frontend Next.js application:
 
-```bash
-cp .env.local apps/api/.env.local
-cp .env.local apps/web/.env.local
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3001"
 ```
 
 For the worker, create `apps/worker/.env`:
@@ -456,6 +455,6 @@ python apps/worker/src/live_alert_worker.py
 3.  **Secure Unsubscribe Link**:
     Emails do not currently include a secure unsubscribe option. We plan to add a pre-signed unsubscribe link containing an encrypted token, allowing users to disable alerts with a single click.
 4.  **User-Selectable Deviation Threshold**:
-    The deviation threshold for price alerts is currently hardcoded to 2% (`0.02`) in [live_alert_worker.py](file:///home/vikram/Dev-Stuff/avgdown/apps/worker/src/live_alert_worker.py#L96). In the future, this will be made configurable per watchlist entry by adding a field to the database and exposing it on the frontend watchlist form.
+    The deviation threshold for price alerts is currently hardcoded to 2% (`0.02`) in [live_alert_worker.py](apps/worker/src/live_alert_worker.py#L96). In the future, this will be made configurable per watchlist entry by adding a field to the database and exposing it on the frontend watchlist form.
 5.  **Idempotence Delivery Failure Edge Case**:
     Since alerts are written to the database before the email dispatch is attempted, any crash that happens _after_ the database write but _before_ the email is sent will result in the alert being permanently skipped for that day. This is because subsequent worker runs filter out any entries that already have an alert row created on the current calendar day, regardless of whether `delivered` is true or false.

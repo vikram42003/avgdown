@@ -1,5 +1,6 @@
 import logging
 import re
+from typing import Optional
 from models import TriggeredAlert
 from db import get_alerted_today_entries
 from datetime import datetime, timezone
@@ -115,7 +116,7 @@ def validate_domain_name(domain: str) -> str:
     return "avgdown.com"
 
 
-def get_currency_symbol(symbol: str, explicit_currency: str = None) -> str:
+def get_currency_symbol(symbol: str, explicit_currency: Optional[str] = None) -> str:
     """
     Derives a currency symbol for formatting based on the asset symbol
     or an optional explicit currency.
@@ -129,7 +130,10 @@ def get_currency_symbol(symbol: str, explicit_currency: str = None) -> str:
 
     # Regex patterns for crypto/currency pairs
     # Treat crypto pairs (e.g. BTC-USD, ETH-EUR, or containing "/") as no symbol (use raw value or empty)
-    if re.search(r"^[A-Z0-9]{3,}/[A-Z0-9]{3,}$", symbol_upper) or any(suffix in symbol_upper for suffix in ["-USD", "-BTC", "-ETH"]):
+    if (
+        re.search(r"^[A-Z0-9]{3,}[-/][A-Z0-9]{3,}$", symbol_upper)
+        or any(suffix in symbol_upper for suffix in ["-USD", "-BTC", "-ETH", "-EUR", "-GBP", "-JPY", "-INR"])
+    ):
         return ""
 
     # Check common Yahoo Finance suffixes and patterns
