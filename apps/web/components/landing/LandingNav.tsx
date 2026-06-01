@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { ChartLineUpIcon } from "@phosphor-icons/react/dist/ssr";
-import { Button } from "@/components/ui/button";
+import { NavAuthButtons } from "./AuthAwareButtons";
 
 export function LandingNav() {
   return (
@@ -13,12 +12,7 @@ export function LandingNav() {
           AvgDown
         </div>
         <nav className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/login">Sign In</Link>
-          </Button>
-          <Button size="sm" asChild className="rounded-full px-5">
-            <Link href="/signup">Get Started</Link>
-          </Button>
+          <NavAuthButtons />
         </nav>
       </div>
     </header>

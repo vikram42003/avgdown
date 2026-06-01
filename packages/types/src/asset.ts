@@ -14,6 +14,7 @@ export const AssetSchema = z.object({
   exchange: SupportedExchangesEnum.describe("The exchange where the asset is traded"),
   name: z.string().describe("The name of the asset"),
   assetType: AssetTypeEnum.describe("The type of the asset"),
+  isPopular: z.boolean().default(false).describe("Whether this asset appears in the popular/browse grid"),
   createdAt: z.date().describe("The date and time when the asset was seeded/created"),
 });
 
@@ -21,6 +22,16 @@ export const AssetSchema = z.object({
 
 export const AssetResponseSchema = AssetSchema.extend({
   createdAt: z.union([z.date(), z.iso.datetime()]).describe("ISO string representation of createdAt"),
+});
+
+// Search result from Yahoo Finance — may or may not exist in our DB
+
+export const AssetSearchResultSchema = z.object({
+  symbol: z.string().describe("The ticker symbol"),
+  name: z.string().describe("The display name of the asset"),
+  exchange: z.string().describe("The exchange (may not match our enum for unsupported exchanges)"),
+  assetType: z.string().describe("The asset type (STOCK, ETF, CRYPTO, etc.)"),
+  existingAssetId: z.string().nullable().describe("DB asset ID if this asset already exists, null otherwise"),
 });
 
 // Base - Daily Price Snapshot
@@ -47,6 +58,7 @@ export const DailyPriceSnapshotResponseSchema = DailyPriceSnapshotSchema.extend(
 
 export type Asset = z.infer<typeof AssetSchema>;
 export type AssetResponse = z.infer<typeof AssetResponseSchema>;
+export type AssetSearchResult = z.infer<typeof AssetSearchResultSchema>;
 
 export type DailyPriceSnapshot = z.infer<typeof DailyPriceSnapshotSchema>;
 export type DailyPriceSnapshotResponse = z.infer<typeof DailyPriceSnapshotResponseSchema>;

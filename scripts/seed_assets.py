@@ -67,12 +67,12 @@ async def seed(db_url: str):
                 name = info.get("longName") or info.get("shortName") or symbol
 
                 # We use an UPSERT: if the (symbol, exchange) pair already exists,
-                # only update the name
+                # only update the name and ensure is_popular is set
                 await conn.execute(
                     """
-                    INSERT INTO assets (id, symbol, exchange, name, asset_type, created_at)
-                    VALUES (gen_random_uuid(), $1, $2::\"Exchange\", $3, $4::\"AssetType\", now())
-                    ON CONFLICT (symbol, exchange) DO UPDATE SET name = EXCLUDED.name
+                    INSERT INTO assets (id, symbol, exchange, name, asset_type, is_popular, created_at)
+                    VALUES (gen_random_uuid(), $1, $2::\"Exchange\", $3, $4::\"AssetType\", true, now())
+                    ON CONFLICT (symbol, exchange) DO UPDATE SET name = EXCLUDED.name, is_popular = true
                     """,
                     symbol, item["exchange"], name, item["asset_type"]
                 )

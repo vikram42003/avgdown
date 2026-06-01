@@ -1,4 +1,12 @@
+import os
 import logging
+
+level_name = os.getenv("LOG_LEVEL", "info").upper()
+level_value = getattr(logging, level_name, logging.INFO)
+logging.getLogger().setLevel(level_value)
+logger = logging.getLogger(__name__)
+
+
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -12,7 +20,7 @@ from models import WatchlistEntryProjection
 from providers.yf import HISTORY_WINDOW, fetch_daily_closes_bulk
 from utils import map_symbol_exchange
 
-logger = logging.getLogger(__name__)
+
 
 
 def group_entries_by_symbol(

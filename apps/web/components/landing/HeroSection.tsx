@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { ArrowRightIcon, ChartLineUpIcon } from "@phosphor-icons/react/dist/ssr";
-import { Button } from "@/components/ui/button";
+import { ChartLineUpIcon } from "@phosphor-icons/react/dist/ssr";
+import { HeroCtas } from "./AuthAwareButtons";
 
 export function HeroSection() {
   return (
@@ -28,15 +27,7 @@ export function HeroSection() {
 
       {/* CTAs */}
       <div className="relative mt-10 flex flex-col sm:flex-row gap-4 items-center">
-        <Button size="lg" asChild className="rounded-full px-8 text-base gap-2">
-          <Link href="/signup">
-            Start for free
-            <ArrowRightIcon weight="bold" className="size-4" />
-          </Link>
-        </Button>
-        <Button size="lg" variant="outline" asChild className="rounded-full px-8 text-base">
-          <Link href="/login">Sign in</Link>
-        </Button>
+        <HeroCtas />
       </div>
 
       {/* Subtle scroll hint */}

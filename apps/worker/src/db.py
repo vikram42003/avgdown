@@ -296,7 +296,8 @@ def get_daily_price_snapshot_coverage(
 
 def cleanup_old_data() -> None:
     """
-    Deletes price snapshots, alerts, and missed fetches older than 1 year to keep the DB size bounded.
+    Deletes price snapshots, alerts, and missed fetches older than 1 year,
+    and removes orphaned non-popular assets older than 30 days to keep the DB size bounded.
     """
     conn = get_db()
     with conn.cursor() as cur:
@@ -327,10 +328,25 @@ def cleanup_old_data() -> None:
         )
         missed_deleted = cur.rowcount
 
+        # Orphaned assets: non-popular assets with no watchlist entries, older than 30 days.
+        # These accumulate from search results that were never added to a watchlist.
+        # Related daily_price_snapshots cascade-delete automatically via FK.
+        cur.execute(
+            """
+            DELETE FROM assets
+            WHERE is_popular = false
+              AND NOT EXISTS (SELECT 1 FROM watchlist_entries w WHERE w.asset_id = assets.id)
+              AND created_at < NOW() - INTERVAL '30 days'
+            """
+        )
+        orphaned_assets_deleted = cur.rowcount
+
     conn.commit()
     logger.info(
-        "Cleaned up old data: deleted %d snapshots, %d alerts, and %d missed fetches.",
+        "Cleaned up old data: deleted %d snapshots, %d alerts, %d missed fetches, and %d orphaned assets.",
         snapshots_deleted,
         alerts_deleted,
         missed_deleted,
+        orphaned_assets_deleted,
     )
+

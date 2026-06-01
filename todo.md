@@ -29,30 +29,34 @@
     - I saw the signed out successfully notification AFTER logging out then clicking on app title "avgdown" on the sidebar and then clicking on the sign in button again
     - The login flow with Google OAuth does not work in the live version, what happens is, I clock sign in, it takes me to login page, I click on google oauth button, then seelct my account but then after finishing the oauth consent screen it takes me back to the login page, in devtools requests I can see that we did go to dashboard but it did a 307 back to login, maybe its because the cookie wasnt set cause I dont see the access token cookie being set in the live version on opening devtools. It works fine locally on the dev version
 
----
+## Bugs I've noted down and resolved
+1. ✅ [RESOLVED] Update upsertUser to check googleId when present to avoid unique constraint collisions.
+   When googleId is provided, the current implementation checks by googleId first (handling email drift and updating the DB record) before attempting registration, resolving the unique constraint collision when a Google account's primary email changes. (Resolved on 21 May 2026 via unique-constraint retry writes).
 
 ### Post-MVP
 
-19. Logging: Implement structured, centralized logging across the stack.
-20. Theme Toggle: Add a Dark/Light mode switch in the settings tab.
-21. Landing Page: Build a public landing page at the root `/` and move the main app to `/dashboard`.
-22. Implement the Observability layer
-23. Update Documentation and make charts/graphs and shit for it
-24. GO THROUGH THE GUIDE.md AND SEE IF THERES ANYTHING ELSE LEFT
-25. Webhook Reliability & Visibility: Webhooks are currently fire-and-forget with no retry logic.
+19. Make the Deviation Threshold selectable by the user
+20. Support additional technical indicators beyond SMA (e.g., EMA, RSI, MACD) [plans to expand indicators beyond SMA]
+21. Logging: Implement structured, centralized logging across the stack.
+22. Theme Toggle: Add a Dark/Light mode switch in the settings tab.
+23. Landing Page: Build a public landing page at the root `/` and move the main app to `/dashboard`.
+24. Implement the Observability layer
+25. Update Documentation and make charts/graphs and shit for it
+26. GO THROUGH THE GUIDE.md AND SEE IF THERES ANYTHING ELSE LEFT
+27. Webhook Reliability & Visibility: Webhooks are currently fire-and-forget with no retry logic.
     Failures are only logged. Consider: delivery receipts stored in DB, a retry queue (SQS/dead-letter),
     and a user-facing delivery log so they can debug their integrations.
 
 ### OTHER STUFF (handle it one day...)
-26. Add a way for auth'd users to like setup password if they used oauth and vice versa
-27. Implement the calculation of the delivery rate in dashboard summary cards
-28. Limit the watchlist charts we initially load and add pagination/infinite scrolling
-29. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
-30. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
-31. Add focused tests/fixtures for yfinance response shapes (`download` single ticker, multiple tickers, `group_by`, `multi_level_index`) so provider parsing breaks loudly when yfinance changes its DataFrame structure
-32. Move DNS management from Porkbun to Route 53, and manage it through IAC
-33. (Maybe Imp) Implement Secure One-Click Email Unsubscribe, we send a one time presigned url + token along with emails so users can unsubscribe
-34. Send emails in bulk in live_alerts_worker
+28. Add a way for auth'd users to like setup password if they used oauth and vice versa
+29. Implement the calculation of the delivery rate in dashboard summary cards
+30. Limit the watchlist charts we initially load and add pagination/infinite scrolling
+31. The alert we show on the WatchlistChart is a heuristic not ground truth, so maybe refactor it to show a real accurate alert by reading recent alerts or pinging for last alert for that watchlist
+32. Add search/filter query param support to `GET /assets` in the backend (client-side filtering is fine for MVP since the list is seeded and finite)
+33. Add focused tests/fixtures for yfinance response shapes (`download` single ticker, multiple tickers, `group_by`, `multi_level_index`) so provider parsing breaks loudly when yfinance changes its DataFrame structure
+34. Move DNS management from Porkbun to Route 53, and manage it through IAC
+35. (Maybe Imp) Implement Secure One-Click Email Unsubscribe, we send a one time presigned url + token along with emails so users can unsubscribe
+36. Send emails in bulk in live_alerts_worker
 ---
 
 ## Webhook Payload Contract

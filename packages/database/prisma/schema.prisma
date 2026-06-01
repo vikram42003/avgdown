@@ -44,6 +44,7 @@ model Asset {
   exchange  Exchange
   name      String
   assetType AssetType @map("asset_type")
+  isPopular Boolean   @default(false) @map("is_popular")
   createdAt DateTime  @default(now()) @map("created_at")
 
   watchlistEntries    WatchlistEntry[]

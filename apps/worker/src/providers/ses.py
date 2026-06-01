@@ -4,6 +4,7 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 from models import TriggeredAlert
+from providers.email_templates import render_alert_email_html, render_alert_email_text
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,6 @@ def send_alerts_via_email(
             continue
 
         symbols = set()
-        messages = []
         user_email = None
         # loop over values since entry_id is unused here
         for alert in alert_by_entry_ids.values():
@@ -42,14 +42,17 @@ def send_alerts_via_email(
                 user_email = alert.user_email
 
             symbols.add(alert.symbol)
-            messages.append(alert.message)
 
+        alert_list = list(alert_by_entry_ids.values())
         content = {
             "Simple": {
                 "Subject": {
                     "Data": f"AvgDown: Price Alert Triggered! for {', '.join(sorted(symbols))}"
                 },
-                "Body": {"Text": {"Data": "\n".join(messages)}},
+                "Body": {
+                    "Html": {"Data": render_alert_email_html(domain_name, alert_list)},
+                    "Text": {"Data": render_alert_email_text(alert_list)},
+                },
             }
         }
 
